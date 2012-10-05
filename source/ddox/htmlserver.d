@@ -28,7 +28,7 @@ body {
 		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
 		info.rootPackage = pack;
 
-		res.renderCompat!("api.dt",
+		res.renderCompat!("ddox.overview.dt",
 			HttpServerRequest, "req",
 			Info2*, "info")
 			(Variant(req), Variant(&info));
@@ -49,7 +49,7 @@ body {
 		info.mod = cast(Module)pack.lookup(req.params["modulename"]);
 		if( !info.mod ) return;
 
-		res.renderCompat!("api-module.dt",
+		res.renderCompat!("ddox.module.dt",
 			HttpServerRequest, "req",
 			Info2*, "info")
 			(Variant(req), Variant(&info));
@@ -78,16 +78,16 @@ body {
 		switch( info.item.kind ){
 			default: logWarn("Unknown API item kind: %s", info.item.kind); return;
 			case DeclarationKind.Function:
-				res.renderCompat!("api-function.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
+				res.renderCompat!("ddox.function.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
 				break;
 			case DeclarationKind.Interface:
 			case DeclarationKind.Class:
 			case DeclarationKind.Struct:
 			case DeclarationKind.Template:
-				res.renderCompat!("api-composite.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
+				res.renderCompat!("ddox.composite.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
 				break;
 			case DeclarationKind.Enum:
-				res.renderCompat!("api-enum.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
+				res.renderCompat!("ddox.enum.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
 				break;
 		}
 	}
