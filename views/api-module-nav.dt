@@ -1,0 +1,12 @@
+- import ddox.entities;
+
+- void navModuleList(Package pack)
+	li= pack.name
+	ul
+		- foreach(p; pack.packages)
+			- navModuleList(p);
+		- foreach(m; pack.modules)
+			li
+				a(href="#{info.rootDir}#{m.qualifiedName}/")= m.name
+
+- navModuleList(info.rootPackage);

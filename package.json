@@ -1,0 +1,11 @@
+{
+    "name": "ddox",
+	"description": "Powerful alternative to DMD's DDOC engine.",
+	"homepage": "https://github.com/rejectedsoftware/ddox",
+    "authors": [
+		"Sönke Ludwig"
+	],
+    "version": "0.1.0",
+    "dependencies": {
+    }
+}

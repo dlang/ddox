@@ -1,0 +1,14 @@
+!!! 5
+html
+	head
+		block defs
+		block title
+		title= title
+		link(rel="stylesheet", type="text/css", href="ddox.css")
+	body
+		h1= title
+
+		nav
+			block navigation
+
+		block body

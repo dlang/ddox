@@ -1,0 +1,105 @@
+extends layout
+
+block defs
+	- import ddox.api;
+	- import ddox.ddoc;
+
+block title
+	- auto title = "module " ~ info.mod.name;
+	
+block navigation
+	include api-module-nav
+		
+block body
+	
+	section!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
+	
+	- if( hasChild!FunctionDeclaration(info.mod) )
+		section
+			h2 Functions
+			table
+				col.caption
+				tr
+					th Function name
+					th Description
+				- foreach( f; getDocGroups!FunctionDeclaration(info.mod) )
+					tr
+						td
+							a(href="#{f.nestedName}")= f.name
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- if( hasChild!InterfaceDeclaration(info.mod) )
+		section
+			h2 Interfaces
+			table
+				col.caption
+				tr
+					th Interface name
+					th Description
+				- foreach( f; getDocGroups!InterfaceDeclaration(info.mod)  )
+					tr
+						td
+							a(href="#{f.nestedName}")= f.name
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- if( hasChild!ClassDeclaration(info.mod) )
+		section
+			h2 Classes
+			table
+				col.caption
+				tr
+					th Class name
+					th Description
+				- foreach( f; getDocGroups!ClassDeclaration(info.mod) )
+					tr
+						td
+							a(href="#{f.nestedName}")= f.name
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- if( hasChild!StructDeclaration(info.mod) )
+		section
+			h2 Structs
+			table
+				col.caption
+				tr
+					th Struct name
+					th Description
+				- foreach( f; getDocGroups!StructDeclaration(info.mod)  )
+					tr
+						td 
+							a(href="#{f.nestedName}")= f.name
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- if( hasChild!EnumDeclaration(info.mod) )
+		section
+			h2 Enums
+			table
+				col.caption
+				tr
+					th Enum name
+					th Description
+				- foreach( f; getDocGroups!EnumDeclaration(info.mod)  )
+					tr
+						td
+							a(href="#{f.nestedName}")= f.name
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- if( hasChild!AliasDeclaration(info.mod) )
+		section
+			h2 Type aliases
+			table
+				col.caption
+				tr
+					th Alias name
+					th Type
+					th Description
+				- foreach( f; getDocGroups!AliasDeclaration(info.mod)  )
+					tr
+						td= f.name
+						td
+							- if( f.targetType )
+								|!= formatType(f.targetType)
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
+	!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")

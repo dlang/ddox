@@ -1,0 +1,31 @@
+extends layout
+
+block defs
+	- import ddox.ddoc;
+	- import ddox.entities;
+
+block title
+	- auto title = "API documentation";
+	
+block navigation
+	include api-module-nav
+
+block body
+
+	- void moduleInfoRec(Package pack)
+		- foreach( p; pack.packages )
+			- moduleInfoRec(p);
+		- foreach( m; pack.modules )
+			tr
+				td
+					a(href="#{m.qualifiedName}/")= m.qualifiedName
+				td
+					- if( m.docGroup )
+						|!= formatDdocComment(m.docGroup.text, 0, sec => sec == "$Short")
+	
+	table
+		col.caption
+		tr
+			th Module
+			th Description
+		- moduleInfoRec(info.rootPackage);
