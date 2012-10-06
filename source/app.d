@@ -1,5 +1,7 @@
 module app;
 
+import ddox.ddox;
+import ddox.entities;
 import ddox.htmlserver;
 import ddox.jsonparser;
 
@@ -8,9 +10,11 @@ import vibe.core.file;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.data.json;
+import std.array;
 import std.file;
 import std.getopt;
 import std.stdio;
+import std.string;
 
 
 int main(string[] args)
@@ -24,11 +28,13 @@ int main(string[] args)
 		default: showUsage(args); return 1; break;
 		case "generate-html": return generateHtml(args);
 		case "serve-html": return serveHtml(args);
+		case "filter": return filterDocs(args);
 	}
 }
 
 int processDocs(string[] args)
 {
+
 	/*if( args.length < 3 || args.length > 4 ){
 		showUsage(args);
 		return 1;
@@ -53,6 +59,16 @@ int processDocs(string[] args)
 
 int generateHtml(string[] args)
 {
+	string jsonfile;
+	if( args.length < 3 ){
+		showUsage(args);
+		return 1;
+	}
+
+	// parse the json output file
+	auto docsettings = new DdoxSettings;
+	auto pack = parseDocFile(args[2], docsettings);
+
 	return 0;
 }
 
@@ -63,13 +79,10 @@ int serveHtml(string[] args)
 		showUsage(args);
 		return 1;
 	}
-	jsonfile = args[2];
 
 	// parse the json output file
-	auto text = readText(jsonfile);
-	int line = 1;
-	auto json = parseJson(text, &line);
-	auto pack = parseJsonDocs(json);
+	auto docsettings = new DdoxSettings;
+	auto pack = parseDocFile(args[2], docsettings);
 
 	// register the api routes and start the server
 	auto router = new UrlRouter;
@@ -82,6 +95,69 @@ int serveHtml(string[] args)
 
 	startListening();
 	return runEventLoop();
+}
+
+int filterDocs(string[] args)
+{
+	writefln("cmds: %s", args);
+	string[] excluded, included;
+	getopt(args,
+		config.passThrough,
+		"ex", &excluded,
+		"in", &included);
+
+	string jsonfile;
+	if( args.length < 3 ){
+		showUsage(args);
+		return 1;
+	}
+
+	writefln("Exclude: %s", excluded);
+	writefln("Include: %s", included);
+
+	writefln("Reading doc file...");
+	auto text = readText(args[2]);
+	int line = 1;
+	writefln("Parsing JSON...");
+	auto json = parseJson(text, &line);
+
+	writefln("Filtering modules...");
+	Json[] dst;
+	foreach( m; json ){
+		auto n = m.name.get!string;
+		bool include = true;
+		foreach( ex; excluded )
+			if( n.startsWith(ex) ){
+				include = false;
+				break;
+			}
+		foreach( inc; included )
+			if( n.startsWith(inc) ){
+				include = true;
+				break;
+			}
+		if( include ) dst ~= m;
+	}
+
+	writefln("Writing filtered docs...");
+	auto buf = appender!string();
+	toPrettyJson(buf, Json(dst));
+	std.file.write(args[2], buf.data());
+
+	return 0;
+}
+
+Package parseDocFile(string filename, DdoxSettings settings)
+{
+	writefln("Reading doc file...");
+	auto text = readText(filename);
+	int line = 1;
+	writefln("Parsing JSON...");
+	auto json = parseJson(text, &line);
+	writefln("Parsing docs...");
+	auto ret = parseJsonDocs(json, settings);
+	writefln("Finished parsing docs.");
+	return ret;
 }
 
 void showUsage(string[] args)
@@ -110,6 +186,12 @@ void showUsage(string[] args)
 `Usage: %s generate-html <ddocx-input-file> <output-dir>
 `, args[0]);
 			break;
+		case "filter":
+			writefln(
+`Usage: %s generate-html <ddocx-input-file> <output-dir> [options]
+	-ex=PREFIX       Exclude modules with prefix
+	-in=PREFIX       Force include of modules with prefix
+`, args[0]);
 	}
 	if( args.length < 2 ){
 	} else {
