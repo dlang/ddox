@@ -1,7 +1,8 @@
 - import ddox.entities;
 
 - void navModuleList(Package pack)
-	li= pack.name
+	- if( pack !is info.rootPackage )
+		li= pack.name
 	ul
 		- foreach(p; pack.packages)
 			- navModuleList(p);
