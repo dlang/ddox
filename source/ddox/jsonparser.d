@@ -153,6 +153,7 @@ struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json.name.get!string);
+		insertIntoTypeMap(ret);
 		//if( auto pt = "type" in json ) ret.targetType = parseType(*pt, parent);
 		return ret;
 	}
@@ -176,6 +177,7 @@ struct Parser
 	auto parseEnumDecl(Json json, Entity parent)
 	{
 		auto ret = new EnumDeclaration(parent, json.name.get!string);
+		insertIntoTypeMap(ret);
 		ret.baseType = parseType(json.base, parent);
 		auto mems = parseDeclList(json.members, ret);
 		foreach( m; mems ){
@@ -215,6 +217,8 @@ struct Parser
 				ret = intfdecl;
 				break;
 		}
+
+		insertIntoTypeMap(ret);
 
 		ret.members = parseDeclList(json.members, ret);
 
@@ -587,8 +591,10 @@ struct Parser
 	void insertIntoTypeMap(Declaration decl)
 	{
 		string[] parts = split(decl.qualifiedName, ".");
-		foreach( i; 0 .. parts.length-1 )
-			m_typeMap[join(parts[i .. $], ".")] = decl;
+		foreach( i; 0 .. parts.length ){
+			auto partial_name = join(parts[i .. $], ".");
+			m_typeMap[partial_name] = decl;
+		}
 	}
 }
 

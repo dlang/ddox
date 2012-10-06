@@ -12,7 +12,5 @@ class DdoxSettings {
 	SortMode moduleSort = SortMode.Name;
 	SortMode declSort = SortMode.None;
 	bool inheritDocumentation = true;
-	string[] excludedPaths;
-	string[] includedPaths;
 }
 
