@@ -29,6 +29,7 @@ Package parseJsonDocs(Json json, Package root = null)
 struct Parser
 {
 	private Tuple!(Type, Entity)[] m_primTypes;
+	private Declaration[string] m_typeMap;
 
 	void resolveTypes(Package root)
 	{
@@ -46,8 +47,10 @@ struct Parser
 
 		foreach( t; m_primTypes ){
 			auto decl = cast(Declaration)t[1].lookup(t[0].typeName);
-			if( !decl || !isTypeDecl(decl.kind) )
-				decl = cast(Declaration)root.lookdown(t[0].typeName, true);
+			if( !decl || !isTypeDecl(decl.kind) ){
+				auto pd = t[0].typeName in m_typeMap;
+				if( pd ) decl = *pd;
+			}
 			if( decl && isTypeDecl(decl.kind) )
 				t[0].typeDecl = decl;
 		}
@@ -333,7 +336,6 @@ struct Parser
 		auto str = tp.opt!string;
 		if( str.length == 0 ) str = def_type;
 		auto tokens = tokenizeDSource(str);
-logInfo("TP: %s", str);
 		
 		auto type = parseTypeDecl(tokens, sc);
 		type.text = str;
@@ -670,6 +672,13 @@ logInfo("TP: %s", str);
 		while( s.length > 0 && chars.countUntil(s[0]) >= 0 ) s.popFront();
 		while( s.length > 0 && chars.countUntil(s[$-1]) >= 0 ) s.popBack();
 		return s;
+	}
+
+	void insertIntoTypeMap(Declaration decl)
+	{
+		string[] parts = split(decl.qualifiedName, ".");
+		foreach( i; 0 .. parts.length-1 )
+			m_typeMap[join(parts[i .. $], ".")] = decl;
 	}
 }
 
