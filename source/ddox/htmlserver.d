@@ -26,7 +26,7 @@ body {
 
 		Info2 info;
 		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
 		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 
@@ -47,7 +47,7 @@ body {
 
 		Info2 info;
 		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
 		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 		info.mod = cast(Module)pack.lookup(req.params["modulename"]);
@@ -73,7 +73,7 @@ body {
 
 		Info3 info;
 		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
 		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 		info.mod = pack.lookup!Module(req.params["modulename"]);
