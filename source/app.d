@@ -25,7 +25,7 @@ int main(string[] args)
 	}
 
 	switch( args[1] ){
-		default: showUsage(args); return 1; break;
+		default: showUsage(args); return 1;
 		case "generate-html": return generateHtml(args);
 		case "serve-html": return serveHtml(args);
 		case "filter": return filterDocs(args);
@@ -179,7 +179,6 @@ void showUsage(string[] args)
 			writefln(
 `Usage: %s generate-html <ddocx-input-file>
 `, args[0]);
-			break;
 			break;
 		case "generate-html":
 			writefln(

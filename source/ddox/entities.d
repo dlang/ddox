@@ -145,7 +145,7 @@ final class Package : Entity {
 		return pack;
 	}
 
-	void iterateChildren(bool delegate(Entity) del)
+	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( p; packages ) if( !del(p) ) return;
 		foreach( m; modules ) if( !del(m) ) return;
@@ -158,7 +158,7 @@ final class Module : Entity{
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del)
+	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( m; members ) if( !del(m) ) return;
 	}
@@ -210,28 +210,28 @@ class Declaration : Entity {
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	abstract void iterateChildren(bool delegate(Entity) del);
+	abstract override void iterateChildren(bool delegate(Entity) del);
 }
 
 class TypedDeclaration : Declaration {
 	Type type;
 
-	abstract @property DeclarationKind kind() const;
+	abstract override @property DeclarationKind kind() const;
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	abstract void iterateChildren(bool delegate(Entity) del);
+	abstract override void iterateChildren(bool delegate(Entity) del);
 }
 
 final class VariableDeclaration : TypedDeclaration {
 	Value initializer;
 
-	@property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.docGroup = docGroup; ret.initializer = initializer; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Variable; }
+	override @property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.docGroup = docGroup; ret.initializer = initializer; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Variable; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del) {}
+	override void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class FunctionDeclaration : TypedDeclaration {
@@ -239,14 +239,14 @@ final class FunctionDeclaration : TypedDeclaration {
 	VariableDeclaration[] parameters;
 	string[] attributes;
 
-	@property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.docGroup = docGroup; ret.returnType = returnType; ret.parameters = parameters; ret.attributes = attributes; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Function; }
+	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.docGroup = docGroup; ret.returnType = returnType; ret.parameters = parameters; ret.attributes = attributes; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Function; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
 	bool hasAttribute(string att) const { foreach( a; attributes ) if( a == att ) return true; return false; }
 
-	void iterateChildren(bool delegate(Entity) del)
+	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( p; parameters ) del(p);
 	}
@@ -255,19 +255,19 @@ final class FunctionDeclaration : TypedDeclaration {
 class CompositeTypeDeclaration : TypedDeclaration {
 	Declaration[] members;
 
-	abstract @property DeclarationKind kind();
+	override abstract @property DeclarationKind kind();
  
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del)
+	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( m; members ) if( !del(m) ) return;
 	}
 }
 
 final class StructDeclaration : CompositeTypeDeclaration {
-	@property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Struct; }
+	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Struct; }
 
 	this(Entity parent, string name){ super(parent, name); }
 }
@@ -275,8 +275,8 @@ final class StructDeclaration : CompositeTypeDeclaration {
 final class InterfaceDeclaration : CompositeTypeDeclaration {
 	Type[] derivedInterfaces;
 
-	@property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.derivedInterfaces = derivedInterfaces; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Interface; }
+	override @property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.derivedInterfaces = derivedInterfaces; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
@@ -291,8 +291,8 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 	Type baseClass;
 	Type[] derivedInterfaces;
 
-	@property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Class; }
+	override @property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Class; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
@@ -307,8 +307,8 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 final class EnumDeclaration : CompositeTypeDeclaration {
 	Type baseType;
 
-	@property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseType = baseType; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Enum; }
+	override @property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseType = baseType; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Enum; }
 
 	this(Entity parent, string name){ super(parent, name); }
 }
@@ -316,36 +316,36 @@ final class EnumDeclaration : CompositeTypeDeclaration {
 final class EnumMemberDeclaration : Declaration {
 	Value value;
 
-	@property EnumMemberDeclaration dup() { auto ret = new EnumMemberDeclaration(parent, name); ret.docGroup = docGroup; ret.value = value; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
+	override @property EnumMemberDeclaration dup() { auto ret = new EnumMemberDeclaration(parent, name); ret.docGroup = docGroup; ret.value = value; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del) {}
+	override void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class AliasDeclaration : Declaration {
 	Declaration targetDecl;
 	Type targetType;
 
-	@property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.docGroup = docGroup; ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Alias; }
+	override @property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.docGroup = docGroup; ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Alias; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del) {}
+	override void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class TemplateDeclaration : Declaration {
 	string templateArgs;
 	Declaration[] members;
 
-	@property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.docGroup = docGroup; ret.templateArgs = templateArgs; ret.members = members; return ret; }
-	@property DeclarationKind kind() const { return DeclarationKind.Template; }
+	override @property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.docGroup = docGroup; ret.templateArgs = templateArgs; ret.members = members; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Template; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(Entity) del)
+	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( m; members ) del(m);
 	}
