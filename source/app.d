@@ -127,6 +127,9 @@ int filterDocs(string[] args)
 					case "protected": prot = Protection.Protected; break;
 				}
 			}
+			if( auto c = "comment" in json ){
+				if( strip(c.get!string) == "private" ) prot = Protection.Private;
+			}
 			if( prot < minprot ) return Json.Undefined;
 
 			if( auto mem = "members" in json ){
