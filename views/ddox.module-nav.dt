@@ -1,13 +1,24 @@
 - import ddox.entities;
 
-- void navModuleList(Package pack)
-	- if( pack !is info.rootPackage )
-		li= pack.name
-	ul
+- if( info.navPackageTree )
+	- void moduleNavTree(Package pack)
+		- if( pack !is info.rootPackage )
+			li= pack.name
+		ul
+			- foreach(p; pack.packages)
+				- moduleNavTree(p);
+			- foreach(m; pack.modules)
+				li
+					a(href="#{info.rootDir}#{m.qualifiedName}/")= m.name
+
+	- moduleNavTree(info.rootPackage);
+- else
+	- void moduleNavList(Package pack)
 		- foreach(p; pack.packages)
-			- navModuleList(p);
+			- moduleNavList(p);
 		- foreach(m; pack.modules)
 			li
-				a(href="#{info.rootDir}#{m.qualifiedName}/")= m.name
+				a(href="#{info.rootDir}#{m.qualifiedName}/")= m.qualifiedName
 
-- navModuleList(info.rootPackage);
+	ul
+		- moduleNavList(info.rootPackage);

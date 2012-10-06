@@ -10,7 +10,7 @@ import vibe.http.router;
 import vibe.templ.diet; // just so that rdmd picks it up
 
 
-void registerApiDocs(UrlRouter router, Package pack, string path_prefix = "/api")
+void registerApiDocs(UrlRouter router, Package pack, string path_prefix = "/api", bool nav_package_tree = true)
 in {
 	assert(path_prefix.length == 0 || path_prefix[0] == '/');
 	assert(!path_prefix.endsWith('/'));
@@ -20,12 +20,14 @@ body {
 	{
 		struct Info2 {
 			string rootDir;
+			bool navPackageTree;
 			Package rootPackage;
 		}
 
 		Info2 info;
 		info.rootDir = req.rootDir;
 		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 
 		res.renderCompat!("ddox.overview.dt",
@@ -38,6 +40,7 @@ body {
 	{
 		struct Info2 {
 			string rootDir;
+			bool navPackageTree;
 			Package rootPackage;
 			Module mod;
 		}
@@ -45,6 +48,7 @@ body {
 		Info2 info;
 		info.rootDir = req.rootDir;
 		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 		info.mod = cast(Module)pack.lookup(req.params["modulename"]);
 		if( !info.mod ) return;
@@ -59,6 +63,7 @@ body {
 	{
 		struct Info3 {
 			string rootDir;
+			bool navPackageTree;
 			Package rootPackage;
 			Module mod;
 			Declaration item;
@@ -69,6 +74,7 @@ body {
 		Info3 info;
 		info.rootDir = req.rootDir;
 		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
+		info.navPackageTree = nav_package_tree;
 		info.rootPackage = pack;
 		info.mod = pack.lookup!Module(req.params["modulename"]);
 		logInfo("mod: %s", info.mod !is null);
