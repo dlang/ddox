@@ -227,7 +227,7 @@ class TypedDeclaration : Declaration {
 final class VariableDeclaration : TypedDeclaration {
 	Value initializer;
 
-	override @property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.docGroup = docGroup; ret.initializer = initializer; return ret; }
+	override @property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.initializer = initializer; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Variable; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -240,7 +240,7 @@ final class FunctionDeclaration : TypedDeclaration {
 	VariableDeclaration[] parameters;
 	string[] attributes;
 
-	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.docGroup = docGroup; ret.returnType = returnType; ret.parameters = parameters; ret.attributes = attributes; return ret; }
+	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.returnType = returnType; ret.parameters = parameters; ret.attributes = attributes; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Function; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -267,7 +267,7 @@ class CompositeTypeDeclaration : TypedDeclaration {
 }
 
 final class StructDeclaration : CompositeTypeDeclaration {
-	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; return ret; }
+	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Struct; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -276,7 +276,7 @@ final class StructDeclaration : CompositeTypeDeclaration {
 final class InterfaceDeclaration : CompositeTypeDeclaration {
 	Type[] derivedInterfaces;
 
-	override @property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.derivedInterfaces = derivedInterfaces; return ret; }
+	override @property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; ret.derivedInterfaces = derivedInterfaces; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -292,7 +292,7 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 	Type baseClass;
 	Type[] derivedInterfaces;
 
-	override @property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces; return ret; }
+	override @property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Class; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -308,7 +308,7 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 final class EnumDeclaration : CompositeTypeDeclaration {
 	Type baseType;
 
-	override @property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseType = baseType; return ret; }
+	override @property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; ret.baseType = baseType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Enum; }
 
 	this(Entity parent, string name){ super(parent, name); }

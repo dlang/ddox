@@ -76,6 +76,7 @@ T[] getDocGroups(T)(Declaration[] decls)
 
 string formatType()(Type type)
 {
+	if( !type ) return "{null}";
 	//logDebug("format type: %s", type);
 	auto ret = appender!string();
 	formatType(ret, type);
