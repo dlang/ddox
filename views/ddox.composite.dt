@@ -22,6 +22,29 @@ block body
 	
 	section!= formatDdocComment(item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
 
+
+	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
+		section
+			h2 Inherits from
+
+			ul
+				- if( cls_item.baseClass )
+					li
+						code.prettyprint.lang-d!= formatType(cls_item.baseClass)
+						| (base class)
+				- foreach( intf; cls_item.derivedInterfaces )
+					li
+						code.prettyprint.lang-d!= formatType(intf)
+	
+	- if( intf_item && intf_item.derivedInterfaces.length )
+		section
+			h2 Inherits from
+
+			ul
+				- foreach( intf; intf_item.derivedInterfaces )
+					li
+						code.prettyprint.lang-d!= formatType(intf)
+
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Enum",  "Alias",   "Template"];
@@ -96,28 +119,6 @@ block body
 								- if( grp.inheritingDecl )
 									| [inherited]
 							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
-
-	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
-		section
-			h2 Inherits from
-
-			ul
-				- if( cls_item.baseClass )
-					li
-						code.prettyprint.lang-d!= formatType(cls_item.baseClass)
-						| (base class)
-				- foreach( intf; cls_item.derivedInterfaces )
-					li
-						code.prettyprint.lang-d!= formatType(intf)
-	
-	- if( intf_item && intf_item.derivedInterfaces.length )
-		section
-			h2 Inherits from
-
-			ul
-				- foreach( intf; intf_item.derivedInterfaces )
-					li
-						code.prettyprint.lang-d!= formatType(intf)
 
 	|!= formatDdocComment(item.docGroup.text, 2, sec => sec != "$Short" && sec != "$Long")
 	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
