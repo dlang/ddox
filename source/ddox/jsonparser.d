@@ -254,7 +254,7 @@ struct Parser
 		if( str.length == 0 ) str = def_type;
 		auto tokens = tokenizeDSource(str);
 		
-		logInfo("parse type '%s'", str);
+		logDebug("parse type '%s'", str);
 		auto type = parseTypeDecl(tokens, sc);
 		type.text = str;
 		return type;
