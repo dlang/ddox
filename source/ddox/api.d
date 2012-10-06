@@ -21,6 +21,21 @@ string getFunctionName(Json proto)
 	return n;
 }
 
+DocGroup[] docGroups(Declaration[] items)
+{
+	DocGroup[] ret;
+	foreach( itm; items ){
+		bool found = false;
+		foreach( g; ret )
+			if( g is itm.docGroup ){
+				found = true;
+				break;
+			}
+		if( !found ) ret ~= itm.docGroup;
+	}
+	return ret;
+}
+
 
 bool hasChild(T)(Module mod){ return hasChild!T(mod.members); }
 bool hasChild(T)(CompositeTypeDeclaration decl){ return hasChild!T(decl.members); }
@@ -47,7 +62,7 @@ T[] getDocGroups(T)(Declaration[] decls)
 	foreach( d; decls ){
 		auto dt = cast(T)d;
 		if( !dt ) continue;
-		if( !dt.docGroup || dt.docGroup !is dg || dt.name != name ){
+		if( dt.docGroup !is dg || dt.name != name ){
 			ret ~= dt;
 			dg = d.docGroup;
 			name = d.name;

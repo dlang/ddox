@@ -57,7 +57,7 @@ block body
 				- foreach( p; properties )
 					tr
 						td
-							a(href="#{p.nestedName}")= p.name
+							a(href="../#{p.module_.qualifiedName}/#{p.nestedName}")= p.name
 							- if( p.inheritingDecl )
 								| [inherited]
 						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
@@ -75,7 +75,7 @@ block body
 				- foreach( p; methods )
 					tr
 						td
-							a(href="#{p.nestedName}")= p.name
+							a(href="../#{p.module_.qualifiedName}/#{p.nestedName}")= p.name
 							- if( p.inheritingDecl )
 								| [inherited]
 						td!= formatDdocComment(p.docGroup.text, 3, sec => sec == "$Short")
@@ -92,7 +92,7 @@ block body
 					- foreach( grp; getDocGroups!kind(item) )
 						tr
 							td
-								a(href="#{grp.nestedName}")= grp.name
+								a(href="../#{grp.module_.qualifiedName}/#{grp.nestedName}")= grp.name
 								- if( grp.inheritingDecl )
 									| [inherited]
 							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")

@@ -38,25 +38,46 @@ class Entity {
 
 	abstract void iterateChildren(bool delegate(Entity) del);
 
-	final Entity findChild(string name)
+	final T findChild(T = Entity)(string name)
 	{
-		Entity ret;
-		iterateChildren((ch){ if( ch.name == name ){ ret = cast()ch; return false; } return true; });
+		T ret;
+		iterateChildren((ch){ if( ch.name == name ){ ret = cast(T)ch; return ret is null; } return true; });
 		return ret;
 	}
 
-	final Entity lookup(string qualified_name)
+	final T[] findChildren(T = Entity)(string name)
+	{
+		T[] ret;
+		iterateChildren((ch){ if( ch.name == name ){ auto t = cast(T)ch; if( t ) ret ~= t; } return true; });
+		return ret;
+	}
+
+	final T lookup(T = Entity)(string qualified_name, bool recurse = true)
 	{
 		auto parts = split(qualified_name, ".");
 		Entity e = this;
-		foreach( p; parts ){
-			e = e.findChild(p);
-			if( !e ){
-				if( parent ) return parent.lookup(qualified_name);
-				else return null;
+		foreach( i, p; parts ){
+			if( i+1 < parts.length ){
+				e = e.findChild(p);
+				if( !e ) break;
+			} else {
+				auto r = e.findChild!T(p);
+				if( r ) return r;
 			}
 		}
-		return e;
+		if( recurse && parent ) return parent.lookup!T(qualified_name);
+		return null;
+	}
+
+	final T[] lookupAll(T = Entity)(string qualified_name)
+	{
+		auto parts = split(qualified_name, ".");
+		Entity e = this;
+		foreach( i, p; parts ){
+			if( i+1 < parts.length ) e = e.findChild(p);
+			else return e.findChildren!T(p);
+		}
+		return null;
 	}
 
 	final Entity lookdown(string qualified_name, bool stop_at_module_level = false)

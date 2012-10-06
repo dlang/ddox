@@ -1,6 +1,6 @@
 module ddox.htmlserver;
 
-import ddox.api; // just so that rdmd picks it up
+import ddox.api;
 import ddox.ddoc; // just so that rdmd picks it up
 import ddox.entities;
 
@@ -63,17 +63,21 @@ body {
 			Module mod;
 			Declaration item;
 			DocGroup docGroup;
+			DocGroup[] docGroups; // for multiple doc groups with the same name
 		}
 
 		Info3 info;
 		info.rootDir = req.rootDir;
 		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $];
 		info.rootPackage = pack;
-		info.mod = cast(Module)pack.lookup(req.params["modulename"]);
+		info.mod = pack.lookup!Module(req.params["modulename"]);
+		logInfo("mod: %s", info.mod !is null);
 		if( !info.mod ) return;
-		info.item = cast(Declaration)info.mod.lookup(req.params["itemname"]);
+		info.item = info.mod.lookup!Declaration(req.params["itemname"], false);
+		logInfo("item: %s", info.item !is null);
 		if( !info.item ) return;
 		info.docGroup = info.item.docGroup;
+		info.docGroups = docGroups(info.mod.lookupAll!Declaration(req.params["itemname"]));
 
 		switch( info.item.kind ){
 			default: logWarn("Unknown API item kind: %s", info.item.kind); return;
