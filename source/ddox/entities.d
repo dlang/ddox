@@ -36,17 +36,11 @@ class Entity {
 		this.name = name;
 	}
 
-	abstract void iterateChildren(bool delegate(inout(Entity)) del) inout;
+	abstract void iterateChildren(bool delegate(Entity) del);
 
 	final Entity findChild(string name)
 	{
 		Entity ret;
-		iterateChildren((ch){ if( ch.name == name ){ ret = cast()ch; return false; } return true; });
-		return ret;
-	}
-	final const(Entity) findChild(string name)
-	const {
-		Rebindable!(const(Entity)) ret;
 		iterateChildren((ch){ if( ch.name == name ){ ret = cast()ch; return false; } return true; });
 		return ret;
 	}
@@ -64,24 +58,15 @@ class Entity {
 		}
 		return e;
 	}
-	final const(Entity) lookup(string qualified_name)
-	const {
-		auto parts = split(qualified_name, ".");
-		Rebindable!(const(Entity)) e = this;
-		foreach( p; parts ){
-			e = e.findChild(p);
-			if( !e ) return null;
-		}
-		return e;
-	}
 
-	final Entity lookdown(string qualified_name)
+	final Entity lookdown(string qualified_name, bool stop_at_module_level = false)
 	{
 		auto parts = split(qualified_name, ".");
 		Entity e = this;
 		foreach( p; parts ){
 			e = e.findChild(p);
 			if( !e ){
+				if( stop_at_module_level && cast(Module)this ) return null;
 				Entity ret;
 				iterateChildren((ch){
 					if( auto res = (cast()ch).lookdown(qualified_name) ){
@@ -94,6 +79,12 @@ class Entity {
 			}
 		}
 		return e;
+	}
+
+	void visit(T)(void delegate(T) del)
+	{
+		if( auto t = cast(T)this ) del(t);
+		iterateChildren((ch){ ch.visit!T(del); return true; });
 	}
 }
 
@@ -133,8 +124,8 @@ final class Package : Entity {
 		return pack;
 	}
 
-	void iterateChildren(bool delegate(inout(Entity)) del)
-	inout {
+	void iterateChildren(bool delegate(Entity) del)
+	{
 		foreach( p; packages ) if( !del(p) ) return;
 		foreach( m; modules ) if( !del(m) ) return;
 	}
@@ -146,8 +137,8 @@ final class Module : Entity{
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del)
-	inout{
+	void iterateChildren(bool delegate(Entity) del)
+	{
 		foreach( m; members ) if( !del(m) ) return;
 	}
 }
@@ -172,9 +163,11 @@ enum Protection {
 }
 
 class Declaration : Entity {
+	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
 	int line;
 
+	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind();
 	@property inout(Declaration) parentDeclaration() inout { return cast(inout(Declaration))parent; }
 	@property Module module_() {
@@ -196,7 +189,7 @@ class Declaration : Entity {
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	abstract void iterateChildren(bool delegate(inout(Entity)) del) inout;
+	abstract void iterateChildren(bool delegate(Entity) del);
 }
 
 class TypedDeclaration : Declaration {
@@ -206,17 +199,18 @@ class TypedDeclaration : Declaration {
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	abstract void iterateChildren(bool delegate(inout(Entity)) del) inout;
+	abstract void iterateChildren(bool delegate(Entity) del);
 }
 
 final class VariableDeclaration : TypedDeclaration {
 	Value initializer;
 
+	@property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.docGroup = docGroup; ret.initializer = initializer; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Variable; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del) inout {}
+	void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class FunctionDeclaration : TypedDeclaration {
@@ -224,14 +218,15 @@ final class FunctionDeclaration : TypedDeclaration {
 	VariableDeclaration[] parameters;
 	string[] attributes;
 
+	@property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.docGroup = docGroup; ret.returnType = returnType; ret.parameters = parameters; ret.attributes = attributes; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Function; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
 	bool hasAttribute(string att) const { foreach( a; attributes ) if( a == att ) return true; return false; }
 
-	void iterateChildren(bool delegate(inout(Entity)) del)
-	inout {
+	void iterateChildren(bool delegate(Entity) del)
+	{
 		foreach( p; parameters ) del(p);
 	}
 }
@@ -243,13 +238,14 @@ class CompositeTypeDeclaration : TypedDeclaration {
  
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del)
-	inout {
+	void iterateChildren(bool delegate(Entity) del)
+	{
 		foreach( m; members ) if( !del(m) ) return;
 	}
 }
 
 final class StructDeclaration : CompositeTypeDeclaration {
+	@property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Struct; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -258,23 +254,39 @@ final class StructDeclaration : CompositeTypeDeclaration {
 final class InterfaceDeclaration : CompositeTypeDeclaration {
 	Type[] derivedInterfaces;
 
+	@property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.derivedInterfaces = derivedInterfaces; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
 	this(Entity parent, string name){ super(parent, name); }
+
+	invariant()
+	{
+		foreach( t; derivedInterfaces )
+			assert(t && (!t.typeDecl || cast(InterfaceDeclaration)t.typeDecl !is null));
+	}
 }
 
 final class ClassDeclaration : CompositeTypeDeclaration {
 	Type baseClass;
 	Type[] derivedInterfaces;
 
+	@property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Class; }
 
 	this(Entity parent, string name){ super(parent, name); }
+
+	invariant()
+	{
+		assert(!baseClass || !baseClass.typeDecl || cast(ClassDeclaration)baseClass.typeDecl !is null);
+		foreach( t; derivedInterfaces )
+			assert(t && (!t.typeDecl || cast(InterfaceDeclaration)t.typeDecl !is null));
+	}
 }
 
 final class EnumDeclaration : CompositeTypeDeclaration {
 	Type baseType;
 
+	@property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.docGroup = docGroup; ret.members = members; ret.baseType = baseType; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Enum; }
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -283,34 +295,37 @@ final class EnumDeclaration : CompositeTypeDeclaration {
 final class EnumMemberDeclaration : Declaration {
 	Value value;
 
+	@property EnumMemberDeclaration dup() { auto ret = new EnumMemberDeclaration(parent, name); ret.docGroup = docGroup; ret.value = value; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del) inout {}
+	void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class AliasDeclaration : Declaration {
 	Declaration targetDecl;
 	Type targetType;
 
+	@property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.docGroup = docGroup; ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Alias; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del) inout {}
+	void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class TemplateDeclaration : Declaration {
 	string templateArgs;
 	Declaration[] members;
 
+	@property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.docGroup = docGroup; ret.templateArgs = templateArgs; ret.members = members; return ret; }
 	@property DeclarationKind kind() const { return DeclarationKind.Template; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	void iterateChildren(bool delegate(inout(Entity)) del)
-	inout {
+	void iterateChildren(bool delegate(Entity) del)
+	{
 		foreach( m; members ) del(m);
 	}
 }
@@ -353,4 +368,29 @@ final class Type {
 
 	this() {}
 	this(Declaration decl) { kind = TypeKind.Primitive; text = decl.nestedName; typeName = text; typeDecl = decl; }
+
+	override equals_t opEquals(Object other_)
+	{
+		auto other = cast(Type)other_;
+		if( !other ) return false;
+		if( kind != other.kind ) return false;
+		if( attributes != other.attributes ) return false; // TODO use set comparison instead
+		if( modifiers != other.modifiers ) return false; // TODO: use set comparison instead
+
+		final switch( kind ){
+			case TypeKind.Primitive: return typeName == other.typeName && typeDecl == other.typeDecl;
+			case TypeKind.Pointer: 
+			case TypeKind.Array: return elementType == other.elementType;
+			case TypeKind.StaticArray: return elementType == other.elementType && arrayLength == other.arrayLength;
+			case TypeKind.AssociativeArray: return elementType == other.elementType && keyType == other.keyType;
+			case TypeKind.Function:
+			case TypeKind.Delegate:
+				if( returnType != other.returnType ) return false;
+				if( parameterTypes.length != other.parameterTypes.length ) return false;
+				foreach( i, p; parameterTypes )
+					if( p != other.parameterTypes[i] )
+						return false;
+		}
+		return true;
+	}
 }
