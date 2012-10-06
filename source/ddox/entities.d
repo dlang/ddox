@@ -187,6 +187,7 @@ class Declaration : Entity {
 	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
 	int line;
+	string templateArgs;
 
 	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind();
@@ -337,7 +338,6 @@ final class AliasDeclaration : Declaration {
 }
 
 final class TemplateDeclaration : Declaration {
-	string templateArgs;
 	Declaration[] members;
 
 	override @property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.docGroup = docGroup; ret.templateArgs = templateArgs; ret.members = members; return ret; }

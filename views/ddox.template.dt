@@ -1,0 +1,67 @@
+extends layout
+
+block defs
+	- import ddox.api;
+	- import ddox.ddoc;
+	- import ddox.entities;
+	- import std.algorithm;
+	- import std.typetuple;
+
+	- auto item = cast(TemplateDeclaration)info.item;
+	- assert(item !is null);
+
+block title
+	- auto title = item.nestedName ~ " template";
+	
+block navigation
+	include ddox.module-nav
+		
+block body
+	
+	section!= formatDdocComment(item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
+
+	section
+		h2 Arguments
+
+		pre.code.prettyprint.lang-d.prototype
+			|template #{item.name}(#{item.templateArgs});
+
+	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
+	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Enums", "Aliases", "Templates"];
+	- auto kindnames_sing = ["Function", "Interface",  "Class",   "Struct",  "Enum",  "Alias",   "Template"];
+
+	- if( hasChild!VariableDeclaration(item) )
+		section
+			h2 Variables
+			table
+				col.caption
+				tr
+					th Field name
+					th Field Type
+					th Descrption
+				- foreach( f; getChildren!VariableDeclaration(item) )
+					tr
+						td= f.name ~ (f.inheritingDecl ? " [inherited]" : null)
+						td!= formatType(f.type)
+						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+
+	- foreach( i, kind; kinds )
+		- if( hasChild!kind(item) )
+			section
+				h2= kindnames[i]
+				table
+					col.caption
+					tr
+						th #{kindnames_sing[i]} name
+						th Description
+					- foreach( grp; getDocGroups!kind(item) )
+						tr
+							td
+								a(href="../#{grp.module_.qualifiedName}/#{grp.nestedName}")= grp.name
+								- if( grp.inheritingDecl )
+									| [inherited]
+							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
+
+	|!= formatDdocComment(item.docGroup.text, 2, sec => sec != "$Short" && sec != "$Long")
+	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
+	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")

@@ -3,6 +3,7 @@ extends layout
 block defs
 	- import ddox.api;
 	- import ddox.ddoc;
+	- import std.typetuple;
 
 block title
 	- auto title = "module " ~ info.mod.name;
@@ -14,75 +15,24 @@ block body
 	
 	section!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
 	
-	- if( hasChild!FunctionDeclaration(info.mod) )
-		section
-			h2 Functions
-			table
-				col.caption
-				tr
-					th Function name
-					th Description
-				- foreach( f; getDocGroups!FunctionDeclaration(info.mod) )
-					tr
-						td
-							a(href="#{f.nestedName}")= f.name
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, TemplateDeclaration) kinds;
+	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Enums", "Templates"];
+	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Enum",  "Template"];
 
-	- if( hasChild!InterfaceDeclaration(info.mod) )
-		section
-			h2 Interfaces
-			table
-				col.caption
-				tr
-					th Interface name
-					th Description
-				- foreach( f; getDocGroups!InterfaceDeclaration(info.mod)  )
+	- foreach( i, kind; kinds )
+		- if( hasChild!kind(info.mod) )
+			section
+				h2= kindnames[i]
+				table
+					col.caption
 					tr
-						td
-							a(href="#{f.nestedName}")= f.name
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
-
-	- if( hasChild!ClassDeclaration(info.mod) )
-		section
-			h2 Classes
-			table
-				col.caption
-				tr
-					th Class name
-					th Description
-				- foreach( f; getDocGroups!ClassDeclaration(info.mod) )
-					tr
-						td
-							a(href="#{f.nestedName}")= f.name
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
-
-	- if( hasChild!StructDeclaration(info.mod) )
-		section
-			h2 Structs
-			table
-				col.caption
-				tr
-					th Struct name
-					th Description
-				- foreach( f; getDocGroups!StructDeclaration(info.mod)  )
-					tr
-						td 
-							a(href="#{f.nestedName}")= f.name
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
-
-	- if( hasChild!EnumDeclaration(info.mod) )
-		section
-			h2 Enums
-			table
-				col.caption
-				tr
-					th Enum name
-					th Description
-				- foreach( f; getDocGroups!EnumDeclaration(info.mod)  )
-					tr
-						td
-							a(href="#{f.nestedName}")= f.name
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+						th #{kindnames_sing[i]} name
+						th Description
+					- foreach( grp; getDocGroups!kind(info.mod) )
+						tr
+							td
+								a(href="../#{grp.module_.qualifiedName}/#{grp.nestedName}")= grp.name
+							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
 
 	- if( hasChild!AliasDeclaration(info.mod) )
 		section

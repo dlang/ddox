@@ -93,8 +93,10 @@ body {
 			case DeclarationKind.Interface:
 			case DeclarationKind.Class:
 			case DeclarationKind.Struct:
-			case DeclarationKind.Template:
 				res.renderCompat!("ddox.composite.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
+				break;
+			case DeclarationKind.Template:
+				res.renderCompat!("ddox.template.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
 				break;
 			case DeclarationKind.Enum:
 				res.renderCompat!("ddox.enum.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));

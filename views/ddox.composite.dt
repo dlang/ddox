@@ -22,9 +22,9 @@ block body
 	
 	section!= formatDdocComment(item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
 
-	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration) kinds;
-	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Enums", "Aliases"];
-	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Enum",  "Alias"];
+	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
+	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Enums", "Aliases", "Templates"];
+	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section

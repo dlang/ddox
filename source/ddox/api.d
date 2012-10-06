@@ -39,10 +39,12 @@ DocGroup[] docGroups(Declaration[] items)
 
 bool hasChild(T)(Module mod){ return hasChild!T(mod.members); }
 bool hasChild(T)(CompositeTypeDeclaration decl){ return hasChild!T(decl.members); }
+bool hasChild(T)(TemplateDeclaration mod){ return hasChild!T(mod.members); }
 bool hasChild(T)(Declaration[] decls){ foreach( m; decls ) if( cast(T)m ) return true; return false; }
 
 T[] getChildren(T)(Module mod){ return getChildren!T(mod.members); }
 T[] getChildren(T)(CompositeTypeDeclaration decl){ return getChildren!T(decl.members); }
+T[] getChildren(T)(TemplateDeclaration decl){ return getChildren!T(decl.members); }
 T[] getChildren(T)(Declaration[] decls)
 {
 	T[] ret;
@@ -54,6 +56,7 @@ T[] getChildren(T)(Declaration[] decls)
 
 T[] getDocGroups(T)(Module mod){ return getDocGroups!T(mod.members); }
 T[] getDocGroups(T)(CompositeTypeDeclaration decl){ return getDocGroups!T(decl.members); }
+T[] getDocGroups(T)(TemplateDeclaration decl){ return getDocGroups!T(decl.members); }
 T[] getDocGroups(T)(Declaration[] decls)
 {
 	T[] ret;

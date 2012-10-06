@@ -3,10 +3,11 @@ extends layout
 block defs
 	- import ddox.api;
 	- import ddox.ddoc;
+	- import ddox.entities;
 	- import std.algorithm;
 
 block title
-	- auto title = info.item.nestedName ~ " function";
+	- auto title = info.item.nestedName ~ (cast(CompositeTypeDeclaration)info.item.parent ? " method" : " function");
 	
 block navigation
 	include ddox.module-nav
@@ -25,7 +26,7 @@ block body
 					- if( !proto ) continue;
 					- if( pi > 0 )
 						|
-					|!{formatType(proto.returnType)} #{proto.name}(
+					|!{formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
 					- foreach( size_t i, p; proto.parameters )
 						|&nbsp;&nbsp;!{formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
 					- if( proto.attributes.length )

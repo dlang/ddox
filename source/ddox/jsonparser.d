@@ -2,6 +2,7 @@ module ddox.jsonparser;
 
 import ddox.ddox;
 import ddox.entities;
+import ddox.processors.eptemplates;
 import ddox.processors.inherit;
 import ddox.processors.sort;
 
@@ -32,6 +33,9 @@ Package parseJsonDocs(Json json, DdoxSettings settings, Package root = null)
 	if( settings.moduleSort == SortMode.Name ){
 		writefln("Sorting docs...");
 		sortDocs!((a, b) => a.name < b.name)(root);
+	}
+	if( settings.mergeEponymousTemplates ){
+		mergeEponymousTemplates(root);
 	}
 	return root;
 }
