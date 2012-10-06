@@ -101,10 +101,12 @@ int filterDocs(string[] args)
 {
 	writefln("cmds: %s", args);
 	string[] excluded, included;
+	Protection minprot = Protection.Private;
 	getopt(args,
-		config.passThrough,
+		//config.passThrough,
 		"ex", &excluded,
-		"in", &included);
+		"in", &included,
+		"min-protection", &minprot);
 
 	string jsonfile;
 	if( args.length < 3 ){
@@ -112,8 +114,35 @@ int filterDocs(string[] args)
 		return 1;
 	}
 
-	writefln("Exclude: %s", excluded);
-	writefln("Include: %s", included);
+	Json filterProt(Json json)
+	{
+		if( json.type == Json.Type.Object ){
+			
+			Protection prot = Protection.Public;
+			if( auto p = "protection" in json ){
+				switch(p.get!string){
+					default: break;
+					case "private": prot = Protection.Private; break;
+					case "package": prot = Protection.Package; break;
+					case "protected": prot = Protection.Protected; break;
+				}
+			}
+			if( prot < minprot ) return Json.Undefined;
+
+			if( auto mem = "members" in json ){
+				json.members = filterProt(*mem);
+			}
+		} else if( json.type == Json.Type.Array ){
+			Json[] newmem;
+			foreach( m; json ){
+				auto mf = filterProt(m);
+				if( mf.type != Json.Type.Undefined )
+					newmem ~= mf;
+			}
+			return Json(newmem);
+		}
+		return json;
+	}
 
 	writefln("Reading doc file...");
 	auto text = readText(args[2]);
@@ -136,7 +165,7 @@ int filterDocs(string[] args)
 				include = true;
 				break;
 			}
-		if( include ) dst ~= m;
+		if( include ) dst ~= filterProt(m);
 	}
 
 	writefln("Writing filtered docs...");
@@ -188,8 +217,11 @@ void showUsage(string[] args)
 		case "filter":
 			writefln(
 `Usage: %s generate-html <ddocx-input-file> <output-dir> [options]
-	-ex=PREFIX       Exclude modules with prefix
-	-in=PREFIX       Force include of modules with prefix
+    --ex=PREFIX            Exclude modules with prefix
+    --in=PREFIX            Force include of modules with prefix
+    --min-protection=PROT  Remove items with lower protection level than
+                           specified.
+                           PROT can be: Public, Protected, Package, Private
 `, args[0]);
 	}
 	if( args.length < 2 ){
