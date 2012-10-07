@@ -13,7 +13,7 @@ import vibe.http.router;
 import vibe.templ.diet; // just so that rdmd picks it up
 
 
-void registerApiDocs(UrlRouter router, Package pack, string path_prefix = "/api", bool nav_package_tree = true)
+void registerApiDocs(UrlRouter router, Package pack, string path_prefix = "/api", bool nav_package_tree = false)
 in {
 	assert(path_prefix.length == 0 || path_prefix[0] == '/');
 	assert(!path_prefix.endsWith('/'));

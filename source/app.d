@@ -80,11 +80,13 @@ int cmdFilterDocs(string[] args)
 	writefln("cmds: %s", args);
 	string[] excluded, included;
 	Protection minprot = Protection.Private;
+	bool justdoc = false;
 	getopt(args,
 		//config.passThrough,
 		"ex", &excluded,
 		"in", &included,
-		"min-protection", &minprot);
+		"min-protection", &minprot,
+		"only-documented", &justdoc);
 
 	string jsonfile;
 	if( args.length < 3 ){
@@ -95,6 +97,8 @@ int cmdFilterDocs(string[] args)
 	Json filterProt(Json json)
 	{
 		if( json.type == Json.Type.Object ){
+			auto comment = json.comment.opt!string().strip();
+			if( comment.empty && justdoc ) return Json.Undefined;
 			
 			Protection prot = Protection.Public;
 			if( auto p = "protection" in json ){
@@ -105,9 +109,7 @@ int cmdFilterDocs(string[] args)
 					case "protected": prot = Protection.Protected; break;
 				}
 			}
-			if( auto c = "comment" in json ){
-				if( strip(c.get!string) == "private" ) prot = Protection.Private;
-			}
+			if( comment == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.Undefined;
 
 			if( auto mem = "members" in json ){
@@ -203,6 +205,7 @@ void showUsage(string[] args)
     --min-protection=PROT  Remove items with lower protection level than
                            specified.
                            PROT can be: Public, Protected, Package, Private
+    --only-documented      Remove undocumented entities
 `, args[0]);
 	}
 	if( args.length < 2 ){
