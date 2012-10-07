@@ -90,7 +90,7 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 	// first section is implicitly the long description
 	{
 		auto j = skipSection(i);
-		if( !display_section || display_section("$Long") )
+		if( j > i && (!display_section || display_section("$Long")) )
 			parseSection(dst, "$Long", lines[i .. j], hlevel, macros);
 		i = j;
 	}
@@ -137,7 +137,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 	{
 		auto ln = strip(lines[i]);
 		if( ln.length == 0 ) return BLANK;
-		else if( ln.allOf("-") ) return CODE;
+		else if( ln.length >= 3 &&ln.allOf("-") ) return CODE;
 		else if( ln.countUntil(':') > 0 && !ln[0 .. ln.countUntil(':')].anyOf(" \t") ) return SECTION;
 		return TEXT;
 	}
@@ -168,7 +168,8 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 				if( lntype == BLANK ){ i++; continue; }
 
 				switch( lntype ){
-					default: assert(false);
+					default: assert(false, "Unexpected line type "~to!string(lntype)~": "~lines[i]);
+					case SECTION:
 					case TEXT:
 						dst.put("<p>");
 						auto j = skipBlock(i);
