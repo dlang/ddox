@@ -13,12 +13,19 @@ block navigation
 	include ddox.module-nav
 		
 block body
+	- auto multi = info.docGroups.length > 0;
 
 	- foreach( docgroup; info.docGroups )
-		section!= formatDdocComment(docgroup.text, 2, sec => sec == "$Short" || sec == "$Long")
+		- if( multi )
+			h2 Overload group
+
+		section!= formatDdocComment(docgroup.text, multi ? 3 : 2, sec => sec == "$Short" || sec == "$Long")
 		
 		section
-			h2 Prototypes
+			- if( multi )
+				h3 Prototypes
+			- else
+				h2 Prototypes
 			pre.code.prettyprint.lang-d.prototype
 				- auto mems = docgroup.members;
 				- foreach( size_t pi, pd; mems )
@@ -34,6 +41,6 @@ block body
 					- else
 						|);
 
-		|!= formatDdocComment(docgroup.text, 2, sec => sec != "$Short" && sec != "$Long")
+		|!= formatDdocComment(docgroup.text, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
 	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
 	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")

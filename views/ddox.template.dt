@@ -28,7 +28,7 @@ block body
 
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Enums", "Aliases", "Templates"];
-	- auto kindnames_sing = ["Function", "Interface",  "Class",   "Struct",  "Enum",  "Alias",   "Template"];
+	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section
