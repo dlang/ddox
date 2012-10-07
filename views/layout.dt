@@ -1,14 +1,16 @@
 !!! 5
 html
 	head
+		meta(charset="UTF-8")
 		block defs
 		block title
 		title= title
-		link(rel="stylesheet", type="text/css", href="ddox.css")
+		link(rel="stylesheet", type="text/css", href="#{info.linkTo(null)}styles/ddox.css")
 	body
 		h1= title
 
-		nav
+		nav#main-nav
 			block navigation
 
-		block body
+		#main-contents
+			block body

@@ -26,9 +26,9 @@ block body
 					- if( !proto ) continue;
 					- if( pi > 0 )
 						|
-					|!{formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
+					|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
 					- foreach( size_t i, p; proto.parameters )
-						|&nbsp;&nbsp;!{formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
+						|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
 					- if( proto.attributes.length )
 						|) #{join(proto.attributes, " ")};
 					- else

@@ -20,7 +20,7 @@ block body
 	section!= formatDdocComment(info.item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
 
 	p The enum base type is
-		code.prettyprint.lang-d!= formatType(enum_item.baseType)
+		code.prettyprint.lang-d!= info.formatType(enum_item.baseType)
 		|.
 	
 	section

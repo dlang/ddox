@@ -9,7 +9,7 @@
 				- moduleNavTree(p);
 			- foreach(m; pack.modules)
 				li
-					a(href="#{info.rootDir}#{m.qualifiedName}/")= m.name
+					a(href="#{info.linkTo(m)}")= m.name
 
 	- moduleNavTree(info.rootPackage);
 - else
@@ -18,7 +18,7 @@
 			- moduleNavList(p);
 		- foreach(m; pack.modules)
 			li
-				a(href="#{info.rootDir}#{m.qualifiedName}/")= m.qualifiedName
+				a(href="#{info.linkTo(m)}")= m.qualifiedName
 
 	ul
 		- moduleNavList(info.rootPackage);

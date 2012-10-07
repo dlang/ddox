@@ -76,6 +76,7 @@ class Entity {
 		foreach( i, p; parts ){
 			if( i+1 < parts.length ) e = e.findChild(p);
 			else return e.findChildren!T(p);
+			if( !e ) return null;
 		}
 		return null;
 	}

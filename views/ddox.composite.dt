@@ -30,11 +30,11 @@ block body
 			ul
 				- if( cls_item.baseClass )
 					li
-						code.prettyprint.lang-d!= formatType(cls_item.baseClass)
+						code.prettyprint.lang-d!= info.formatType(cls_item.baseClass)
 						| (base class)
 				- foreach( intf; cls_item.derivedInterfaces )
 					li
-						code.prettyprint.lang-d!= formatType(intf)
+						code.prettyprint.lang-d!= info.formatType(intf)
 	
 	- if( intf_item && intf_item.derivedInterfaces.length )
 		section
@@ -43,7 +43,7 @@ block body
 			ul
 				- foreach( intf; intf_item.derivedInterfaces )
 					li
-						code.prettyprint.lang-d!= formatType(intf)
+						code.prettyprint.lang-d!= info.formatType(intf)
 
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Enums", "Aliases", "Templates"];
@@ -61,7 +61,7 @@ block body
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td= f.name ~ (f.inheritingDecl ? " [inherited]" : null)
-						td!= formatType(f.type)
+						td!= info.formatType(f.type)
 						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
 
 	- FunctionDeclaration[] properties, methods;
@@ -80,11 +80,11 @@ block body
 				- foreach( p; properties )
 					tr
 						td
-							a(href="../#{p.module_.qualifiedName}/#{p.nestedName}")= p.name
+							a(href="#{info.linkTo(p)}")= p.name
 							- if( p.inheritingDecl )
 								| [inherited]
 						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
-						td!= { foreach(ov; mems){ auto rt = (cast(FunctionDeclaration)ov).returnType; if( !canFind(["", "void"], rt.typeName) ) return formatType(rt); } return "-"; }()
+						td!= { foreach(ov; mems){ auto rt = (cast(FunctionDeclaration)ov).returnType; if( !canFind(["", "void"], rt.typeName) ) return info.formatType(rt); } return "-"; }()
 						td!= formatDdocComment(p.docGroup.text, 3, sec => sec == "$Short")
 
 	- if( methods.length )
@@ -98,7 +98,7 @@ block body
 				- foreach( p; methods )
 					tr
 						td
-							a(href="../#{p.module_.qualifiedName}/#{p.nestedName}")= p.name
+							a(href="#{info.linkTo(p)}")= p.name
 							- if( p.inheritingDecl )
 								| [inherited]
 						td!= formatDdocComment(p.docGroup.text, 3, sec => sec == "$Short")
@@ -115,7 +115,7 @@ block body
 					- foreach( grp; getDocGroups!kind(item) )
 						tr
 							td
-								a(href="../#{grp.module_.qualifiedName}/#{grp.nestedName}")= grp.name
+								a(href="#{info.linkTo(grp)}")= grp.name
 								- if( grp.inheritingDecl )
 									| [inherited]
 							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")

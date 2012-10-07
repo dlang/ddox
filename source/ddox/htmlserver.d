@@ -5,8 +5,10 @@ import ddox.ddoc; // just so that rdmd picks it up
 import ddox.entities;
 import ddox.htmlgenerator;
 
+import std.array;
 import std.string;
 import vibe.core.log;
+import vibe.http.fileserver;
 import vibe.http.router;
 import vibe.templ.diet; // just so that rdmd picks it up
 
@@ -20,10 +22,37 @@ body {
 	auto settings = new GeneratorSettings;
 	settings.navPackageTree = nav_package_tree;
 
+	string linkTo(Entity ent, int level)
+	{
+		auto dst = appender!string();
+		if( level ) foreach( i; 0 .. level ) dst.put("../");
+		else dst.put("./");
+
+		if( ent !is null && ent.parent !is null ){
+			Entity[] nodes;
+			int mod_idx = -1;
+			while( ent ){
+				if( cast(Module)ent ) mod_idx = nodes.length;
+				nodes ~= ent;
+				ent = ent.parent;
+			}
+			foreach_reverse(i, n; nodes[mod_idx .. $-1]){
+				dst.put(n.name);
+				if( i > 0 ) dst.put('.');
+			}
+			dst.put("/");
+			foreach_reverse(i, n; nodes[0 .. mod_idx]){
+				dst.put(n.name);
+				if( i > 0 ) dst.put('.');
+			}
+		}
+		return dst.data();
+	}
+
 	void showApi(HttpServerRequest req, HttpServerResponse res)
 	{
 		res.contentType = "text/html; charset=UTF-8";
-		generateApiIndex(res.bodyWriter, pack, settings, req);
+		generateApiIndex(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
 	}
 
 	void showApiModule(HttpServerRequest req, HttpServerResponse res)
@@ -32,7 +61,7 @@ body {
 		if( !mod ) return;
 
 		res.contentType = "text/html; charset=UTF-8";
-		generateModulePage(res.bodyWriter, pack, mod, settings, req);
+		generateModulePage(res.bodyWriter, pack, mod, settings, ent => linkTo(ent, 1), req);
 	}
 
 	void showApiItem(HttpServerRequest req, HttpServerResponse res)
@@ -45,7 +74,7 @@ body {
 		if( !item ) return;
 
 		res.contentType = "text/html; charset=UTF-8";
-		generateDeclPage(res.bodyWriter, pack, mod, item, settings, req);
+		generateDeclPage(res.bodyWriter, pack, mod, item, settings, ent => linkTo(ent, 1), req);
 	}
 
 	if( path_prefix.length ) router.get(path_prefix, staticRedirect("path_prefix/"));
@@ -53,4 +82,5 @@ body {
 	router.get(path_prefix~"/:modulename", delegate(req, res){ res.redirect((path_prefix.length ? path_prefix ~ "/" : "/api/")~req.params["modulename"]~"/"); });
 	router.get(path_prefix~"/:modulename/", &showApiModule);
 	router.get(path_prefix~"/:modulename/:itemname", &showApiItem);
+	router.get("*", serveStaticFiles("public"));
 }

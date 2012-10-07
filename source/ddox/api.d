@@ -74,16 +74,16 @@ T[] getDocGroups(T)(Declaration[] decls)
 	return ret;
 }
 
-string formatType()(Type type)
+string formatType()(Type type, string delegate(Entity) link_to)
 {
 	if( !type ) return "{null}";
 	//logDebug("format type: %s", type);
 	auto ret = appender!string();
-	formatType(ret, type);
+	formatType(ret, type, link_to);
 	return ret.data();
 }
 
-void formatType(R)(ref R dst, Type type)
+void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 {
 	auto attribs = type.attributes;
 	switch( type.kind ){
@@ -93,20 +93,20 @@ void formatType(R)(ref R dst, Type type)
 				auto mn = type.typeDecl.module_.qualifiedName;
 				auto qn = type.typeDecl.nestedName;
 				if( qn.startsWith(mn~".") ) qn = qn[mn.length+1 .. $];
-				formattedWrite(dst, "<a href=\"../%s/%s\">%s</a>", mn, qn, qn);
+				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), qn);
 			} else {
 				dst.put(type.typeName);
 			}
 			break;
 		case TypeKind.Function:
 		case TypeKind.Delegate:
-			formatType(dst, type.returnType);
+			formatType(dst, type.returnType, link_to);
 			dst.put(' ');
 			dst.put(type.kind == TypeKind.Function ? "function" : "delegate");
 			dst.put('(');
 			foreach( size_t i, pt; type.parameterTypes ){
 				if( i > 0 ) dst.put(", ");
-				formatType(dst, pt);
+				formatType(dst, pt, link_to);
 				if( type._parameterNames[i].length ){
 					dst.put(' ');
 					dst.put(type._parameterNames[i]);
@@ -125,7 +125,7 @@ void formatType(R)(ref R dst, Type type)
 				dst.put(att);
 				dst.put('(');
 			}
-			formatType(dst, type.elementType);
+			formatType(dst, type.elementType, link_to);
 			dst.put('*');
 			foreach( att; attribs ) dst.put(')');
 			break;
@@ -134,7 +134,7 @@ void formatType(R)(ref R dst, Type type)
 				dst.put(att);
 				dst.put('(');
 			}
-			formatType(dst, type.elementType);
+			formatType(dst, type.elementType, link_to);
 			dst.put("[]");
 			foreach( att; attribs ) dst.put(')');
 			break;
@@ -143,7 +143,7 @@ void formatType(R)(ref R dst, Type type)
 				dst.put(att);
 				dst.put('(');
 			}
-			formatType(dst, type.elementType);
+			formatType(dst, type.elementType, link_to);
 			formattedWrite(dst, "[%s]", type.arrayLength);
 			foreach( att; attribs ) dst.put(')');
 			break;
@@ -152,9 +152,9 @@ void formatType(R)(ref R dst, Type type)
 				dst.put(att);
 				dst.put('(');
 			}
-			formatType(dst, type.elementType);
+			formatType(dst, type.elementType, link_to);
 			dst.put('[');
-			formatType(dst, type.keyType);
+			formatType(dst, type.keyType, link_to);
 			dst.put(']');
 			foreach( att; attribs ) dst.put(')');
 			break;

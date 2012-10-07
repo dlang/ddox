@@ -18,7 +18,7 @@ block body
 		- foreach( m; pack.modules )
 			tr
 				td
-					a(href="#{m.qualifiedName}/")= m.qualifiedName
+					a(href="#{info.linkTo(m)}")= m.qualifiedName
 				td
 					- if( m.docGroup )
 						|!= formatDdocComment(m.docGroup.text, 0, sec => sec == "$Short")

@@ -2,6 +2,7 @@ module app;
 
 import ddox.ddox;
 import ddox.entities;
+import ddox.htmlgenerator;
 import ddox.htmlserver;
 import ddox.jsonparser;
 
@@ -26,41 +27,16 @@ int main(string[] args)
 
 	switch( args[1] ){
 		default: showUsage(args); return 1;
-		case "generate-html": return generateHtml(args);
-		case "serve-html": return serveHtml(args);
-		case "filter": return filterDocs(args);
+		case "generate-html": return cmdGenerateHtml(args);
+		case "serve-html": return cmdServeHtml(args);
+		case "filter": return cmdFilterDocs(args);
 	}
 }
 
-int processDocs(string[] args)
-{
-
-	/*if( args.length < 3 || args.length > 4 ){
-		showUsage(args);
-		return 1;
-	}
-
-	auto input = args[2];
-	auto output = args.length > 3 ? args[3] : "ddox.json";
-
-	auto srctext = readText(input);
-	int line = 1;
-	auto dmd_json = parseJson(srctext, &line);
-	
-	auto proc = new DocProcessor;
-	auto dldoc_json = proc.processProject(dmd_json);
-	
-	auto dst = appender!string();
-	toPrettyJson(dst, dldoc_json);
-	std.file.write(args[2], dst.data());*/
-
-	return 0;
-}
-
-int generateHtml(string[] args)
+int cmdGenerateHtml(string[] args)
 {
 	string jsonfile;
-	if( args.length < 3 ){
+	if( args.length < 4 ){
 		showUsage(args);
 		return 1;
 	}
@@ -69,10 +45,12 @@ int generateHtml(string[] args)
 	auto docsettings = new DdoxSettings;
 	auto pack = parseDocFile(args[2], docsettings);
 
+	generateHtmlDocs(Path(args[3]), pack);
+
 	return 0;
 }
 
-int serveHtml(string[] args)
+int cmdServeHtml(string[] args)
 {
 	string jsonfile;
 	if( args.length < 3 ){
@@ -97,7 +75,7 @@ int serveHtml(string[] args)
 	return runEventLoop();
 }
 
-int filterDocs(string[] args)
+int cmdFilterDocs(string[] args)
 {
 	writefln("cmds: %s", args);
 	string[] excluded, included;
@@ -209,7 +187,7 @@ void showUsage(string[] args)
 			break;
 		case "serve-html":
 			writefln(
-`Usage: %s generate-html <ddocx-input-file>
+`Usage: %s serve-html <ddocx-input-file>
 `, args[0]);
 			break;
 		case "generate-html":
@@ -219,7 +197,7 @@ void showUsage(string[] args)
 			break;
 		case "filter":
 			writefln(
-`Usage: %s generate-html <ddocx-input-file> <output-dir> [options]
+`Usage: %s filter <ddocx-input-file> [options]
     --ex=PREFIX            Exclude modules with prefix
     --in=PREFIX            Force include of modules with prefix
     --min-protection=PROT  Remove items with lower protection level than
