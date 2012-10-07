@@ -30,12 +30,12 @@ Package parseJsonDocs(Json json, DdoxSettings settings, Package root = null)
 		writefln("Searching for inherited docs...");
 		inheritDocs(root);
 	}
+	if( settings.mergeEponymousTemplates ){
+		mergeEponymousTemplates(root);
+	}
 	if( settings.moduleSort == SortMode.Name ){
 		writefln("Sorting docs...");
 		sortDocs!((a, b) => a.name < b.name)(root);
-	}
-	if( settings.mergeEponymousTemplates ){
-		mergeEponymousTemplates(root);
 	}
 	return root;
 }
@@ -111,7 +111,7 @@ struct Parser
 		foreach( mem; json ){
 			auto decl = parseDecl(mem, parent);
 			auto doc = mem.comment.opt!string().strip();
-			if( doc == "ditto" && lastdoc ){
+			if( icmp(doc, "ditto") == 0 && lastdoc ){
 				lastdoc.members ~= decl;
 				decl.docGroup = lastdoc;
 			} else if( doc == "private" ){
@@ -140,6 +140,7 @@ struct Parser
 				case "enum": ret = parseEnumDecl(json, parent); break;
 				case "enum member": ret = parseEnumMemberDecl(json, parent); break;
 				case "struct": ret = parseCompositeDecl(json, parent); break;
+				case "union":  ret = parseCompositeDecl(json, parent); break;
 				case "class": ret = parseCompositeDecl(json, parent); break;
 				case "interface": ret = parseCompositeDecl(json, parent); break;
 				case "variable": ret = parseVariableDecl(json, parent); break;
@@ -166,14 +167,17 @@ struct Parser
 	{
 		auto ret = new FunctionDeclaration(parent, json.name.get!string);
 		ret.type = parseType(json["type"], parent);
-		ret.returnType = ret.type.returnType;
-		ret.attributes = ret.type.attributes;
-		assert(ret.type.kind == TypeKind.Function, "Expected function type, got "~to!string(ret.type.kind));
-		foreach( i, pt; ret.type.parameterTypes ){
-			auto decl = new VariableDeclaration(ret, ret.type._parameterNames[i]);
-			decl.type = pt;
-			decl.initializer = ret.type._parameterDefaultValues[i];
-			ret.parameters ~= decl;
+		if( ret.type.kind == TypeKind.Function ){
+			ret.returnType = ret.type.returnType;
+			ret.attributes = ret.type.attributes;
+			foreach( i, pt; ret.type.parameterTypes ){
+				auto decl = new VariableDeclaration(ret, ret.type._parameterNames[i]);
+				decl.type = pt;
+				decl.initializer = ret.type._parameterDefaultValues[i];
+				ret.parameters ~= decl;
+			}
+		} else {
+			logError("Expected function type for '%s', got %s", json["type"].opt!string, ret.type.kind);
 		}
 		return ret;
 	}
@@ -203,10 +207,15 @@ struct Parser
 	{
 		CompositeTypeDeclaration ret;
 		switch(json.kind.get!string){
-			default: assert(false, "Invalid composite decl kind.");
+			default:
+				logWarn("Invalid composite decl kind: %s", json.kind.get!string);
+				return new StructDeclaration(parent, json.name.get!string);
 			case "struct":
 				ret = new StructDeclaration(parent, json.name.get!string);
 				break;
+			/*case "union":
+				ret = new UnionDeclaration(parent, json.name.get!string);
+				break;*/
 			case "class":
 				auto clsdecl = new ClassDeclaration(parent, json.name.get!string);
 				clsdecl.baseClass = parseType(json.base, parent, "Object");
@@ -254,10 +263,19 @@ struct Parser
 		if( str.length == 0 ) str = def_type;
 		auto tokens = tokenizeDSource(str);
 		
-		logDebug("parse type '%s'", str);
-		auto type = parseTypeDecl(tokens, sc);
-		type.text = str;
-		return type;
+		logInfo("parse type '%s'", str);
+		try {
+			auto type = parseTypeDecl(tokens, sc);
+			type.text = str;
+			return type;
+		} catch( Exception e ){
+			logError("Error parsing type '%s': %s", str, e.msg);
+			auto type = new Type;
+			type.text = str;
+			type.typeName = str;
+			type.kind = TypeKind.Primitive;
+			return type;
+		}
 	}
 
 	Value parseValue(string str)
@@ -436,9 +454,16 @@ struct Parser
 						tokens.popFront();
 						if( tokens.front == "(" ){
 							size_t j = 1;
-							while( j < tokens.length && tokens[j] != ")" ) j++;
-							type.templateArgs = join(tokens[0 .. j+1]);
-							tokens.popFrontN(j+1);
+							int cc = 1;
+							while( cc > 0 ){
+								assert(j < tokens.length);
+								if( tokens[j] == "(" ) cc++;
+								else if( tokens[j] == ")") cc--;
+								j++;
+							}
+							type.templateArgs = join(tokens[0 .. j]);
+							tokens.popFrontN(j);
+							logInfo("templargs: %s", type.templateArgs);
 						} else {
 							type.templateArgs = tokens[0];
 							tokens.popFront();
@@ -478,7 +503,7 @@ struct Parser
 					aa.keyType = keytp;
 					type = aa;
 				}
-				enforce(tokens.front == "]", "Expected '[', got '"~tokens.front~"'.");
+				enforce(tokens.front == "]", "Expected ']', got '"~tokens.front~"'.");
 				tokens.popFront();
 			} else break;
 		}
@@ -531,13 +556,22 @@ struct Parser
 			
 			// character literal?
 			if( dsource[0] == '\'' ){
-				assert(false);
+				size_t i = 1;
+				while( dsource[i] != '\'' ){
+					if( dsource[i] == '\\' ) i++;
+					i++;
+					enforce(i < dsource.length);
+				}
+				ret ~= dsource[0 .. i+1];
+				dsource.popFrontN(i+1);
+				continue;
 			}
 			
 			// string? (incomplete!)
 			if( dsource[0] == '"' ){
 				size_t i = 1;
 				while( dsource[i] != '"' ){
+					if( dsource[i] == '\\' ) i++;
 					i++;
 					enforce(i < dsource.length);
 				}
@@ -548,14 +582,12 @@ struct Parser
 			
 			// number?
 			if( isDigit(dsource[0]) || dsource[0] == '.' ){
-				assert(isDigit(dsource[0]));
-				size_t i = 1;
-				while( i < dsource.length && isDigit(dsource[i]) ) i++;
-				assert(i >= dsource.length || dsource[i] != '.' && dsource[i] != 'e' && dsource[i] != 'E');
-				// only integers supported any badly supported
-				ret ~= dsource[0 .. i];
-				dsource.popFrontN(i);
+				auto dscopy = dsource;
+				parse!double(dscopy);
+				ret ~= dsource[0 .. dsource.length-dscopy.length];
+				dsource.popFrontN(dsource.length-dscopy.length);
 				if( dsource.startsWith("u") ) dsource.popFront();
+				else if( dsource.startsWith("f") ) dsource.popFront();
 				continue;
 			}
 			
