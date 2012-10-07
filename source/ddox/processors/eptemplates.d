@@ -12,6 +12,7 @@ void mergeEponymousTemplates(Package root)
 				if( templ.members.length == 1 && templ.members[0].name == templ.name ){
 					templ.members[0].templateArgs = templ.templateArgs;
 					templ.members[0].parent = templ.parent;
+					templ.members[0].docGroup = templ.docGroup;
 					d = templ.members[0];
 				} else processDecls(templ.members);
 			} else if( auto comp = cast(CompositeTypeDeclaration)d ){
