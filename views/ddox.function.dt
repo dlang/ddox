@@ -13,7 +13,7 @@ block navigation
 	include ddox.module-nav
 		
 block body
-	- auto multi = info.docGroups.length > 0;
+	- auto multi = info.docGroups.length > 1;
 
 	- foreach( docgroup; info.docGroups )
 		- if( multi )
