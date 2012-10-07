@@ -30,7 +30,7 @@ body {
 
 		if( ent !is null && ent.parent !is null ){
 			Entity[] nodes;
-			int mod_idx = -1;
+			size_t mod_idx = 0;
 			while( ent ){
 				if( cast(Module)ent ) mod_idx = nodes.length;
 				nodes ~= ent;
