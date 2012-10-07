@@ -6,7 +6,7 @@ block defs
 	- import std.typetuple;
 
 block title
-	- auto title = "module " ~ info.mod.name;
+	- auto title = "module " ~ info.mod.qualifiedName;
 	
 block navigation
 	include ddox.module-nav
