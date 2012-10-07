@@ -34,8 +34,12 @@ Package parseJsonDocs(Json json, DdoxSettings settings, Package root = null)
 		mergeEponymousTemplates(root);
 	}
 	if( settings.moduleSort == SortMode.Name ){
-		writefln("Sorting docs...");
-		sortDocs!((a, b) => a.name < b.name)(root);
+		writefln("Sorting modules...");
+		sortModules!((a, b) => a.name < b.name)(root);
+	}
+	if( settings.declSort == SortMode.Name ){
+		writefln("Sorting declarations...");
+		sortDecls!((a, b) => a.name < b.name)(root);
 	}
 	return root;
 }
