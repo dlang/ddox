@@ -79,10 +79,7 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 	if( i < lines.length && getLineType(i) == TEXT ){
 		auto j = skipBlock(i);
 		if( !display_section || display_section("$Short") ){
-			foreach( l; lines[i .. j] ){
-				dst.put(l);
-				dst.put("\n");
-			}
+			renderTextLine(dst, lines[i .. j].join("\n"), macros);
 		}
 		i = j;
 	}
