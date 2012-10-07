@@ -281,12 +281,6 @@ final class InterfaceDeclaration : CompositeTypeDeclaration {
 	override @property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
 	this(Entity parent, string name){ super(parent, name); }
-
-	invariant()
-	{
-		foreach( t; derivedInterfaces )
-			assert(t && (!t.typeDecl || cast(InterfaceDeclaration)t.typeDecl !is null));
-	}
 }
 
 final class ClassDeclaration : CompositeTypeDeclaration {
@@ -297,13 +291,6 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 	override @property DeclarationKind kind() const { return DeclarationKind.Class; }
 
 	this(Entity parent, string name){ super(parent, name); }
-
-	invariant()
-	{
-		assert(!baseClass || !baseClass.typeDecl || cast(ClassDeclaration)baseClass.typeDecl !is null);
-		foreach( t; derivedInterfaces )
-			assert(t && (!t.typeDecl || cast(InterfaceDeclaration)t.typeDecl !is null));
-	}
 }
 
 final class EnumDeclaration : CompositeTypeDeclaration {
