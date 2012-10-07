@@ -1,12 +1,15 @@
-= DDocX documentation engine =
+DDocX documentation engine
+==========================
 
-== First steps ==
+First steps
+-----------
 
 1. Download and install vibe.d
 2. Generate JSON for your project by adding the command line switches "-D -X -Xfdocs.json" to your DMD command line
 3. Build ddox by running "vibe build" from the ddocx folder
 
-== Filtering docs ==
+Filtering docs
+--------------
 
 You can filter the JSON file using "app filter".
 
@@ -15,13 +18,15 @@ The following command will filter out all modules starting with "core.sync.", ex
 	app filter docs.json --ex core.sync. --in core.sync.mutex --in core.sync.condition --min-protection Public
 
 
-== Serving the docs on localhost ==
+Serving the docs on localhost
+-----------------------------
 
-Simply run the following command and go to http://127.0.0.1:8080/:
+Simply run the following command and go to http://127.0.0.1:8080/
 
 	app serve-html docs.json
 
-== Generating offline documentation ==
+Generating offline documentation
+--------------------------------
 
 The following command will generate HTML docs in the folder "docs":
 
