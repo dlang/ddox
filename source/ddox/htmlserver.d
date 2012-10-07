@@ -3,6 +3,7 @@ module ddox.htmlserver;
 import ddox.api;
 import ddox.ddoc; // just so that rdmd picks it up
 import ddox.entities;
+import ddox.htmlgenerator;
 
 import std.string;
 import vibe.core.log;
@@ -16,92 +17,35 @@ in {
 	assert(!path_prefix.endsWith('/'));
 }
 body {
+	auto settings = new GeneratorSettings;
+	settings.navPackageTree = nav_package_tree;
+
 	void showApi(HttpServerRequest req, HttpServerResponse res)
 	{
-		struct Info2 {
-			string rootDir;
-			bool navPackageTree;
-			Package rootPackage;
-		}
-
-		Info2 info;
-		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
-		info.navPackageTree = nav_package_tree;
-		info.rootPackage = pack;
-
-		res.renderCompat!("ddox.overview.dt",
-			HttpServerRequest, "req",
-			Info2*, "info")
-			(Variant(req), Variant(&info));
+		res.contentType = "text/html; charset=UTF-8";
+		generateApiIndex(res.bodyWriter, pack, settings, req);
 	}
 
 	void showApiModule(HttpServerRequest req, HttpServerResponse res)
 	{
-		struct Info2 {
-			string rootDir;
-			bool navPackageTree;
-			Package rootPackage;
-			Module mod;
-		}
+		auto mod = cast(Module)pack.lookup(req.params["modulename"]);
+		if( !mod ) return;
 
-		Info2 info;
-		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
-		info.navPackageTree = nav_package_tree;
-		info.rootPackage = pack;
-		info.mod = cast(Module)pack.lookup(req.params["modulename"]);
-		if( !info.mod ) return;
-
-		res.renderCompat!("ddox.module.dt",
-			HttpServerRequest, "req",
-			Info2*, "info")
-			(Variant(req), Variant(&info));
+		res.contentType = "text/html; charset=UTF-8";
+		generateModulePage(res.bodyWriter, pack, mod, settings, req);
 	}
 
 	void showApiItem(HttpServerRequest req, HttpServerResponse res)
 	{
-		struct Info3 {
-			string rootDir;
-			bool navPackageTree;
-			Package rootPackage;
-			Module mod;
-			Declaration item;
-			DocGroup docGroup;
-			DocGroup[] docGroups; // for multiple doc groups with the same name
-		}
+		auto mod = pack.lookup!Module(req.params["modulename"]);
+		logInfo("mod: %s", mod !is null);
+		if( !mod ) return;
+		auto item = mod.lookup!Declaration(req.params["itemname"], false);
+		logInfo("item: %s", item !is null);
+		if( !item ) return;
 
-		Info3 info;
-		info.rootDir = req.rootDir;
-		if( path_prefix.length ) info.rootDir ~= path_prefix[1 .. $] ~ "/";
-		info.navPackageTree = nav_package_tree;
-		info.rootPackage = pack;
-		info.mod = pack.lookup!Module(req.params["modulename"]);
-		logInfo("mod: %s", info.mod !is null);
-		if( !info.mod ) return;
-		info.item = info.mod.lookup!Declaration(req.params["itemname"], false);
-		logInfo("item: %s", info.item !is null);
-		if( !info.item ) return;
-		info.docGroup = info.item.docGroup;
-		info.docGroups = docGroups(info.mod.lookupAll!Declaration(req.params["itemname"]));
-
-		switch( info.item.kind ){
-			default: logWarn("Unknown API item kind: %s", info.item.kind); return;
-			case DeclarationKind.Function:
-				res.renderCompat!("ddox.function.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
-				break;
-			case DeclarationKind.Interface:
-			case DeclarationKind.Class:
-			case DeclarationKind.Struct:
-				res.renderCompat!("ddox.composite.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
-				break;
-			case DeclarationKind.Template:
-				res.renderCompat!("ddox.template.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
-				break;
-			case DeclarationKind.Enum:
-				res.renderCompat!("ddox.enum.dt", HttpServerRequest, "req", Info3*, "info")(Variant(req), Variant(&info));
-				break;
-		}
+		res.contentType = "text/html; charset=UTF-8";
+		generateDeclPage(res.bodyWriter, pack, mod, item, settings, req);
 	}
 
 	if( path_prefix.length ) router.get(path_prefix, staticRedirect("path_prefix/"));
