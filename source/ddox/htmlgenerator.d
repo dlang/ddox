@@ -41,7 +41,7 @@ void generateHtmlDocs(Path dst_path, Package root)
 				return dst.data();
 			}
 			Entity[] nodes;
-			int mod_idx = -1;
+			size_t mod_idx = 0;
 			while( ent ){
 				if( cast(Module)ent ) mod_idx = nodes.length;
 				nodes ~= ent;
