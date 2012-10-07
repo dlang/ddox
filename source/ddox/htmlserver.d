@@ -22,7 +22,7 @@ body {
 	auto settings = new GeneratorSettings;
 	settings.navPackageTree = nav_package_tree;
 
-	string linkTo(Entity ent, int level)
+	string linkTo(Entity ent, size_t level)
 	{
 		auto dst = appender!string();
 		if( level ) foreach( i; 0 .. level ) dst.put("../");
