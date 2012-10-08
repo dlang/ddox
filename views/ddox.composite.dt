@@ -84,7 +84,7 @@ block body
 							- if( p.inheritingDecl )
 								| [inherited]
 						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
-						td!= { foreach(ov; mems){ auto rt = (cast(FunctionDeclaration)ov).returnType; if( !canFind(["", "void"], rt.typeName) ) return info.formatType(rt); } return "-"; }()
+						td!= { foreach(ov; mems){ auto ovf = cast(FunctionDeclaration)ov; if( !ovf ) continue; auto rt = ovf.returnType; if( !canFind(["", "void"], rt.typeName) ) return info.formatType(rt); } return "-"; }()
 						td!= formatDdocComment(p.docGroup.text, 3, sec => sec == "$Short")
 
 	- if( methods.length )

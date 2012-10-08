@@ -67,10 +67,10 @@ body {
 	void showApiItem(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto mod = pack.lookup!Module(req.params["modulename"]);
-		logInfo("mod: %s", mod !is null);
+		logDebug("mod: %s", mod !is null);
 		if( !mod ) return;
 		auto item = mod.lookup!Declaration(req.params["itemname"], false);
-		logInfo("item: %s", item !is null);
+		logDebug("item: %s", item !is null);
 		if( !item ) return;
 
 		res.contentType = "text/html; charset=UTF-8";

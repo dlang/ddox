@@ -95,6 +95,10 @@ struct Parser
 	void parseModule(Json json, Package root_package)
 	{
 		Module mod;
+		if( "name" !in json ){
+			logError("No name attribute in "~json.toString());
+			return;
+		}
 		auto path = json.name.get!string.split(".");
 		Package p = root_package;
 		foreach( i, pe; path ){
@@ -114,8 +118,8 @@ struct Parser
 		Declaration[] ret;
 		foreach( mem; json ){
 			auto decl = parseDecl(mem, parent);
-			auto doc = mem.comment.opt!string().strip();
-			if( icmp(doc, "ditto") == 0 && lastdoc ){
+			auto doc = decl.docGroup.text;
+			if( lastdoc && (doc == lastdoc.text && doc.length || icmp(doc, "ditto") == 0) ){
 				lastdoc.members ~= decl;
 				decl.docGroup = lastdoc;
 			} else if( doc == "private" ){
@@ -139,6 +143,8 @@ struct Parser
 			switch( json.kind.get!string ){
 				default: enforce(false, "Unknown declaration kind: "~json.kind.get!string); assert(false);
 				case "alias": ret = parseAliasDecl(json, parent); break;
+				case "allocator": ret = parseFunctionDecl(json, parent); break;
+				case "deallocator": ret = parseFunctionDecl(json, parent); break;
 				case "constructor": ret = parseFunctionDecl(json, parent); break;
 				case "function": ret = parseFunctionDecl(json, parent); break;
 				case "enum": ret = parseEnumDecl(json, parent); break;
@@ -267,7 +273,7 @@ struct Parser
 		if( str.length == 0 ) str = def_type;
 		auto tokens = tokenizeDSource(str);
 		
-		logInfo("parse type '%s'", str);
+		logDebug("parse type '%s'", str);
 		try {
 			auto type = parseTypeDecl(tokens, sc);
 			type.text = str;
@@ -467,7 +473,7 @@ struct Parser
 							}
 							type.templateArgs = join(tokens[0 .. j]);
 							tokens.popFrontN(j);
-							logInfo("templargs: %s", type.templateArgs);
+							logDebug("templargs: %s", type.templateArgs);
 						} else {
 							type.templateArgs = tokens[0];
 							tokens.popFront();
