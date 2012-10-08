@@ -26,9 +26,9 @@ block body
 		pre.code.prettyprint.lang-d.prototype
 			|template #{item.name}(#{item.templateArgs});
 
-	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
-	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Enums", "Aliases", "Templates"];
-	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Enum",  "Alias",   "Template"];
+	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
+	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Aliases", "Templates"];
+	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Union",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section

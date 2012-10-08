@@ -15,9 +15,9 @@ block body
 	
 	section!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
 	
-	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, TemplateDeclaration) kinds;
-	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Enums", "Templates"];
-	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Enum",  "Template"];
+	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, TemplateDeclaration) kinds;
+	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Templates"];
+	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Union",  "Enum",  "Template"];
 
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(info.mod) )

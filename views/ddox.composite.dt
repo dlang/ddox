@@ -46,8 +46,8 @@ block body
 						code.prettyprint.lang-d!= info.formatType(intf)
 
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
-	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Enums", "Aliases", "Templates"];
-	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Enum",  "Alias",   "Template"];
+	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
+	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section

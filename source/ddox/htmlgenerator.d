@@ -171,6 +171,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declar
 		case DeclarationKind.Interface:
 		case DeclarationKind.Class:
 		case DeclarationKind.Struct:
+		case DeclarationKind.Union:
 			dst.parseDietFileCompat!("ddox.composite.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Template:

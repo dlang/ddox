@@ -56,6 +56,7 @@ struct Parser
 			switch(a){
 				default: return false;
 				case DeclarationKind.Struct:
+				case DeclarationKind.Union:
 				case DeclarationKind.Class:
 				case DeclarationKind.Interface:
 				case DeclarationKind.Enum:
@@ -142,19 +143,33 @@ struct Parser
 		} else {
 			switch( json.kind.get!string ){
 				default: enforce(false, "Unknown declaration kind: "~json.kind.get!string); assert(false);
-				case "alias": ret = parseAliasDecl(json, parent); break;
-				case "allocator": ret = parseFunctionDecl(json, parent); break;
-				case "deallocator": ret = parseFunctionDecl(json, parent); break;
-				case "constructor": ret = parseFunctionDecl(json, parent); break;
-				case "function": ret = parseFunctionDecl(json, parent); break;
-				case "enum": ret = parseEnumDecl(json, parent); break;
-				case "enum member": ret = parseEnumMemberDecl(json, parent); break;
-				case "struct": ret = parseCompositeDecl(json, parent); break;
-				case "union":  ret = parseCompositeDecl(json, parent); break;
-				case "class": ret = parseCompositeDecl(json, parent); break;
-				case "interface": ret = parseCompositeDecl(json, parent); break;
-				case "variable": ret = parseVariableDecl(json, parent); break;
-				case "template": ret = parseTemplateDecl(json, parent); break;
+				case "alias":
+					ret = parseAliasDecl(json, parent);
+					break;
+				case "function":
+				case "allocator":
+				case "deallocator":
+				case "constructor":
+					ret = parseFunctionDecl(json, parent);
+					break;
+				case "enum":
+					ret = parseEnumDecl(json, parent);
+					break;
+				case "enum member":
+					ret = parseEnumMemberDecl(json, parent);
+					break;
+				case "struct":
+				case "union":
+				case "class":
+				case "interface":
+					ret = parseCompositeDecl(json, parent);
+					break;
+				case "variable":
+					ret = parseVariableDecl(json, parent);
+					break;
+				case "template":
+					ret = parseTemplateDecl(json, parent);
+					break;
 			}
 		}
 
@@ -223,9 +238,9 @@ struct Parser
 			case "struct":
 				ret = new StructDeclaration(parent, json.name.get!string);
 				break;
-			/*case "union":
+			case "union":
 				ret = new UnionDeclaration(parent, json.name.get!string);
-				break;*/
+				break;
 			case "class":
 				auto clsdecl = new ClassDeclaration(parent, json.name.get!string);
 				clsdecl.baseClass = parseType(json.base, parent, "Object");

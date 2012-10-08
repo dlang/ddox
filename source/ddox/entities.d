@@ -169,6 +169,7 @@ enum DeclarationKind {
 	Variable,
 	Function,
 	Struct,
+	Union,
 	Class,
 	Interface,
 	Enum,
@@ -270,6 +271,13 @@ class CompositeTypeDeclaration : TypedDeclaration {
 final class StructDeclaration : CompositeTypeDeclaration {
 	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Struct; }
+
+	this(Entity parent, string name){ super(parent, name); }
+}
+
+final class UnionDeclaration : CompositeTypeDeclaration {
+	override @property UnionDeclaration dup() { auto ret = new UnionDeclaration(parent, name); ret.docGroup = docGroup; ret.type = type; ret.members = members; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.Union; }
 
 	this(Entity parent, string name){ super(parent, name); }
 }
