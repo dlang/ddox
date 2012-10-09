@@ -97,6 +97,10 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 			} else {
 				dst.put(type.typeName);
 			}
+			if( type.templateArgs.length ){
+				dst.put('!');
+				dst.put(type.templateArgs);
+			}
 			break;
 		case TypeKind.Function:
 		case TypeKind.Delegate:
