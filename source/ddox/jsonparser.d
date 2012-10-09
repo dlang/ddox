@@ -51,9 +51,9 @@ struct Parser
 
 	void resolveTypes(Package root)
 	{
-		bool isTypeDecl(DeclarationKind a)
+		bool isTypeDecl(Declaration a)
 		{
-			switch(a){
+			switch(a.kind){
 				default: return false;
 				case DeclarationKind.Struct:
 				case DeclarationKind.Union:
@@ -61,16 +61,18 @@ struct Parser
 				case DeclarationKind.Interface:
 				case DeclarationKind.Enum:
 					return true;
+				case DeclarationKind.Alias:
+					return (cast(AliasDeclaration)a).targetType !is null;
 			}
 		}
 
 		foreach( t; m_primTypes ){
 			auto decl = cast(Declaration)t[1].lookup(t[0].typeName);
-			if( !decl || !isTypeDecl(decl.kind) ){
+			if( !decl || !isTypeDecl(decl) ){
 				auto pd = t[0].typeName in m_typeMap;
 				if( pd ) decl = *pd;
 			}
-			if( decl && isTypeDecl(decl.kind) )
+			if( decl && isTypeDecl(decl) )
 				t[0].typeDecl = decl;
 		}
 
@@ -97,7 +99,7 @@ struct Parser
 	{
 		Module mod;
 		if( "name" !in json ){
-			logError("No name attribute in "~json.toString());
+			logError("No name attribute in module %s - ignoring", json.filename.opt!string);
 			return;
 		}
 		auto path = json.name.get!string.split(".");
@@ -183,8 +185,12 @@ struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json.name.get!string);
+		if( auto pt = "type" in json ){
+			ret.targetType = parseType(*pt, parent, null);
+			if( ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
+				ret.targetType = null;
+		}
 		insertIntoTypeMap(ret);
-		//if( auto pt = "type" in json ) ret.targetType = parseType(*pt, parent);
 		return ret;
 	}
 
