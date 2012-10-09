@@ -136,6 +136,10 @@ int cmdFilterDocs(string[] args)
 	writefln("Filtering modules...");
 	Json[] dst;
 	foreach( m; json ){
+		if( "name" !in m ){
+			writefln("No name for module %s - ignoring", m.file.opt!string);
+			continue;
+		}
 		auto n = m.name.get!string;
 		bool include = true;
 		foreach( ex; excluded )
