@@ -85,7 +85,16 @@ string formatType()(Type type, string delegate(Entity) link_to)
 
 void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 {
-	auto attribs = type.attributes;
+	foreach( att; type.attributes){
+		dst.put(att); 
+		dst.put(' ');
+	}
+	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
+		foreach( att; type.modifiers ){
+			dst.put(att);
+			dst.put('(');
+		}
+	}
 	switch( type.kind ){
 		default:
 		case TypeKind.Primitive:
@@ -121,46 +130,31 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 				}
 			}
 			dst.put(')');
-			foreach( att; attribs )
+			foreach( att; type.modifiers ){
+				dst.put(' ');
 				dst.put(att);
+			}
 			break;
 		case TypeKind.Pointer:
-			foreach( att; attribs ){
-				dst.put(att);
-				dst.put('(');
-			}
 			formatType(dst, type.elementType, link_to);
 			dst.put('*');
-			foreach( att; attribs ) dst.put(')');
 			break;
 		case TypeKind.Array:
-			foreach( att; attribs ){
-				dst.put(att);
-				dst.put('(');
-			}
 			formatType(dst, type.elementType, link_to);
 			dst.put("[]");
-			foreach( att; attribs ) dst.put(')');
 			break;
 		case TypeKind.StaticArray:
-			foreach( att; attribs ){
-				dst.put(att);
-				dst.put('(');
-			}
 			formatType(dst, type.elementType, link_to);
 			formattedWrite(dst, "[%s]", type.arrayLength);
-			foreach( att; attribs ) dst.put(')');
 			break;
 		case TypeKind.AssociativeArray:
-			foreach( att; attribs ){
-				dst.put(att);
-				dst.put('(');
-			}
 			formatType(dst, type.elementType, link_to);
 			dst.put('[');
 			formatType(dst, type.keyType, link_to);
 			dst.put(']');
-			foreach( att; attribs ) dst.put(')');
 			break;
+	}
+	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
+		foreach( att; type.modifiers ) dst.put(')');
 	}
 }
