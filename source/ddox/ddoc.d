@@ -75,21 +75,20 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 
 	int i = 0;
 
+	Section[] sections;
+
 	// special case short description on the first line
 	while( i < lines.length && getLineType(i) == BLANK ) i++;
 	if( i < lines.length && getLineType(i) == TEXT ){
 		auto j = skipBlock(i);
-		if( !display_section || display_section("$Short") ){
-			renderTextLine(dst, lines[i .. j].join("\n"), macros);
-		}
+		sections ~= Section("$Short", lines[i .. j].join("\n"));
 		i = j;
 	}
 
 	// first section is implicitly the long description
 	{
 		auto j = skipSection(i);
-		if( j > i && (!display_section || display_section("$Long")) )
-			parseSection(dst, "$Long", lines[i .. j], hlevel, macros);
+		if( j > i ) sections ~= Section("$Long", lines[i .. j]);
 		i = j;
 	}
 
@@ -101,9 +100,15 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 		auto sect = strip(lines[i][0 .. pidx]);
 		lines[i] = strip(lines[i][pidx+1 .. $]);
 		if( lines[i].empty ) i++;
-		if( !display_section || display_section(sect) )
-			parseSection(dst, sect, lines[i .. j], hlevel, macros);
+		if( sect == "Macros" ) parseMacros(macros, lines[i .. j]);
+		else sections ~= Section(sect, lines[i .. j]);
 		i = j;
+	}
+
+	foreach( s; sections ){
+		if( display_section && !display_section(s.name) ) continue;
+		if( s.name == "$Short") renderTextLine(dst, s.lines[0], macros);
+		else parseSection(dst, s.name, s.lines, hlevel, macros);
 	}
 }
 
@@ -124,6 +129,17 @@ private enum {
 	TEXT,
 	CODE,
 	SECTION
+}
+
+private struct Section {
+	string name;
+	string[] lines;
+
+	this(string name, string[] lines...)
+	{
+		this.name = name;
+		this.lines = lines;
+	}
 }
 
 private {
@@ -205,9 +221,6 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 			}
 			putFooter();
 			break;
-		case "Macros":
-			parseMacros(macros, lines);
-			break;
 		case "Params":
 			putHeader("Parameters");
 			dst.put("<table><col class=\"caption\"><tr><th>Parameter name</th><th>Description</th></tr>\n");
@@ -251,10 +264,7 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 		line = line[1 .. $];
 		if( line.length < 1) continue;
 
-		if( line[0] == '0'){
-			if( params.length ) dst.put(params[0]);
-			line = line[1 .. $];
-		} else if( line[0] >= '1' && line[0] <= '9' ){
+		if( line[0] >= '0' && line[0] <= '9' ){
 			int pidx = line[0]-'0';
 			if( pidx < params.length )
 				dst.put(params[pidx]);
@@ -274,43 +284,66 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 				else if( line[cidx] == ')' ) l--;
 			}
 			if( l > 0 ){
-				logDebug("Unmatched parenthesis in DDOC comment.");
+				logDebug("Unmatched parenthesis in DDOC comment: %s", line[0 .. cidx]);
 				continue;
 			}
 			if( cidx < 1 ){
-				logDebug("Missing macro name in DDOC comment.");
+				logDebug("Empty macro parens.");
 				continue;
 			}
 
 			auto mnameidx = line[0 .. cidx-1].countUntilAny(" \t\r\n");
-
-			if( mnameidx < 0 ){
+			if( mnameidx < 0 ) mnameidx = cidx-1;
+			if( mnameidx == 0 ){
 				logDebug("Macro call in DDOC comment is missing macro name.");
 				continue;
 			}
 			auto mname = line[0 .. mnameidx];
 
-			auto argstext = appender!string();
 			string[] args;
 			if( mnameidx+1 < cidx ){
-				renderTextLine(argstext, line[mnameidx+1 .. cidx-1], macros, params);
-				args = splitParams(argstext.data());
+				auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
+				foreach( arg; rawargs ){
+					auto argtext = appender!string();
+					renderTextLine(argtext, arg, macros, params);
+					args ~= argtext.data();
+				}
 			}
+			args = join(args) ~ args;
 
-			logTrace("PARAMS: (%s) %s", mname, args);
-			logTrace("MACROS: %s", macros);
+			logTrace("PARAMS for %s: %s", mname, args);
 			line = line[cidx .. $];
 
-			if( auto pm = mname in macros )
+			if( auto pm = mname in macros ){
+				logTrace("MACRO %s: %s", mname, *pm);
 				renderTextLine(dst, *pm, macros, args);
-			else logDebug("Macro '%s' not found.", mname);
+			} else {
+				logTrace("Macro '%s' not found.", mname);
+				if( args.length ) dst.put(args[0]);
+			}
 		}
 	}
 }
 
 private string[] splitParams(string ln)
 {
-	return ln ~ ln.split(",").map!(a => a.strip())().array();
+	string[] ret;
+	size_t i = 0, start = 0;
+	while(i < ln.length){
+		if( ln[i] == ',' ){
+			ret ~= ln[start .. i];
+			start = ++i;
+		} else if( ln[i] == '(' ){
+			i++;
+			int l = 1;
+			for( ; i < ln.length && l > 0; i++ ){
+				if( ln[i] == '(' ) l++;
+				else if( ln[i] == ')' ) l--;
+			}
+		} else i++;
+	}
+	if( i > start ) ret ~= ln[start .. i];
+	return ret;
 }
 
 private string skipWhitespace(ref string ln)
