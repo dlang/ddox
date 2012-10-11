@@ -252,7 +252,7 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 		if( line.length < 1) continue;
 
 		if( line[0] == '0'){
-			dst.put(params[0]);
+			if( params.length ) dst.put(params[0]);
 			line = line[1 .. $];
 		} else if( line[0] >= '1' && line[0] <= '9' ){
 			int pidx = line[0]-'0';
@@ -260,9 +260,9 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 				dst.put(params[pidx]);
 			line = line[1 .. $];
 		} else if( line[0] == '+' ){
-			auto idx = params[0].countUntil(',');
-			if( idx >= 0 ){
-				dst.put(params[0][idx+1 .. $]);
+			if( params.length ){
+				auto idx = params[0].countUntil(',');
+				if( idx >= 0 ) dst.put(params[0][idx+1 .. $]);
 			}
 			line = line[1 .. $];
 		} else if( line[0] == '(' ){
@@ -295,7 +295,7 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 			if( mnameidx+1 < cidx ){
 				renderTextLine(argstext, line[mnameidx+1 .. cidx-1], macros, params);
 				args = splitParams(argstext.data());
-			} else args = [null];
+			}
 
 			logTrace("PARAMS: (%s) %s", mname, args);
 			logTrace("MACROS: %s", macros);

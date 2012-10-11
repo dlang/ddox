@@ -6,7 +6,7 @@ html
 		block title
 		title= title
 		link(rel="stylesheet", type="text/css", href="#{info.linkTo(null)}styles/ddox.css")
-		link(rel="stylesheet", href="#{req.rootDir}prettify/prettify.css", type="text/css")
+		link(rel="stylesheet", href="#{info.linkTo(null)}prettify/prettify.css", type="text/css")
 		script(type="text/javascript", src="#{info.linkTo(null)}prettify/prettify.js")/**/
 	body(onload="prettyPrint()")
 		h1= title
