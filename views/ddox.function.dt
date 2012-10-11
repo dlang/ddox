@@ -33,13 +33,18 @@ block body
 					- if( !proto ) continue;
 					- if( pi > 0 )
 						|
-					|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
-					- foreach( size_t i, p; proto.parameters )
-						|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
-					- if( proto.attributes.length )
-						|) #{join(proto.attributes, " ")};
+					- if( proto.parameters.length )
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
+						- foreach( size_t i, p; proto.parameters )
+							|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
+						- if( proto.attributes.length )
+							|) #{join(proto.attributes, " ")};
+						- else
+							|);
+					- else if( proto.attributes.length)
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}() #{join(proto.attributes, " ")};
 					- else
-						|);
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}();
 
 		|!= formatDdocComment(docgroup.text, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
 	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
