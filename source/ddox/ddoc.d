@@ -35,6 +35,7 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 
 	string[string] macros;
 	parseMacros(macros, s_standardMacros);
+	parseMacros(macros, s_defaultMacros);
 
 	int getLineType(int i)
 	{
@@ -106,6 +107,18 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 	}
 }
 
+
+/**
+	Sets a set of macros that will be available to all calls to formatDdocComment.
+*/
+void setDefaultDdocMacroFile(string filename)
+{
+	import vibe.core.file;
+	import vibe.stream.stream;
+	auto text = readAllUtf8(openFile(filename));
+	s_defaultMacros = splitLines(text);
+}
+
 private enum {
 	BLANK,
 	TEXT,
@@ -113,6 +126,9 @@ private enum {
 	SECTION
 }
 
+private {
+	string[] s_defaultMacros;
+}
 
 /// private
 private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel, string[string] macros)
@@ -236,26 +252,17 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 		if( line.length < 1) continue;
 
 		if( line[0] == '0'){
-			foreach( i, p; params ){
-				if( i > 0 ) dst.put(' ');
-				dst.put(p);
-			}
+			dst.put(params[0]);
 			line = line[1 .. $];
 		} else if( line[0] >= '1' && line[0] <= '9' ){
-			int pidx = line[0]-'1';
+			int pidx = line[0]-'0';
 			if( pidx < params.length )
 				dst.put(params[pidx]);
 			line = line[1 .. $];
 		} else if( line[0] == '+' ){
-			bool got_comma = false;
-			foreach( i, p; params ){
-				if( !got_comma ){
-					if( p == "," )
-						got_comma = true;
-					continue;
-				}
-				if( i > 0 ) dst.put(' ');
-				dst.put(p);
+			auto idx = params[0].countUntil(',');
+			if( idx >= 0 ){
+				dst.put(params[0][idx+1 .. $]);
 			}
 			line = line[1 .. $];
 		} else if( line[0] == '(' ){
@@ -288,7 +295,7 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 			if( mnameidx+1 < cidx ){
 				renderTextLine(argstext, line[mnameidx+1 .. cidx-1], macros, params);
 				args = splitParams(argstext.data());
-			}
+			} else args = [null];
 
 			logTrace("PARAMS: (%s) %s", mname, args);
 			logTrace("MACROS: %s", macros);
@@ -303,13 +310,7 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 
 private string[] splitParams(string ln)
 {
-	ln = stripLeft(ln);
-	string[] ret;
-	while( ln.length ){
-		ret ~= skipWhitespace(ln);
-		ln = stripLeft(ln);
-	}
-	return ret;
+	return ln ~ ln.split(",").map!(a => a.strip())().array();
 }
 
 private string skipWhitespace(ref string ln)
