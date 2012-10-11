@@ -1,5 +1,6 @@
 module app;
 
+import ddox.ddoc;
 import ddox.ddox;
 import ddox.entities;
 import ddox.htmlgenerator;
@@ -35,11 +36,17 @@ int main(string[] args)
 
 int cmdGenerateHtml(string[] args)
 {
-	string jsonfile;
+	string macrofile;
+	getopt(args,
+		//config.passThrough,
+		"std-macros", &macrofile);
+
 	if( args.length < 4 ){
 		showUsage(args);
 		return 1;
 	}
+
+	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
@@ -52,11 +59,17 @@ int cmdGenerateHtml(string[] args)
 
 int cmdServeHtml(string[] args)
 {
-	string jsonfile;
+	string macrofile;
+	getopt(args,
+		//config.passThrough,
+		"std-macros", &macrofile);
+
 	if( args.length < 3 ){
 		showUsage(args);
 		return 1;
 	}
+
+	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
@@ -77,7 +90,6 @@ int cmdServeHtml(string[] args)
 
 int cmdFilterDocs(string[] args)
 {
-	writefln("cmds: %s", args);
 	string[] excluded, included;
 	Protection minprot = Protection.Private;
 	bool justdoc = false;
@@ -189,16 +201,19 @@ void showUsage(string[] args)
 	<COMMAND> can be one of:
 		generate-html
 		serve-html
+		filter
 `, args[0]);
 			break;
 		case "serve-html":
 			writefln(
 `Usage: %s serve-html <ddocx-input-file>
+    --std-macros=FILE      File containing DDOC macros that will be available
 `, args[0]);
 			break;
 		case "generate-html":
 			writefln(
 `Usage: %s generate-html <ddocx-input-file> <output-dir>
+    --std-macros=FILE      File containing DDOC macros that will be available
 `, args[0]);
 			break;
 		case "filter":
