@@ -33,6 +33,7 @@
 
 /* Put a border around prettyprinted code snippets. */
 pre.prettyprint {
+  padding: 1em 0;
   background-color: #222;
   border: 1px solid black;
 }
