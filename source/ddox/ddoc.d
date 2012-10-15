@@ -270,7 +270,9 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 					auto pname = ln[0 .. eidx].strip();
 					auto pdesc = ln[eidx+1 .. $].strip();
 					if( in_dt ) dst.put("</td></tr>\n");
-					dst.put("<tr><td>");
+					dst.put("<tr><td><a id=\"");
+					dst.put(pname);
+					dst.put("\"></a>");
 					dst.put(pname);
 					dst.put("</td><td>\n");
 					dst.put(pdesc);
@@ -308,7 +310,7 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context, stri
 				if( link.length ){
 					dst.put("<a href=\"");
 					dst.put(link);
-					dst.put("><code class=\"prettyprint lang-d\">");
+					dst.put("\"><code class=\"prettyprint lang-d\">");
 					dst.put(ident);
 					dst.put("</code></a>");
 				} else dst.put(ident);
