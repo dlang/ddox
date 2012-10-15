@@ -11,10 +11,9 @@ html
 		script(type="text/javascript", src="#{info.linkTo(null)}prettify/prettify.js")/**/
 		script(type="text/javascript", src="#{info.linkTo(null)}scripts/ddox.js")/**/
 	body(onload="prettyPrint(); ddoxFormat();")
-		h1= title
-
 		nav#main-nav
 			block navigation
 
 		#main-contents
+			h1= title
 			block body

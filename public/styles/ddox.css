@@ -5,6 +5,8 @@ body {
 	font-size: 0;
 }
 
+h1 { margin-top: 0; }
+
 a {
 	color: #13e;
 	text-decoration: none;
@@ -12,14 +14,6 @@ a {
 
 a:hover {
 	color: #24f;
-}
-
-h1 {
-	border-bottom: 1px solid black;
-	margin: 0;
-	padding: 0 10pt;
-	background-color: #ddd;
-	font-size: 20pt;
 }
 
 #main-nav {
