@@ -23,19 +23,25 @@ import std.conv;
 */
 string formatDdocComment(string ddoc_, int hlevel = 2, bool delegate(string) display_section = null)
 {
+	return formatDdocComment(new BareContext(ddoc_), hlevel, display_section);
+}
+/// ditto
+string formatDdocComment(DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
+{
 	auto dst = appender!string();
-	filterDdocComment(dst, cast(string)ddoc_, hlevel, display_section);
+	filterDdocComment(dst, context, hlevel, display_section);
 	return dst.data;
 }
 /// ditto
-void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(string) display_section = null)
+void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
 {
-	auto lines = splitLines(ddoc);
+	auto lines = splitLines(context.docText);
 	if( !lines.length ) return;
 
 	string[string] macros;
 	parseMacros(macros, s_standardMacros);
 	parseMacros(macros, s_defaultMacros);
+	parseMacros(macros, context.defaultMacroDefinitions);
 
 	int getLineType(int i)
 	{
@@ -107,8 +113,8 @@ void filterDdocComment(R)(ref R dst, string ddoc, int hlevel = 2, bool delegate(
 
 	foreach( s; sections ){
 		if( display_section && !display_section(s.name) ) continue;
-		if( s.name == "$Short") renderTextLine(dst, s.lines[0], macros);
-		else parseSection(dst, s.name, s.lines, hlevel, macros);
+		if( s.name == "$Short") renderTextLine(dst, s.lines[0], context, macros);
+		else parseSection(dst, s.name, s.lines, context, hlevel, macros);
 	}
 }
 
@@ -122,6 +128,34 @@ void setDefaultDdocMacroFile(string filename)
 	import vibe.stream.stream;
 	auto text = readAllUtf8(openFile(filename));
 	s_defaultMacros = splitLines(text);
+}
+
+
+/**
+	Provides context information about the documented element.
+*/
+interface DdocContext {
+	/// The DDOC text
+	@property string docText();
+
+	/// A line array with macro definitions
+	@property string[] defaultMacroDefinitions();
+
+	/// Looks up a symbol in the scope of the documented element and returns a link to it.
+	string lookupScopeSymbolLink(string name);
+}
+
+private class BareContext : DdocContext {
+	private string m_ddoc;
+	
+	this(string ddoc)
+	{
+		m_ddoc = ddoc;
+	}
+
+	@property string docText() { return m_ddoc; }
+	@property string[] defaultMacroDefinitions() { return null; }
+	string lookupScopeSymbolLink(string name) { return null; }
 }
 
 private enum {
@@ -147,7 +181,7 @@ private {
 }
 
 /// private
-private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel, string[string] macros)
+private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext context, int hlevel, string[string] macros)
 {
 	void putHeader(string hdr){
 		dst.put("<section>");
@@ -202,7 +236,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 					case TEXT:
 						dst.put("<p>");
 						auto j = skipBlock(i);
-						renderTextLine(dst, lines[i .. j].join("\n"), macros);
+						renderTextLine(dst, lines[i .. j].join("\n"), context, macros);
 						dst.put("</p>\n");
 						i = j;
 						break;
@@ -252,7 +286,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 }
 
 /// private
-private void renderTextLine(R)(ref R dst, string line, string[string] macros, string[] params = null)
+private void renderTextLine(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null)
 {
 	while( line.length > 0 ){
 		switch( line[0] ){
@@ -270,18 +304,24 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 			case 'A': .. case 'Z':
 				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
 				auto ident = skipIdent(line);
-				// TODO: check for semantic correspondence
-				dst.put(ident);
+				auto link = context.lookupScopeSymbolLink(ident);
+				if( link.length ){
+					dst.put("<a href=\"");
+					dst.put(link);
+					dst.put("><code class=\"prettyprint lang-d\">");
+					dst.put(ident);
+					dst.put("</code></a>");
+				} else dst.put(ident);
 				break;
 			case '$':
-				renderMacro(dst, line, macros, params);
+				renderMacro(dst, line, context, macros, params);
 				break;
 		}
 	}
 }
 
 /// private
-private void renderMacro(R)(ref R dst, ref string line, string[string] macros, string[] params = null)
+private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params = null)
 {
 	line = line[1 .. $];
 	if( line.length < 1) return;
@@ -327,7 +367,7 @@ private void renderMacro(R)(ref R dst, ref string line, string[string] macros, s
 			auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
 			foreach( arg; rawargs ){
 				auto argtext = appender!string();
-				renderTextLine(argtext, arg, macros, params);
+				renderTextLine(argtext, arg, context, macros, params);
 				args ~= argtext.data();
 			}
 		}
@@ -338,7 +378,7 @@ private void renderMacro(R)(ref R dst, ref string line, string[string] macros, s
 
 		if( auto pm = mname in macros ){
 			logTrace("MACRO %s: %s", mname, *pm);
-			renderTextLine(dst, *pm, macros, args);
+			renderTextLine(dst, *pm, context, macros, args);
 		} else {
 			logTrace("Macro '%s' not found.", mname);
 			if( args.length ) dst.put(args[0]);
