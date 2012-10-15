@@ -1,0 +1,11 @@
+extends layout
+
+block title
+	block ddox.defs
+	block ddox.title
+
+block navigation
+	block ddox.navigation
+
+block body
+	block ddox.body
