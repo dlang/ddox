@@ -2,8 +2,6 @@ extends ddox.layout
 
 block ddox.defs
 	- import ddox.api;
-	- import ddox.ddoc;
-	- import ddox.entities;
 	- import std.algorithm;
 
 block ddox.title
@@ -22,7 +20,7 @@ block ddox.body
 		- if( multi )
 			h2 Overload group
 
-		section!= formatDdocComment(docgroup.text, multi ? 3 : 2, sec => sec == "$Short" || sec == "$Long")
+		section!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec == "$Short" || sec == "$Long")
 		
 		section
 			- if( multi )
@@ -49,6 +47,6 @@ block ddox.body
 					- else
 						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}();
 
-		|!= formatDdocComment(docgroup.text, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")
+		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")

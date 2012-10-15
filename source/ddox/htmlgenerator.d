@@ -118,6 +118,10 @@ class DocPageInfo {
 	
 	@property bool navPackageTree() const { return settings.navPackageTree; }
 	string formatType(Type tp) { return .formatType(tp, linkTo); }
+	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
+	{
+		return formatDdocComment(new DocGroupContext(group, linkTo), hlevel, display_section);
+	}
 }
 
 class DocModulePageInfo : DocPageInfo {

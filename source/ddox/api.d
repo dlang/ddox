@@ -8,12 +8,57 @@
 module ddox.api;
 
 public import ddox.ddox;
+public import ddox.ddoc;
 
 import std.array;
 import std.format;
 import std.string;
 import vibe.core.log;
 import vibe.data.json;
+
+
+
+class DocGroupContext : DdocContext {
+	private {
+		DocGroup m_group;
+		string delegate(Entity ent) m_linkTo;
+	}
+
+	this(DocGroup grp, string delegate(Entity ent) link_to)
+	{
+		m_group = grp;
+		m_linkTo = link_to;
+	}
+
+	@property string docText() { return m_group.text; }
+	@property string[] defaultMacroDefinitions() { return null; }
+	string lookupScopeSymbolLink(string name)
+	{
+		foreach( def; m_group.members ){
+			// if this is a function, first search the parameters
+			// TODO: maybe do the same for function/delegate variables/type aliases
+			if( auto fn = cast(FunctionDeclaration)def ){
+				foreach( p; fn.parameters )
+					if( p.name == name )
+						return m_linkTo(fn)~"#"~name;
+			}
+
+			// then look up the name in the outer scope
+			auto n = def.lookup(name);
+
+			// packages are not linked
+			if( cast(Package)n ) continue;
+
+			// module names must be fully qualified
+			if( auto mod = cast(Module)n )
+				if( mod.qualifiedName != name )
+					continue;
+			
+			if( n ) return m_linkTo(n);
+		}
+		return null;
+	}
+}
 
 
 string getFunctionName(Json proto)

@@ -2,8 +2,6 @@ extends ddox.layout
 
 block ddox.defs
 	- import ddox.api;
-	- import ddox.ddoc;
-	- import ddox.entities;
 	- import std.algorithm;
 	- import std.typetuple;
 
@@ -21,7 +19,7 @@ block ddox.navigation
 		
 block ddox.body
 	
-	section!= formatDdocComment(item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
+	section!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
 
 	section
 		h2 Arguments
@@ -46,7 +44,7 @@ block ddox.body
 					tr
 						td= f.name ~ (f.inheritingDecl ? " [inherited]" : null)
 						td!= info.formatType(f.type)
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(item) )
@@ -63,8 +61,8 @@ block ddox.body
 								a(href="#{info.linkTo(grp)}")= grp.name
 								- if( grp.inheritingDecl )
 									| [inherited]
-							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
+							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
-	|!= formatDdocComment(item.docGroup.text, 2, sec => sec != "$Short" && sec != "$Long")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")
+	|!= info.formatDoc(item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")

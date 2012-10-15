@@ -2,8 +2,6 @@ extends ddox.layout
 
 block ddox.defs
 	- import ddox.api;
-	- import ddox.ddoc;
-	- import ddox.entities;
 	- import std.typetuple;
 
 block ddox.title
@@ -17,7 +15,7 @@ block ddox.navigation
 		
 block ddox.body
 	
-	section!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
+	section!= info.formatDoc(info.mod.docGroup, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
 	
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Templates"];
@@ -36,7 +34,7 @@ block ddox.body
 						tr
 							td
 								a(id="#{grp.name}", href="#{info.linkTo(grp)}")= grp.name
-							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
+							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 	- if( hasChild!AliasDeclaration(info.mod) )
 		section
@@ -55,7 +53,7 @@ block ddox.body
 						td
 							- if( f.targetType )
 								|!= info.formatType(f.targetType)
-						td!= formatDdocComment(f.docGroup.text, 3, sec => sec == "$Short")
+						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
-	!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
-	!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")
+	!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
+	!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")

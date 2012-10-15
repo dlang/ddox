@@ -18,7 +18,7 @@ block ddox.navigation
 		
 block ddox.body
 	
-	section!= formatDdocComment(info.item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
+	section!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
 
 	p The enum base type is
 		code.prettyprint.lang-d!= info.formatType(enum_item.baseType)
@@ -35,8 +35,8 @@ block ddox.body
 			- foreach( mem; enum_item.members )
 				tr
 					td= mem.name
-					td!= formatDdocComment(mem.docGroup.text, 3, sec => sec == "$Short")
+					td!= info.formatDoc(mem.docGroup, 3, sec => sec == "$Short")
 
-	|!= formatDdocComment(info.item.docGroup.text, 2, sec => sec != "$Short" && sec != "$Long")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "Authors")
-	|!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec == "License" || sec == "Copyright")
+	|!= info.formatDoc(info.item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")

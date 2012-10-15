@@ -1,8 +1,7 @@
 extends ddox.layout
 
 block ddox.defs
-	- import ddox.ddoc;
-	- import ddox.entities;
+	- import ddox.api;
 
 block ddox.title
 	- auto title = "API documentation";
@@ -24,7 +23,7 @@ block ddox.body
 					a(href="#{info.linkTo(m)}")= m.qualifiedName
 				td
 					- if( m.docGroup )
-						|!= formatDdocComment(m.docGroup.text, 0, sec => sec == "$Short")
+						|!= info.formatDoc(m.docGroup, 0, sec => sec == "$Short")
 	
 	table
 		col.caption
