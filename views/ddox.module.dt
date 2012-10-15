@@ -1,21 +1,21 @@
-extends layout
+extends ddox.layout
 
-block defs
+block ddox.defs
 	- import ddox.api;
 	- import ddox.ddoc;
 	- import ddox.entities;
 	- import std.typetuple;
 
-block title
+block ddox.title
 	- auto title = "Module " ~ info.mod.qualifiedName;
 	
-block navigation
+block ddox.navigation
 	- if( info.settings.navPackageTree )
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
 		
-block body
+block ddox.body
 	
 	section!= formatDdocComment(info.mod.docGroup.text, 2, sec => sec != "License" && sec != "Copyright" && sec != "Authors")
 	

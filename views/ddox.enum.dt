@@ -1,6 +1,6 @@
-extends layout
+extends ddox.layout
 
-block defs
+block ddox.defs
 	- import ddox.api;
 	- import ddox.ddoc;
 	- import ddox.entities;
@@ -9,16 +9,16 @@ block defs
 	- auto enum_item = cast(EnumDeclaration)info.item;
 	- assert(enum_item !is null);
 
-block title
+block ddox.title
 	- auto title = "Enum " ~ info.item.nestedName;
 	
-block navigation
+block ddox.navigation
 	- if( info.settings.navPackageTree )
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
 		
-block body
+block ddox.body
 	
 	section!= formatDdocComment(info.item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
 

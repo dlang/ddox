@@ -2,7 +2,6 @@
 html
 	head
 		meta(charset="UTF-8")
-		block defs
 		block title
 		title= title
 		link(rel="stylesheet", type="text/css", href="#{info.linkTo(null)}styles/ddox.css")
@@ -10,7 +9,7 @@ html
 		script(type="text/javascript", src="#{info.linkTo(null)}scripts/jquery.js")/**/
 		script(type="text/javascript", src="#{info.linkTo(null)}prettify/prettify.js")/**/
 		script(type="text/javascript", src="#{info.linkTo(null)}scripts/ddox.js")/**/
-	body(onload="prettyPrint(); ddoxFormat();")
+	body(onload="prettyPrint(); setupDdox();")
 		nav#main-nav
 			block navigation
 

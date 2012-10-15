@@ -1,6 +1,6 @@
-extends layout
+extends ddox.layout
 
-block defs
+block ddox.defs
 	- import ddox.api;
 	- import ddox.ddoc;
 	- import ddox.entities;
@@ -12,16 +12,16 @@ block defs
 	- auto cls_item = cast(ClassDeclaration)item;
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
-block title
+block ddox.title
 	- auto title = to!string(item.kind) ~ " " ~item.nestedName;
 	
-block navigation
+block ddox.navigation
 	- if( info.settings.navPackageTree )
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
 		
-block body
+block ddox.body
 	
 	section!= formatDdocComment(item.docGroup.text, 2, sec => sec == "$Short" || sec == "$Long")
 

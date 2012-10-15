@@ -1,19 +1,19 @@
-extends layout
+extends ddox.layout
 
-block defs
+block ddox.defs
 	- import ddox.ddoc;
 	- import ddox.entities;
 
-block title
+block ddox.title
 	- auto title = "API documentation";
 	
-block navigation
+block ddox.navigation
 	- if( info.settings.navPackageTree )
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
 
-block body
+block ddox.body
 
 	- void moduleInfoRec(Package pack)
 		- foreach( p; pack.packages )

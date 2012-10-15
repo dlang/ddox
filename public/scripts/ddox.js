@@ -1,4 +1,4 @@
-function ddoxFormat()
+function setupDdox()
 {
 	$(".tree-view").children(".package").click(toggleTree);
 	$(".tree-view.collapsed").children("ul").hide();
