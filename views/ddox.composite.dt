@@ -13,7 +13,7 @@ block ddox.defs
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
 block ddox.title
-	- auto title = to!string(item.kind) ~ " " ~item.nestedName;
+	- auto title = to!string(item.kind) ~ " " ~item.nestedName ~ (item.templateArgs.length ? "!" ~ item.templateArgs : null);
 	
 block ddox.navigation
 	- if( info.settings.navPackageTree )
