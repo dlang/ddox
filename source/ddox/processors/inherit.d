@@ -1,3 +1,10 @@
+/**
+	Inherits non-existing members and documentation from anchestor classes/intefaces.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module ddox.processors.inherit;
 
 import ddox.api;

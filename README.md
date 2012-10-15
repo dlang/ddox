@@ -1,4 +1,4 @@
-DDocX documentation engine
+DDOX documentation engine
 ==========================
 
 First steps

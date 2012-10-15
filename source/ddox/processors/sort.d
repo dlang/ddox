@@ -1,3 +1,10 @@
+/**
+	Sorts packages, modules and definitions in the syntax tree.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module ddox.processors.sort;
 
 import ddox.entities;

@@ -1,7 +1,15 @@
+/**
+	Generates offline documentation in the form of HTML files.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module ddox.htmlgenerator;
 
 import ddox.api;
 import ddox.entities;
+import ddox.settings;
 
 import std.array;
 import std.variant;
@@ -12,10 +20,6 @@ import vibe.http.server : HttpServerRequest;
 import vibe.stream.stream;
 import vibe.templ.diet;
 
-
-class GeneratorSettings {
-	bool navPackageTree = true;
-}
 
 /*
 	structure:

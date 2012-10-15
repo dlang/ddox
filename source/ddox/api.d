@@ -1,6 +1,13 @@
+/**
+	Internal functions for use inside the HTML templates.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module ddox.api;
 
-import ddox.entities;
+public import ddox.ddox;
 
 import std.array;
 import std.format;

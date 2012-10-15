@@ -1,3 +1,10 @@
+/**
+	Parses DMD JSON output and builds up a socumentation syntax tree.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module ddox.jsonparser;
 
 import ddox.ddox;
@@ -44,7 +51,7 @@ Package parseJsonDocs(Json json, DdoxSettings settings, Package root = null)
 	return root;
 }
 
-struct Parser
+private struct Parser
 {
 	private Tuple!(Type, Entity)[] m_primTypes;
 	private Declaration[string] m_typeMap;

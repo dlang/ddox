@@ -2,8 +2,6 @@ extends ddox.layout
 
 block ddox.defs
 	- import ddox.api;
-	- import ddox.ddoc;
-	- import ddox.entities;
 	- import std.algorithm;
 	- import std.typetuple;
 
