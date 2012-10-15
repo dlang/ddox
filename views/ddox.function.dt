@@ -7,10 +7,13 @@ block defs
 	- import std.algorithm;
 
 block title
-	- auto title = info.item.nestedName ~ (cast(CompositeTypeDeclaration)info.item.parent ? " method" : " function");
+	- auto title = (cast(CompositeTypeDeclaration)info.item.parent ? "Method " : "Function ") ~ info.item.nestedName;
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 		
 block body
 	- auto multi = info.docGroups.length > 1;

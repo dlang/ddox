@@ -8,7 +8,10 @@ block title
 	- auto title = "API documentation";
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 
 block body
 

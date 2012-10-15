@@ -10,10 +10,13 @@ block defs
 	- assert(enum_item !is null);
 
 block title
-	- auto title = info.item.nestedName ~ " enum";
+	- auto title = "Enum " ~ info.item.nestedName;
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 		
 block body
 	

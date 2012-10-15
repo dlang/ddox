@@ -1,0 +1,11 @@
+- import ddox.entities;
+
+- void moduleNavList(Package pack)
+	- foreach(p; pack.packages)
+		- moduleNavList(p);
+	- foreach(m; pack.modules)
+		li
+			a(href="#{info.linkTo(m)}")= m.qualifiedName
+
+ul
+	- moduleNavList(info.rootPackage);

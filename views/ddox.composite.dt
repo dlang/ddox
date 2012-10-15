@@ -13,10 +13,13 @@ block defs
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
 block title
-	- auto title = item.nestedName ~ " " ~ to!string(item.kind);
+	- auto title = to!string(item.kind) ~ " " ~item.nestedName;
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 		
 block body
 	

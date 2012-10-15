@@ -37,9 +37,11 @@ int main(string[] args)
 int cmdGenerateHtml(string[] args)
 {
 	string macrofile;
+	bool moduleTree;
 	getopt(args,
 		//config.passThrough,
-		"std-macros", &macrofile);
+		"std-macros", &macrofile,
+		"module-tree", &moduleTree);
 
 	if( args.length < 4 ){
 		showUsage(args);
@@ -52,7 +54,9 @@ int cmdGenerateHtml(string[] args)
 	auto docsettings = new DdoxSettings;
 	auto pack = parseDocFile(args[2], docsettings);
 
-	generateHtmlDocs(Path(args[3]), pack);
+	auto gensettings = new GeneratorSettings;
+	gensettings.navPackageTree = moduleTree;
+	generateHtmlDocs(Path(args[3]), pack, gensettings);
 
 	return 0;
 }
@@ -60,9 +64,11 @@ int cmdGenerateHtml(string[] args)
 int cmdServeHtml(string[] args)
 {
 	string macrofile;
+	bool moduleTree;
 	getopt(args,
 		//config.passThrough,
-		"std-macros", &macrofile);
+		"std-macros", &macrofile,
+		"module-tree", &moduleTree);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -76,8 +82,10 @@ int cmdServeHtml(string[] args)
 	auto pack = parseDocFile(args[2], docsettings);
 
 	// register the api routes and start the server
+	auto gensettings = new GeneratorSettings;
+	gensettings.navPackageTree = moduleTree;
 	auto router = new UrlRouter;
-	registerApiDocs(router, pack, "");
+	registerApiDocs(router, pack, "", gensettings);
 
 	writefln("Listening on port 8080...");
 	auto settings = new HttpServerSettings;
@@ -208,12 +216,14 @@ void showUsage(string[] args)
 			writefln(
 `Usage: %s serve-html <ddocx-input-file>
     --std-macros=FILE      File containing DDOC macros that will be available
+    --module-tree          Use a tree instead of a list for module navigation
 `, args[0]);
 			break;
 		case "generate-html":
 			writefln(
 `Usage: %s generate-html <ddocx-input-file> <output-dir>
     --std-macros=FILE      File containing DDOC macros that will be available
+    --module-tree          Use a tree instead of a list for module navigation
 `, args[0]);
 			break;
 		case "filter":

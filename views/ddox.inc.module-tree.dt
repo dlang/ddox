@@ -1,0 +1,13 @@
+- import ddox.entities;
+
+- void moduleNavTree(Package pack)
+	- if( pack !is info.rootPackage )
+		li= pack.name
+	ul.tree-view(class='#{!pack.parent || !pack.parent.parent ? "opened" : "collapsed"}')
+		- foreach(p; pack.packages)
+			- moduleNavTree(p);
+		- foreach(m; pack.modules)
+			li
+				a(href="#{info.linkTo(m)}")= m.name
+
+- moduleNavTree(info.rootPackage);

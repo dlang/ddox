@@ -3,13 +3,17 @@ extends layout
 block defs
 	- import ddox.api;
 	- import ddox.ddoc;
+	- import ddox.entities;
 	- import std.typetuple;
 
 block title
-	- auto title = "module " ~ info.mod.qualifiedName;
+	- auto title = "Module " ~ info.mod.qualifiedName;
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 		
 block body
 	

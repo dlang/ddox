@@ -1,6 +1,8 @@
 body {
 	margin: 0;
 	padding: 0;
+	font-family: "Lucida Sans Unicode", "Lucida Grande", "Open Sans", sans-serif;
+	font-size: 9.5pt;
 }
 
 h1 {
@@ -23,4 +25,21 @@ h1 {
 
 #main-contents {
 	padding: 2em;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+th {
+	text-align: left;
+}
+
+td {
+	border-top: 1px dashed #ddd;
+	border-bottom: 1px dashed #ddd;
+}
+
+col.caption {
+	width: 150pt;
 }

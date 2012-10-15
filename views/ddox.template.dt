@@ -11,10 +11,13 @@ block defs
 	- assert(item !is null);
 
 block title
-	- auto title = item.nestedName ~ " template";
+	- auto title = "Template " ~ item.nestedName;
 	
 block navigation
-	include ddox.module-nav
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
 		
 block body
 	

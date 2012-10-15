@@ -25,9 +25,9 @@ class GeneratorSettings {
 	/pack1/pack2/module1/member.submember.html
 */
 
-void generateHtmlDocs(Path dst_path, Package root)
+void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = null)
 {
-	auto settings = new GeneratorSettings;
+	if( !settings ) settings = new GeneratorSettings;
 
 	string linkTo(Entity ent, size_t level)
 	{
