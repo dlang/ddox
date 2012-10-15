@@ -262,7 +262,9 @@ private void renderTextLine(R)(ref R dst, string line, string[string] macros, st
 				break;
 			case '_':
 				line = line[1 .. $];
-				dst.put(skipIdent(line));
+				auto ident = skipIdent(line);
+				if( ident.length ) dst.put(ident);
+				else dst.put('_');
 				break;
 			case 'a': .. case 'z':
 			case 'A': .. case 'Z':
@@ -384,7 +386,6 @@ private string skipIdent(ref string str)
 			break;
 		i++;
 	}
-	assert(i > 0);
 	auto ret = str[0 .. i];
 	str = str[i .. $];
 	return ret;
