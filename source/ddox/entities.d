@@ -332,6 +332,7 @@ final class EnumMemberDeclaration : Declaration {
 
 	override @property EnumMemberDeclaration dup() { auto ret = new EnumMemberDeclaration(parent, name); ret.docGroup = docGroup; ret.value = value; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
+	@property Type type() { if( !value ) return null; return value.type; }
 
 	this(Entity parent, string name){ super(parent, name); }
 
@@ -344,6 +345,7 @@ final class AliasDeclaration : Declaration {
 
 	override @property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.docGroup = docGroup; ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Alias; }
+	@property Type type() { return targetType; }
 
 	this(Entity parent, string name){ super(parent, name); }
 

@@ -36,24 +36,29 @@ block ddox.body
 								a(id="#{grp.name}", href="#{info.linkTo(grp)}")= grp.name
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
-	- if( hasChild!AliasDeclaration(info.mod) )
-		section
-			h2 Type aliases
-			table
-				col.caption
-				tr
-					th Alias name
-					th Type
-					th Description
-				- foreach( f; getDocGroups!AliasDeclaration(info.mod)  )
+	- alias TypeTuple!(EnumMemberDeclaration, VariableDeclaration, AliasDeclaration) tkinds;
+	- auto tkindnames =      ["Enum values", "Global variables", "Aliases"];
+	- auto tkindnames_sing = ["Enum value",  "Variable",  "Alias"];
+
+	- foreach( i, kind; tkinds )
+		- if( hasChild!kind(info.mod) )
+			section
+				h2 #{tkindnames[i]}
+				table
+					col.caption
 					tr
-						td
-							a(id="#{f.name}")
-							|= f.name
-						td
-							- if( f.targetType )
-								|!= info.formatType(f.targetType)
-						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
+						th #{tkindnames_sing[i]} name
+						th Type
+						th Description
+					- foreach( f; getDocGroups!kind(info.mod)  )
+						tr
+							td
+								a(id="#{f.name}")
+								|= f.name
+							td
+								- if( f.type )
+									|!= info.formatType(f.type)
+							td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
 	!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
 	!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
