@@ -331,7 +331,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	if( line[0] >= '0' && line[0] <= '9' ){
 		int pidx = line[0]-'0';
 		if( pidx < params.length )
-			dst.put(params[pidx]);
+			dst.put(strip(params[pidx]));
 		line = line[1 .. $];
 	} else if( line[0] == '+' ){
 		if( params.length ){
@@ -373,7 +373,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 				args ~= argtext.data();
 			}
 		}
-		args = join(args) ~ args;
+		args = join(args, ",") ~ args;
 
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
@@ -394,7 +394,7 @@ private string[] splitParams(string ln)
 	size_t i = 0, start = 0;
 	while(i < ln.length){
 		if( ln[i] == ',' ){
-			ret ~= strip(ln[start .. i]);
+			ret ~= ln[start .. i];
 			start = ++i;
 		} else if( ln[i] == '(' ){
 			i++;
@@ -405,7 +405,7 @@ private string[] splitParams(string ln)
 			}
 		} else i++;
 	}
-	if( i > start ) ret ~= strip(ln[start .. i]);
+	if( i > start ) ret ~= ln[start .. i];
 	return ret;
 }
 
