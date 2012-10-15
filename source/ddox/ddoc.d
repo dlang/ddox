@@ -255,72 +255,91 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, int hlevel,
 private void renderTextLine(R)(ref R dst, string line, string[string] macros, string[] params = null)
 {
 	while( line.length > 0 ){
-		if( line[0] != '$' ){
-			dst.put(line[0]);
-			line = line[1 .. $];
-			continue;
+		switch( line[0] ){
+			default:
+				dst.put(line[0]);
+				line = line[1 .. $];
+				break;
+			case '_':
+				line = line[1 .. $];
+				dst.put(skipIdent(line));
+				break;
+			case 'a': .. case 'z':
+			case 'A': .. case 'Z':
+				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
+				auto ident = skipIdent(line);
+				// TODO: check for semantic correspondence
+				dst.put(ident);
+				break;
+			case '$':
+				renderMacro(dst, line, macros, params);
+				break;
+		}
+	}
+}
+
+/// private
+private void renderMacro(R)(ref R dst, ref string line, string[string] macros, string[] params = null)
+{
+	line = line[1 .. $];
+	if( line.length < 1) return;
+
+	if( line[0] >= '0' && line[0] <= '9' ){
+		int pidx = line[0]-'0';
+		if( pidx < params.length )
+			dst.put(params[pidx]);
+		line = line[1 .. $];
+	} else if( line[0] == '+' ){
+		if( params.length ){
+			auto idx = params[0].countUntil(',');
+			if( idx >= 0 ) dst.put(params[0][idx+1 .. $]);
+		}
+		line = line[1 .. $];
+	} else if( line[0] == '(' ){
+		line = line[1 .. $];
+		int l = 1;
+		size_t cidx = 0;
+		for( cidx = 0; cidx < line.length && l > 0; cidx++ ){
+			if( line[cidx] == '(' ) l++;
+			else if( line[cidx] == ')' ) l--;
+		}
+		if( l > 0 ){
+			logDebug("Unmatched parenthesis in DDOC comment: %s", line[0 .. cidx]);
+			return;
+		}
+		if( cidx < 1 ){
+			logDebug("Empty macro parens.");
+			return;
 		}
 
-		line = line[1 .. $];
-		if( line.length < 1) continue;
+		auto mnameidx = line[0 .. cidx-1].countUntilAny(" \t\r\n");
+		if( mnameidx < 0 ) mnameidx = cidx-1;
+		if( mnameidx == 0 ){
+			logDebug("Macro call in DDOC comment is missing macro name.");
+			return;
+		}
+		auto mname = line[0 .. mnameidx];
 
-		if( line[0] >= '0' && line[0] <= '9' ){
-			int pidx = line[0]-'0';
-			if( pidx < params.length )
-				dst.put(params[pidx]);
-			line = line[1 .. $];
-		} else if( line[0] == '+' ){
-			if( params.length ){
-				auto idx = params[0].countUntil(',');
-				if( idx >= 0 ) dst.put(params[0][idx+1 .. $]);
+		string[] args;
+		if( mnameidx+1 < cidx ){
+			auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
+			foreach( arg; rawargs ){
+				auto argtext = appender!string();
+				renderTextLine(argtext, arg, macros, params);
+				args ~= argtext.data();
 			}
-			line = line[1 .. $];
-		} else if( line[0] == '(' ){
-			line = line[1 .. $];
-			int l = 1;
-			size_t cidx = 0;
-			for( cidx = 0; cidx < line.length && l > 0; cidx++ ){
-				if( line[cidx] == '(' ) l++;
-				else if( line[cidx] == ')' ) l--;
-			}
-			if( l > 0 ){
-				logDebug("Unmatched parenthesis in DDOC comment: %s", line[0 .. cidx]);
-				continue;
-			}
-			if( cidx < 1 ){
-				logDebug("Empty macro parens.");
-				continue;
-			}
+		}
+		args = join(args) ~ args;
 
-			auto mnameidx = line[0 .. cidx-1].countUntilAny(" \t\r\n");
-			if( mnameidx < 0 ) mnameidx = cidx-1;
-			if( mnameidx == 0 ){
-				logDebug("Macro call in DDOC comment is missing macro name.");
-				continue;
-			}
-			auto mname = line[0 .. mnameidx];
+		logTrace("PARAMS for %s: %s", mname, args);
+		line = line[cidx .. $];
 
-			string[] args;
-			if( mnameidx+1 < cidx ){
-				auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
-				foreach( arg; rawargs ){
-					auto argtext = appender!string();
-					renderTextLine(argtext, arg, macros, params);
-					args ~= argtext.data();
-				}
-			}
-			args = join(args) ~ args;
-
-			logTrace("PARAMS for %s: %s", mname, args);
-			line = line[cidx .. $];
-
-			if( auto pm = mname in macros ){
-				logTrace("MACRO %s: %s", mname, *pm);
-				renderTextLine(dst, *pm, macros, args);
-			} else {
-				logTrace("Macro '%s' not found.", mname);
-				if( args.length ) dst.put(args[0]);
-			}
+		if( auto pm = mname in macros ){
+			logTrace("MACRO %s: %s", mname, *pm);
+			renderTextLine(dst, *pm, macros, args);
+		} else {
+			logTrace("Macro '%s' not found.", mname);
+			if( args.length ) dst.put(args[0]);
 		}
 	}
 }
@@ -355,6 +374,20 @@ private string skipWhitespace(ref string ln)
 		ln = ln[1 .. $];
 	}
 	return ret[0 .. ret.length - ln.length];
+}
+
+private string skipIdent(ref string str)
+{
+	size_t i = 0;
+	while( i < str.length ){
+		if( str[i] != '_' && (str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z') && (str[i] < '0' || str[i] > '9') )
+			break;
+		i++;
+	}
+	assert(i > 0);
+	auto ret = str[0 .. i];
+	str = str[i .. $];
+	return ret;
 }
 
 private void parseMacros(ref string[string] macros, in string[] lines)
