@@ -394,7 +394,7 @@ private string[] splitParams(string ln)
 	size_t i = 0, start = 0;
 	while(i < ln.length){
 		if( ln[i] == ',' ){
-			ret ~= ln[start .. i];
+			ret ~= strip(ln[start .. i]);
 			start = ++i;
 		} else if( ln[i] == '(' ){
 			i++;
@@ -405,7 +405,7 @@ private string[] splitParams(string ln)
 			}
 		} else i++;
 	}
-	if( i > start ) ret ~= ln[start .. i];
+	if( i > start ) ret ~= strip(ln[start .. i]);
 	return ret;
 }
 
@@ -423,11 +423,20 @@ private string skipWhitespace(ref string ln)
 private string skipIdent(ref string str)
 {
 	size_t i = 0;
+	bool last_was_ident = false;
 	while( i < str.length ){
+		// dots are allowed if surrounded by identifiers
+		if( last_was_ident && str[i] == '.' ){
+			last_was_ident = false;
+			i++;
+			continue;
+		}
 		if( str[i] != '_' && (str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z') && (str[i] < '0' || str[i] > '9') )
 			break;
+		last_was_ident = true;
 		i++;
 	}
+	if( i > 0 && str[i-1] == '.' ) i--;
 	auto ret = str[0 .. i];
 	str = str[i .. $];
 	return ret;
