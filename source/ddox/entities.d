@@ -36,6 +36,16 @@ class Entity {
 		this.name = name;
 	}
 
+	bool isAncestorOf(in Entity node)
+	const {
+		auto n = rebindable(node);
+		while( n ){
+			if( n.parent is this ) return true;
+			n = n.parent;
+		}
+		return false;
+	}
+
 	abstract void iterateChildren(bool delegate(Entity) del);
 
 	final T findChild(T = Entity)(string name)

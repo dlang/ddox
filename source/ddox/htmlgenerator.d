@@ -110,6 +110,7 @@ class DocPageInfo {
 	string delegate(Entity ent) linkTo;
 	GeneratorSettings settings;
 	Package rootPackage;
+	Entity node;
 	
 	@property bool navPackageTree() const { return settings.navPackageTree; }
 	string formatType(Type tp) { return .formatType(tp, linkTo); }
@@ -131,6 +132,7 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.linkTo = link_to;
 	info.settings = settings;
 	info.rootPackage = root_package;
+	info.node = root_package;
 
 	dst.parseDietFileCompat!("ddox.overview.dt",
 		HttpServerRequest, "req",
@@ -145,6 +147,7 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.settings = settings;
 	info.rootPackage = root_package;
 	info.mod = mod;
+	info.node = mod;
 
 	dst.parseDietFileCompat!("ddox.module.dt",
 		HttpServerRequest, "req",
@@ -158,6 +161,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declar
 	info.linkTo = link_to;
 	info.settings = settings;
 	info.rootPackage = root_package;
+	info.node = item;
 	info.mod = mod;
 	info.item = item;
 	info.docGroup = item.docGroup;

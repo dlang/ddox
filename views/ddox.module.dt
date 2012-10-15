@@ -35,7 +35,7 @@ block body
 					- foreach( grp; getDocGroups!kind(info.mod) )
 						tr
 							td
-								a(href="#{info.linkTo(grp)}")= grp.name
+								a(id="#{grp.name}", href="#{info.linkTo(grp)}")= grp.name
 							td!= formatDdocComment(grp.docGroup.text, 3, sec => sec == "$Short")
 
 	- if( hasChild!AliasDeclaration(info.mod) )
@@ -49,7 +49,9 @@ block body
 					th Description
 				- foreach( f; getDocGroups!AliasDeclaration(info.mod)  )
 					tr
-						td= f.name
+						td
+							a(id="#{f.name}")
+							|= f.name
 						td
 							- if( f.targetType )
 								|!= info.formatType(f.targetType)
