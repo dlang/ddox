@@ -13,4 +13,5 @@ function toggleTree()
 	} else {
 		node.children("ul").show();
 	}
+	return false;
 }
