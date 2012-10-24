@@ -290,7 +290,7 @@ private struct Parser
 		assert(cidx > 0 && name.endsWith(')'), "Template name must be of the form name(args)");
 
 		auto ret = new TemplateDeclaration(parent, name[0 .. cidx]);
-		ret.templateArgs = name[cidx+1 .. $-1];
+		ret.templateArgs = name[cidx .. $];
 		ret.members = parseDeclList(json.members, ret);
 		return ret;
 	}

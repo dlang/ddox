@@ -53,8 +53,7 @@ block ddox.body
 					- foreach( f; getDocGroups!kind(info.mod)  )
 						tr
 							td
-								a(id="#{f.name}")
-								|= f.name
+								a(id="#{f.name}", href="#{info.linkTo(f)}")= f.name
 							td
 								- if( f.type )
 									|!= info.formatType(f.type)
