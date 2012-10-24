@@ -484,7 +484,7 @@ private struct Parser
 					nested_name = null;
 				} else {
 					enforce(i > 0, "Expected identifier but got "~tokens.front);
-					type.typeName = join(tokens[start .. end], ".");
+					type.typeName = join(tokens[start .. end]);
 					//type.typeDecl = cast(Declaration)sc.lookup(type.typeName);
 					tokens.popFrontN(i);
 
