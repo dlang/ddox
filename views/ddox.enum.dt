@@ -34,7 +34,8 @@ block ddox.body
 				th Description
 			- foreach( mem; enum_item.members )
 				tr
-					td= mem.name
+					td
+						a(href="#{info.linkTo(mem)}")= mem.name
 					td!= info.formatDoc(mem.docGroup, 3, sec => sec == "$Short")
 
 	|!= info.formatDoc(info.item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
