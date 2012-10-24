@@ -177,6 +177,10 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declar
 
 	switch( info.item.kind ){
 		default: logWarn("Unknown API item kind: %s", item.kind); return;
+		case DeclarationKind.Variable:
+		case DeclarationKind.EnumMember:
+			dst.parseDietFileCompat!("ddox.variable.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			break;
 		case DeclarationKind.Function:
 			dst.parseDietFileCompat!("ddox.function.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;

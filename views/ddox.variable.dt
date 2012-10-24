@@ -1,0 +1,50 @@
+extends ddox.layout
+
+block ddox.defs
+	- import ddox.api;
+	- import std.algorithm;
+
+block ddox.title
+	- auto title = (cast(CompositeTypeDeclaration)info.item.parent ? "Field " : "Variable ") ~ info.item.nestedName;
+	
+block ddox.navigation
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
+		
+block ddox.body
+	- auto docgroup = info.docGroup;
+
+	section!= info.formatDoc(docgroup, 2, sec => sec == "$Short" || sec == "$Long")
+	
+	section
+		h2 Declaration
+		pre.code.prettyprint.lang-d.prototype
+			- Type type;
+			- Value value;
+			- if( auto var = cast(VariableDeclaration)info.item )
+				- type = var.type;
+				- value = var.initializer;
+			- else if( auto ev = cast(EnumMemberDeclaration)info.item )
+				- type = ev.type;
+				- value = ev.value;
+
+			- if( auto ctd = cast(Declaration)info.item.parent )
+				|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
+			- else
+				|<a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>
+			|{
+			|	// ...
+			- if( value && value.valueString.length )
+				|	!{info.formatType(type)} #{info.item.name} = #{value.valueString};
+			- else if( type )
+				|	!{info.formatType(type)} #{info.item.name};
+			- else
+				|	#{info.item.name};
+			|	// ...
+			|}
+
+	|!= info.formatDoc(docgroup, 2, sec => sec != "$Short" && sec != "$Long")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
+	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
