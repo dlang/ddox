@@ -84,7 +84,7 @@ body {
 		generateDeclPage(res.bodyWriter, pack, mod, item, settings, ent => linkTo(ent, 1), req);
 	}
 
-	if( path_prefix.length ) router.get(path_prefix, staticRedirect("path_prefix/"));
+	if( path_prefix.length ) router.get(path_prefix, staticRedirect(path_prefix~"/"));
 	router.get(path_prefix~"/", &showApi);
 	router.get(path_prefix~"/:modulename", delegate(req, res){ res.redirect((path_prefix.length ? path_prefix ~ "/" : "/api/")~req.params["modulename"]~"/"); });
 	router.get(path_prefix~"/:modulename/", &showApiModule);
