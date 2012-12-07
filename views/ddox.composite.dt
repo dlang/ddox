@@ -50,14 +50,39 @@ block ddox.body
 	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
 
+	- FunctionDeclaration[] properties, methods, constructors;
+	- foreach( itm; getDocGroups!FunctionDeclaration(item) )
+		- if( itm.hasAttribute("@property") )
+			- properties ~= itm;
+		- else if( itm.name != "this" )
+			- methods ~= itm;
+		- else
+			- constructors ~= itm;
+
+	- if( constructors.length )
+		section
+			h2 Constructors
+			table
+				col.caption
+				tr
+					th Name
+					th Description
+				- foreach( p; constructors )
+					tr
+						td
+							a(href="#{info.linkTo(p)}")= p.name
+							- if( p.inheritingDecl )
+								| [inherited]
+						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
+
 	- if( hasChild!VariableDeclaration(item) )
 		section
 			h2 Fields
 			table
 				col.caption
 				tr
-					th Field name
-					th Field Type
+					th Name
+					th Type
 					th Descrption
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
@@ -66,17 +91,13 @@ block ddox.body
 						td!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
-	- FunctionDeclaration[] properties, methods;
-	- foreach( itm; getDocGroups!FunctionDeclaration(item) )
-		- if( itm.hasAttribute("@property") ) properties ~= itm; else methods ~= itm;
-
 	- if( properties.length )
 		section
 			h2 Properties
 			table
 				col.caption
 				tr
-					th Property name
+					th Name
 					th Type
 					th Description
 				- foreach( p; properties )
@@ -95,7 +116,7 @@ block ddox.body
 			table
 				col.caption
 				tr
-					th Method name
+					th Name
 					th Description
 				- foreach( p; methods )
 					tr
@@ -112,7 +133,7 @@ block ddox.body
 				table
 					col.caption
 					tr
-						th #{kindnames_sing[i]} name
+						th Name
 						th Description
 					- foreach( grp; getDocGroups!kind(item) )
 						tr
