@@ -66,7 +66,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 		while(start < lines.length ){
 			if( getLineType(start) == SECTION ){
 				auto cidx = std.string.indexOf(lines[start], ':');
-				if( !lines[cidx ..$].startsWith("://") )
+				if( !lines[start][cidx .. $].startsWith("://") )
 					break;
 			}
 			if( getLineType(start) == CODE )
