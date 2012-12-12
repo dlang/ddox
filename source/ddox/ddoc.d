@@ -10,9 +10,10 @@ module ddox.ddoc;
 import vibe.core.log;
 import vibe.utils.string;
 
-import std.algorithm;
+import std.algorithm : min;
 import std.array;
 import std.conv;
+import std.string;
 
 
 /**
@@ -48,7 +49,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 		auto ln = strip(lines[i]);
 		if( ln.length == 0 ) return BLANK;
 		else if( ln.length >= 3 && ln.allOf("-") ) return CODE;
-		else if( ln.countUntil(':') > 0 && !ln[0 .. ln.countUntil(':')].anyOf(" \t") ) return SECTION;
+		else if( ln.indexOf(':') > 0 && !ln[0 .. ln.indexOf(':')].anyOf(" \t") ) return SECTION;
 		return TEXT;
 	}
 
@@ -62,7 +63,12 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 
 	int skipSection(int start)
 	{
-		while(start < lines.length && getLineType(start) != SECTION){
+		while(start < lines.length ){
+			if( getLineType(start) == SECTION ){
+				auto cidx = std.string.indexOf(lines[start], ':');
+				if( !lines[cidx ..$].startsWith("://") )
+					break;
+			}
 			if( getLineType(start) == CODE )
 				start = skipCodeBlock(start);
 			else start++;
@@ -102,7 +108,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 	while( i < lines.length ){
 		assert(getLineType(i) == SECTION);
 		auto j = skipSection(i+1);
-		auto pidx = lines[i].countUntil(':');
+		auto pidx = lines[i].indexOf(':');
 		auto sect = strip(lines[i][0 .. pidx]);
 		lines[i] = strip(lines[i][pidx+1 .. $]);
 		if( lines[i].empty ) i++;
@@ -221,7 +227,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		auto ln = strip(lines[i]);
 		if( ln.length == 0 ) return BLANK;
 		else if( ln.length >= 3 &&ln.allOf("-") ) return CODE;
-		else if( ln.countUntil(':') > 0 && !ln[0 .. ln.countUntil(':')].anyOf(" \t") ) return SECTION;
+		else if( ln.indexOf(':') > 0 && !ln[0 .. ln.indexOf(':')].anyOf(" \t") ) return SECTION;
 		return TEXT;
 	}
 
@@ -280,7 +286,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			dst.put("<table><col class=\"caption\"><tr><th>Parameter name</th><th>Description</th></tr>\n");
 			bool in_dt = false;
 			foreach( ln; lines ){
-				auto eidx = ln.countUntil("=");
+				auto eidx = ln.indexOf("=");
 				if( eidx < 0 ){
 					if( in_dt ){
 						dst.put(' ');
@@ -355,7 +361,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		line = line[1 .. $];
 	} else if( line[0] == '+' ){
 		if( params.length ){
-			auto idx = params[0].countUntil(',');
+			auto idx = params[0].indexOf(',');
 			if( idx >= 0 ) dst.put(params[0][idx+1 .. $]);
 		}
 		line = line[1 .. $];
@@ -465,7 +471,7 @@ private string skipIdent(ref string str)
 private void parseMacros(ref string[string] macros, in string[] lines)
 {
 	foreach( ln; lines ){
-		auto pidx = ln.countUntil('=');
+		auto pidx = ln.indexOf('=');
 		if( pidx > 0 ){
 			string name = strip(ln[0 .. pidx]);
 			string value = strip(ln[pidx+1 .. $]);
