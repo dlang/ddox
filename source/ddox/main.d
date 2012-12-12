@@ -36,11 +36,12 @@ int ddoxMain(string[] args)
 
 int cmdGenerateHtml(string[] args)
 {
-	string macrofile;
+	string macrofile, overridemacrofile;
 	bool moduleTree;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
+		"override-macros", &overridemacrofile,
 		"module-tree", &moduleTree);
 
 	if( args.length < 4 ){
@@ -49,6 +50,7 @@ int cmdGenerateHtml(string[] args)
 	}
 
 	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
+	if( overridemacrofile.length ) setOverrideDdocMacroFile(overridemacrofile);
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
@@ -63,11 +65,12 @@ int cmdGenerateHtml(string[] args)
 
 int cmdServeHtml(string[] args)
 {
-	string macrofile;
+	string macrofile, overridemacrofile;
 	bool moduleTree;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
+		"override-macros", &overridemacrofile,
 		"module-tree", &moduleTree);
 
 	if( args.length < 3 ){
@@ -76,6 +79,7 @@ int cmdServeHtml(string[] args)
 	}
 
 	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
+	if( overridemacrofile.length ) setOverrideDdocMacroFile(overridemacrofile);
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
@@ -216,6 +220,8 @@ void showUsage(string[] args)
 			writefln(
 `Usage: %s serve-html <ddocx-input-file>
     --std-macros=FILE      File containing DDOC macros that will be available
+    --override-macros=FILE File containing DDOC macros that will override local
+                           definitions (Macros: section)
     --module-tree          Use a tree instead of a list for module navigation
 `, args[0]);
 			break;
@@ -223,6 +229,8 @@ void showUsage(string[] args)
 			writefln(
 `Usage: %s generate-html <ddocx-input-file> <output-dir>
     --std-macros=FILE      File containing DDOC macros that will be available
+    --override-macros=FILE File containing DDOC macros that will override local
+                           definitions (Macros: section)
     --module-tree          Use a tree instead of a list for module navigation
 `, args[0]);
 			break;

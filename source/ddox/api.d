@@ -31,6 +31,7 @@ class DocGroupContext : DdocContext {
 	}
 
 	@property string docText() { return m_group.text; }
+	@property string[] overrideMacroDefinitions() { return null; }
 	@property string[] defaultMacroDefinitions() { return null; }
 	string lookupScopeSymbolLink(string name)
 	{

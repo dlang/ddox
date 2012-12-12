@@ -111,6 +111,9 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 		i = j;
 	}
 
+	parseMacros(macros, s_overrideMacros);
+	parseMacros(macros, context.overrideMacroDefinitions);
+
 	foreach( s; sections ){
 		if( display_section && !display_section(s.name) ) continue;
 		if( s.name == "$Short") renderTextLine(dst, s.lines[0], context, macros);
@@ -132,6 +135,18 @@ void setDefaultDdocMacroFile(string filename)
 
 
 /**
+	Sets a set of macros that will be available to all calls to formatDdocComment and override local macro definitions.
+*/
+void setOverrideDdocMacroFile(string filename)
+{
+	import vibe.core.file;
+	import vibe.stream.stream;
+	auto text = readAllUtf8(openFile(filename));
+	s_overrideMacros = splitLines(text);
+}
+
+
+/**
 	Provides context information about the documented element.
 */
 interface DdocContext {
@@ -140,6 +155,9 @@ interface DdocContext {
 
 	/// A line array with macro definitions
 	@property string[] defaultMacroDefinitions();
+
+	/// Line array with macro definitions that take precedence over local macros
+	@property string[] overrideMacroDefinitions();
 
 	/// Looks up a symbol in the scope of the documented element and returns a link to it.
 	string lookupScopeSymbolLink(string name);
@@ -155,6 +173,7 @@ private class BareContext : DdocContext {
 
 	@property string docText() { return m_ddoc; }
 	@property string[] defaultMacroDefinitions() { return null; }
+	@property string[] overrideMacroDefinitions() { return null; }
 	string lookupScopeSymbolLink(string name) { return null; }
 }
 
@@ -178,6 +197,7 @@ private struct Section {
 
 private {
 	string[] s_defaultMacros;
+	string[] s_overrideMacros;
 }
 
 /// private
