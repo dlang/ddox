@@ -256,7 +256,8 @@ private struct Parser
 				break;
 			case "class":
 				auto clsdecl = new ClassDeclaration(parent, json.name.get!string);
-				clsdecl.baseClass = parseType(json.base, parent, "Object");
+				if( clsdecl.qualifiedName != "object.Object" )
+					clsdecl.baseClass = parseType(json.base, parent, "Object");
 				foreach( intf; json.interfaces.opt!(Json[]) )
 					clsdecl.derivedInterfaces ~= parseType(intf, parent);
 				ret = clsdecl;
