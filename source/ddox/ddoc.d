@@ -236,13 +236,6 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 
 	int skipBlock(int start)
 	{
-		/*int mlevel = countMacroNesting(lines[start], 0);
-		while(true){
-			start++;
-			if( start >= lines.length ) return start;
-			if( mlevel == 0 && getLineType(start) != TEXT ) return start;
-			mlevel = countMacroNesting(lines[start], mlevel);
-		}*/
 		do {
 			start++;
 		} while(start < lines.length && getLineType(start) == TEXT);
@@ -311,7 +304,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 					if( in_dt ){
 						dst.put(' ');
 						dst.put(ln.strip());
-					} else logWarn("Out of place text in param section: %s", ln.strip());
+					} else if( ln.strip().length ) logWarn("Out of place text in param section: %s", ln.strip());
 				} else {
 					auto pname = ln[0 .. eidx].strip();
 					auto pdesc = ln[eidx+1 .. $].strip();
@@ -434,30 +427,6 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	}
 }
 
-private int countMacroNesting(string line, int start_level)
-{
-	int skipMacro(int l)
-	{
-		size_t cidx = 0;
-		for( cidx = 0; cidx < line.length && l > 0; cidx++ ){
-			if( line[cidx] == '(' ) l++;
-			else if( line[cidx] == ')' ) l--;
-		}
-		line = line[cidx .. $];
-		return l;
-	}
-
-	if( auto l = skipMacro(start_level) ) return l;
-
-	while( !line.empty ){
-		if( line.startsWith("$(") ){
-			line = line[2 .. $];
-			if( auto l = skipMacro(1) ) return l;
-		} else line.popFront();
-	}
-	return 0;
-}
-
 private string[] splitParams(string ln)
 {
 	string[] ret;
@@ -514,12 +483,28 @@ private string skipIdent(ref string str)
 
 private void parseMacros(ref string[string] macros, in string[] lines)
 {
+	string lastname;
 	foreach( ln; lines ){
 		auto pidx = ln.indexOf('=');
+		string name;
 		if( pidx > 0 ){
-			string name = strip(ln[0 .. pidx]);
+			name = ln[0 .. pidx].strip();
+			bool badname = false;
+			foreach( ch; name ){
+				if( ch >= 'A' && ch <= 'Z' ) continue;
+				if( ch >= '0' && ch <= 'Z' ) continue;
+				if( ch == '_' ) continue;
+				name = null;
+				break;
+			}
+		}
+
+		if( name.length ){
 			string value = strip(ln[pidx+1 .. $]);
 			macros[name] = value;
+			lastname = name;
+		} else if( lastname.length ){
+			macros[lastname] ~= "\n" ~ strip(ln);
 		}
 	}
 }
