@@ -210,6 +210,7 @@ private {
 private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext context, int hlevel, string[string] macros)
 {
 	void putHeader(string hdr){
+		if( hlevel <= 0 ) return;
 		dst.put("<section>");
 		if( sect.length > 0 && sect[0] != '$' ){
 			dst.put("<h"~to!string(hlevel)~">");
@@ -219,6 +220,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	}
 
 	void putFooter(){
+		if( hlevel <= 0 ) return;
 		dst.put("</section>\n");
 	}
 
@@ -260,10 +262,11 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 					default: assert(false, "Unexpected line type "~to!string(lntype)~": "~lines[i]);
 					case SECTION:
 					case TEXT:
-						dst.put("<p>");
+						bool p = lines.length > 1 || hlevel >= 1;
+						if( p ) dst.put("<p>");
 						auto j = skipBlock(i);
 						renderTextLine(dst, lines[i .. j].join("\n"), context, macros);
-						dst.put("</p>\n");
+						if( p ) dst.put("</p>\n");
 						i = j;
 						break;
 					case CODE:
