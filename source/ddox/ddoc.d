@@ -274,6 +274,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						bool first = true;
 						foreach( ln; lines[i .. j] ){
 							if( !first ) dst.put(' ');
+							else first = false;
 							dst.put(ln.strip());
 						}
 						if( p ) dst.put("</p>\n");
