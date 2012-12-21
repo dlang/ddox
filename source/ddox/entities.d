@@ -35,7 +35,7 @@ class Entity {
 
 	@property string moduleName()
 	const {
-		Rebindable!(const(Entity)) e = parent;
+		Rebindable!(const(Entity)) e = this;
 		while( e && !cast(Module)e ) e = e.parent;
 		if( e ) return e.qualifiedName;
 		return null;
