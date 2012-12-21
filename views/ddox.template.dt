@@ -24,7 +24,7 @@ block ddox.description
 		h2 Arguments
 
 		pre.code.prettyprint.lang-d.prototype
-			|template #{item.name}(#{item.templateArgs});
+			|template #{item.name}#{item.templateArgs};
 
 block ddox.members
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
