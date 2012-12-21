@@ -15,15 +15,18 @@ block ddox.navigation
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
-		
-block ddox.body
-	
-	section!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
 
+block ddox.description
+	section!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
+		
+block ddox.sections
 	p The enum base type is
 		code.prettyprint.lang-d!= info.formatType(enum_item.baseType)
 		|.
 	
+	|!= info.formatDoc(info.item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
+
+block ddox.members
 	section
 		h2 Enum members
 
@@ -38,6 +41,10 @@ block ddox.body
 						a(href="#{info.linkTo(mem)}")= mem.name
 					td!= info.formatDoc(mem.docGroup, 3, sec => sec == "$Short")
 
-	|!= info.formatDoc(info.item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
+
+block ddox.authors
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
+block ddox.license
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
+block ddox.copyright
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")

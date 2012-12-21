@@ -12,7 +12,7 @@ block ddox.navigation
 	- else
 		include ddox.inc.module-list
 
-block ddox.body
+block ddox.members
 
 	- void moduleInfoRec(Package pack)
 		- foreach( p; pack.packages )

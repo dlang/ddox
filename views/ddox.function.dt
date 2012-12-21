@@ -13,7 +13,7 @@ block ddox.navigation
 	- else
 		include ddox.inc.module-list
 		
-block ddox.body
+block ddox.members
 	- auto multi = info.docGroups.length > 1;
 
 	- foreach( docgroup; info.docGroups )
@@ -48,5 +48,10 @@ block ddox.body
 						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}();
 
 		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
+
+block ddox.authors
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
+block ddox.license
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
+block ddox.copyright
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")

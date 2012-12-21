@@ -17,8 +17,7 @@ block ddox.navigation
 	- else
 		include ddox.inc.module-list
 		
-block ddox.body
-	
+block ddox.description		
 	section!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
 
 	section
@@ -27,6 +26,7 @@ block ddox.body
 		pre.code.prettyprint.lang-d.prototype
 			|template #{item.name}(#{item.templateArgs});
 
+block ddox.members
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Union",  "Enum",  "Alias",   "Template"];
@@ -66,6 +66,12 @@ block ddox.body
 									| [inherited]
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
-	|!= info.formatDoc(item.docGroup, 2, sec => sec != "$Short" && sec != "$Long")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
+block ddox.sections
+	|!= info.formatDoc(item.docGroup, 2, sec => sec != "$Short" && sec != "$Long" && sec != "Authors" && sec != "License" && sec != "Copyright")
+
+block ddox.authors
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
+block ddox.license
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
+block ddox.copyright
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")

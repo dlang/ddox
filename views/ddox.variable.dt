@@ -12,12 +12,11 @@ block ddox.navigation
 		include ddox.inc.module-tree
 	- else
 		include ddox.inc.module-list
-		
-block ddox.body
-	- auto docgroup = info.docGroup;
 
+block ddox.description		
+	- auto docgroup = info.docGroup;
 	section!= info.formatDoc(docgroup, 2, sec => sec == "$Short" || sec == "$Long")
-	
+
 	section
 		h2 Declaration
 		pre.code.prettyprint.lang-d.prototype
@@ -46,6 +45,12 @@ block ddox.body
 			|	// ...
 			|}
 
+block ddox.sections
 	|!= info.formatDoc(docgroup, 2, sec => sec != "$Short" && sec != "$Long")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "Authors")
-	|!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "License" || sec == "Copyright")
+
+block ddox.authors
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
+block ddox.license
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
+block ddox.copyright
+	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")
