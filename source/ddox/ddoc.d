@@ -235,10 +235,13 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 
 	int skipBlock(int start)
 	{
-		do {
+		int mlevel = countMacroNesting(lines[start], 0);
+		while(true){
 			start++;
-		} while(start < lines.length && getLineType(start) == TEXT);
-		return start;
+			if( start >= lines.length ) return start;
+			if( mlevel == 0 && getLineType(start) != TEXT ) return start;
+			mlevel = countMacroNesting(lines[start], mlevel);
+		}
 	}
 
 	int skipCodeBlock(int start)
@@ -415,6 +418,30 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			if( args.length ) dst.put(args[0]);
 		}
 	}
+}
+
+private int countMacroNesting(string line, int start_level)
+{
+	int skipMacro(int l)
+	{
+		size_t cidx = 0;
+		for( cidx = 0; cidx < line.length && l > 0; cidx++ ){
+			if( line[cidx] == '(' ) l++;
+			else if( line[cidx] == ')' ) l--;
+		}
+		line = line[cidx .. $];
+		return l;
+	}
+
+	if( auto l = skipMacro(start_level) ) return l;
+
+	while( !line.empty ){
+		if( line.startsWith("$(") ){
+			line = line[2 .. $];
+			if( auto l = skipMacro(1) ) return l;
+		} else line.popFront();
+	}
+	return 0;
 }
 
 private string[] splitParams(string ln)
