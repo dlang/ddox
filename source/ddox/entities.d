@@ -16,7 +16,14 @@ class Entity {
 	string name;
 	DocGroup docGroup;
 
-	@property string qualifiedName() const {
+	this(Entity parent, string name)
+	{
+		this.parent = parent;
+		this.name = name;
+	}
+
+	@property string qualifiedName()
+	const {
 		string s = name;
 		Rebindable!(const(Entity)) e = parent;
 		while( e && e.parent ){
@@ -26,7 +33,16 @@ class Entity {
 		return s;
 	}
 
-	@property string nestedName() const {
+	@property string moduleName()
+	const {
+		Rebindable!(const(Entity)) e = parent;
+		while( e && !cast(Module)e ) e = e.parent;
+		if( e ) return e.qualifiedName;
+		return null;
+	}
+
+	@property string nestedName()
+	const {
 		string s = name;
 		Rebindable!(const(Entity)) e = parent;
 		while( e && e.parent ){
@@ -35,12 +51,6 @@ class Entity {
 			e = e.parent;
 		}
 		return s;
-	}
-
-	this(Entity parent, string name)
-	{
-		this.parent = parent;
-		this.name = name;
 	}
 
 	bool isAncestorOf(in Entity node)
