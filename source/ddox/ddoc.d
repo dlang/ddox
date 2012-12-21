@@ -10,7 +10,7 @@ module ddox.ddoc;
 import vibe.core.log;
 import vibe.utils.string;
 
-import std.algorithm : min;
+import std.algorithm : map, min;
 import std.array;
 import std.conv;
 import std.string;
@@ -66,6 +66,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 		while(start < lines.length ){
 			if( getLineType(start) == SECTION ){
 				auto cidx = std.string.indexOf(lines[start], ':');
+				// FIXME: should this be if( !lines[start][0 .. cidx].anyOf(" \t") && ... ) ?
 				if( !lines[start][cidx .. $].startsWith("://") )
 					break;
 			}
@@ -93,7 +94,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 	while( i < lines.length && getLineType(i) == BLANK ) i++;
 	if( i < lines.length && getLineType(i) == TEXT ){
 		auto j = skipBlock(i);
-		sections ~= Section("$Short", lines[i .. j].join("\n"));
+		sections ~= Section("$Short", lines[i .. j].map!(l => l.strip()).join(" "));
 		i = j;
 	}
 
@@ -214,7 +215,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		dst.put("<section>");
 		if( sect.length > 0 && sect[0] != '$' ){
 			dst.put("<h"~to!string(hlevel)~">");
-			dst.put(hdr);
+			foreach( ch; hdr ) dst.put(ch == '_' ? ' ' : ch);
 			dst.put("</h"~to!string(hlevel)~">\n");
 		}
 	}
@@ -235,14 +236,23 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 
 	int skipBlock(int start)
 	{
-		int mlevel = countMacroNesting(lines[start], 0);
+		/*int mlevel = countMacroNesting(lines[start], 0);
 		while(true){
 			start++;
 			if( start >= lines.length ) return start;
 			if( mlevel == 0 && getLineType(start) != TEXT ) return start;
 			mlevel = countMacroNesting(lines[start], mlevel);
-		}
+		}*/
+		do {
+			start++;
+		} while(start < lines.length && getLineType(start) == TEXT);
+		return start;
 	}
+
+	// run all macros first
+	auto tmpdst = appender!string();
+	renderTextLine(tmpdst, lines.join("\n"), context, macros);
+	lines = splitLines(tmpdst.data);
 
 	int skipCodeBlock(int start)
 	{
@@ -268,7 +278,11 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						bool p = lines.length > 1 || hlevel >= 1;
 						if( p ) dst.put("<p>");
 						auto j = skipBlock(i);
-						renderTextLine(dst, lines[i .. j].join("\n"), context, macros);
+						bool first = true;
+						foreach( ln; lines[i .. j] ){
+							if( !first ) dst.put(' ');
+							dst.put(ln.strip());
+						}
 						if( p ) dst.put("</p>\n");
 						i = j;
 						break;
