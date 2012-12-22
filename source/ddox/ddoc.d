@@ -14,6 +14,7 @@ import std.algorithm : map, min;
 import std.array;
 import std.conv;
 import std.string;
+import std.uni : isAlpha;
 
 
 /**
@@ -49,7 +50,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 		auto ln = strip(lines[i]);
 		if( ln.length == 0 ) return BLANK;
 		else if( ln.length >= 3 && ln.allOf("-") ) return CODE;
-		else if( ln.indexOf(':') > 0 && !ln[0 .. ln.indexOf(':')].anyOf(" \t") ) return SECTION;
+		else if( ln.indexOf(':') > 0 && isIdent(ln[0 .. ln.indexOf(':')]) ) return SECTION;
 		return TEXT;
 	}
 
@@ -64,12 +65,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 	int skipSection(int start)
 	{
 		while(start < lines.length ){
-			if( getLineType(start) == SECTION ){
-				auto cidx = std.string.indexOf(lines[start], ':');
-				// FIXME: should this be if( !lines[start][0 .. cidx].anyOf(" \t") && ... ) ?
-				if( !lines[start][cidx .. $].startsWith("://") )
-					break;
-			}
+			if( getLineType(start) == SECTION ) break;
 			if( getLineType(start) == CODE )
 				start = skipCodeBlock(start);
 			else start++;
@@ -544,50 +540,52 @@ private string skipWhitespace(ref string ln)
 
 private string skipIdent(ref string str)
 {
-	size_t i = 0;
+	string strcopy = str;
+
 	bool last_was_ident = false;
-	while( i < str.length ){
-		// dots are allowed if surrounded by identifiers
-		if( last_was_ident && str[i] == '.' ){
-			last_was_ident = false;
-			i++;
-			continue;
+	while( !str.empty ){
+		auto ch = str.front;
+
+		if( last_was_ident ){
+			// dots are allowed if surrounded by identifiers
+			if( ch == '.' ) last_was_ident = false;
+			else if( ch != '_' && (ch < '0' || ch > '9') && !std.uni.isAlpha(ch) ) break;
+		} else {
+			if( ch != '_' && !std.uni.isAlpha(ch) ) break;
+			last_was_ident = true;
 		}
-		if( str[i] != '_' && (str[i] < 'a' || str[i] > 'z') && (str[i] < 'A' || str[i] > 'Z') && (str[i] < '0' || str[i] > '9') )
-			break;
-		last_was_ident = true;
-		i++;
+		str.popFront();
 	}
-	if( i > 0 && str[i-1] == '.' ) i--;
-	auto ret = str[0 .. i];
-	str = str[i .. $];
-	return ret;
+
+	// if the identifier ended in a '.', remove it again
+	if( str.length != strcopy.length && !last_was_ident )
+		str = strcopy[strcopy.length-str.length-1 .. $];
+	
+	return strcopy[0 .. strcopy.length-str.length];
+}
+
+private bool isIdent(string str)
+{
+	skipIdent(str);
+	return str.length == 0;
 }
 
 private void parseMacros(ref string[string] macros, in string[] lines)
 {
-	string lastname;
-	foreach( ln; lines ){
+	string name;
+	foreach( string ln; lines ){
 		auto pidx = ln.indexOf('=');
-		string name;
 		if( pidx > 0 ){
-			name = ln[0 .. pidx].strip();
-			foreach( ch; name ){
-				if( ch >= 'A' && ch <= 'Z' ) continue;
-				if( ch >= '0' && ch <= 'Z' ) continue;
-				if( ch == '_' ) continue;
-				name = null;
-				break;
+			auto tmpnam = ln[0 .. pidx].strip();
+			if( isIdent(tmpnam) ){
+				name = tmpnam;
+				ln = ln[pidx+1 .. $];
 			}
 		}
 
 		if( name.length ){
-			string value = strip(ln[pidx+1 .. $]);
-			macros[name] = value;
-			lastname = name;
-		} else if( lastname.length ){
-			auto lns = ln.strip();
-			if( lns.length ) macros[lastname] ~= "\n" ~ lns;
+			if( auto pv = name in macros ) *pv ~= "\n" ~ ln.strip();
+			else macros[name] = ln.strip();
 		}
 	}
 }
