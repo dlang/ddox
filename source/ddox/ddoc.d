@@ -574,6 +574,7 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 {
 	string name;
 	foreach( string ln; lines ){
+		if( !ln.strip().length ) continue;
 		auto pidx = ln.indexOf('=');
 		if( pidx > 0 ){
 			auto tmpnam = ln[0 .. pidx].strip();
@@ -584,8 +585,8 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 		}
 
 		if( name.length ){
-			if( auto pv = name in macros ) *pv ~= "\n" ~ ln.strip();
-			else macros[name] = ln.strip();
+			if( auto pv = name in macros ) *pv ~= "\n" ~ ln;
+			else macros[name] = ln;
 		}
 	}
 }
