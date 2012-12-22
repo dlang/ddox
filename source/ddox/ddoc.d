@@ -123,8 +123,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 
 	foreach( s; sections ){
 		if( display_section && !display_section(s.name) ) continue;
-		if( s.name == "$Short") renderTextLine(dst, s.lines[0], context, macros);
-		else parseSection(dst, s.name, s.lines, context, hlevel, macros);
+		parseSection(dst, s.name, s.lines, context, hlevel, macros);
 	}
 }
 
@@ -210,6 +209,8 @@ private {
 /// private
 private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext context, int hlevel, string[string] macros)
 {
+	if( sect == "$Short" ) hlevel = -1;
+
 	void putHeader(string hdr){
 		if( hlevel <= 0 ) return;
 		dst.put("<section>");
@@ -243,9 +244,13 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	}
 
 	// run all macros first
-	auto tmpdst = appender!string();
-	renderTextLine(tmpdst, lines.join("\n"), context, macros);
-	lines = splitLines(tmpdst.data);
+	{
+		//logTrace("MACROS for section %s: %s", sect, macros.keys);
+		auto tmpdst = appender!string();
+		auto text = lines.join("\n");
+		renderMacros(tmpdst, text, context, macros);
+		lines = splitLines(tmpdst.data);
+	}
 
 	int skipCodeBlock(int start)
 	{
@@ -275,7 +280,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						foreach( ln; lines[i .. j] ){
 							if( !first ) dst.put(' ');
 							else first = false;
-							dst.put(ln.strip());
+							renderTextLine(dst, ln.strip(), context);
 						}
 						if( p ) dst.put("</p>\n");
 						i = j;
@@ -285,8 +290,8 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
 						foreach( ln; lines[i+1 .. j] ){
-							dst.put(ln.unindent(base_indent));
-							dst.put("\n");
+							renderCodeLine(dst, ln.unindent(base_indent), context);
+							dst.put('\n');
 						}
 						dst.put("</pre>\n");
 						i = j+1;
@@ -302,20 +307,23 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			foreach( ln; lines ){
 				auto eidx = ln.indexOf("=");
 				if( eidx < 0 ){
+					ln = ln.strip();
 					if( in_dt ){
-						dst.put(' ');
-						dst.put(ln.strip());
-					} else if( ln.strip().length ) logWarn("Out of place text in param section: %s", ln.strip());
+						if( ln.length ){
+							dst.put(' ');
+							renderTextLine(dst, ln, context);
+						}
+					} else if( ln.length ) logWarn("Out of place text in param section: %s", ln);
 				} else {
 					auto pname = ln[0 .. eidx].strip();
 					auto pdesc = ln[eidx+1 .. $].strip();
 					if( in_dt ) dst.put("</td></tr>\n");
-					dst.put("<tr><td><a id=\"");
+					dst.put("<tr><td id=\"");
 					dst.put(pname);
-					dst.put("\"></a>");
+					dst.put("\">");
 					dst.put(pname);
 					dst.put("</td><td>\n");
-					dst.put(pdesc);
+					renderTextLine(dst, pdesc, context);
 					in_dt = true;
 				}
 			}
@@ -328,13 +336,16 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 }
 
 /// private
-private void renderTextLine(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null)
+private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 {
 	while( line.length > 0 ){
 		switch( line[0] ){
 			default:
 				dst.put(line[0]);
 				line = line[1 .. $];
+				break;
+			case '<':
+				dst.put(skipHtmlTag(line));
 				break;
 			case '_':
 				line = line[1 .. $];
@@ -355,16 +366,55 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context, stri
 					dst.put("</code></a>");
 				} else dst.put(ident);
 				break;
-			case '$':
-				renderMacro(dst, line, context, macros, params);
+		}
+	}
+}
+
+/// private
+private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
+{
+	while( line.length > 0 ){
+		switch( line[0] ){
+			default:
+				dst.put(line[0]);
+				line = line[1 .. $];
+				break;
+			case 'a': .. case 'z':
+			case 'A': .. case 'Z':
+				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
+				auto ident = skipIdent(line);
+				auto link = context.lookupScopeSymbolLink(ident);
+				if( link.length ){
+					dst.put("<a href=\"");
+					dst.put(link);
+					dst.put("\">");
+					dst.put(ident);
+					dst.put("</a>");
+				} else dst.put(ident);
 				break;
 		}
 	}
 }
 
 /// private
+private void renderMacros(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null)
+{
+	while( !line.empty ){
+		auto idx = line.indexOf('$');
+		if( idx < 0 ){
+			dst.put(line);
+			return;
+		}
+		dst.put(line[0 .. idx]);
+		line = line[idx .. $];
+		renderMacro(dst, line, context, macros, params);
+	}
+}
+
+/// private
 private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params = null)
 {
+	assert(line[0] == '$');
 	line = line[1 .. $];
 	if( line.length < 1) return;
 
@@ -409,7 +459,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
 			foreach( arg; rawargs ){
 				auto argtext = appender!string();
-				renderTextLine(argtext, arg, context, macros, params);
+				renderMacros(argtext, arg, context, macros, params);
 				args ~= argtext.data();
 			}
 		}
@@ -420,7 +470,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 
 		if( auto pm = mname in macros ){
 			logTrace("MACRO %s: %s", mname, *pm);
-			renderTextLine(dst, *pm, context, macros, args);
+			renderMacros(dst, *pm, context, macros, args);
 		} else {
 			logTrace("Macro '%s' not found.", mname);
 			if( args.length ) dst.put(args[0]);
@@ -447,6 +497,38 @@ private string[] splitParams(string ln)
 	}
 	if( i > start ) ret ~= ln[start .. i];
 	return ret;
+}
+
+private string skipHtmlTag(ref string ln)
+{
+	assert(ln[0] == '<');
+
+	// too short for a tag
+	if( ln.length < 3 ) goto no_match;
+
+	// skip HTML comment
+	if( ln.startsWith("<!--") ){
+		auto idx = ln[4 .. $].indexOf("-->");
+		if( idx < 0 ) goto no_match;
+		auto ret = ln[0 .. idx+7];
+		ln = ln[ret.length .. $];
+		return ret;
+	}
+
+	// skip over regular start/end tag
+	if( ln[1].isAlpha() || ln[1] == '/' && ln[2].isAlpha() ){
+		auto idx = ln.indexOf(">");
+		if( idx < 0 ) goto no_match;
+		auto ret = ln[0 .. idx+1];
+		ln = ln[ret.length .. $];
+		return ret;
+	}
+
+no_match:
+	// found no match, return escaped '<'
+	logTrace("Found stray '<' in DDOC string.");
+	ln.popFront();
+	return "$(LT)";
 }
 
 private string skipWhitespace(ref string ln)
@@ -490,7 +572,6 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 		string name;
 		if( pidx > 0 ){
 			name = ln[0 .. pidx].strip();
-			bool badname = false;
 			foreach( ch; name ){
 				if( ch >= 'A' && ch <= 'Z' ) continue;
 				if( ch >= '0' && ch <= 'Z' ) continue;
@@ -505,7 +586,8 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 			macros[name] = value;
 			lastname = name;
 		} else if( lastname.length ){
-			macros[lastname] ~= "\n" ~ strip(ln);
+			auto lns = ln.strip();
+			if( lns.length ) macros[lastname] ~= "\n" ~ lns;
 		}
 	}
 }
