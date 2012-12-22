@@ -269,8 +269,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 					default: assert(false, "Unexpected line type "~to!string(lntype)~": "~lines[i]);
 					case SECTION:
 					case TEXT:
-						bool p = lines.length > 1 || hlevel >= 1;
-						if( p ) dst.put("<p>");
+						dst.put("<p>");
 						auto j = skipBlock(i);
 						bool first = true;
 						foreach( ln; lines[i .. j] ){
@@ -278,7 +277,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 							else first = false;
 							renderTextLine(dst, ln.strip(), context);
 						}
-						if( p ) dst.put("</p>\n");
+						dst.put("</p>\n");
 						i = j;
 						break;
 					case CODE:
@@ -299,32 +298,39 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		case "Params":
 			putHeader("Parameters");
 			dst.put("<table><col class=\"caption\"><tr><th>Parameter name</th><th>Description</th></tr>\n");
-			bool in_dt = false;
-			foreach( ln; lines ){
+			bool in_parameter = false;
+			string desc;
+			foreach( string ln; lines ){
+				// check if the line starts a parameter documentation
+				string name;
 				auto eidx = ln.indexOf("=");
-				if( eidx < 0 ){
-					ln = ln.strip();
-					if( in_dt ){
-						if( ln.length ){
-							dst.put(' ');
-							renderTextLine(dst, ln, context);
-						}
-					} else if( ln.length ) logWarn("Out of place text in param section: %s", ln);
-				} else {
-					auto pname = ln[0 .. eidx].strip();
-					auto pdesc = ln[eidx+1 .. $].strip();
-					if( in_dt ) dst.put("</td></tr>\n");
+				if( eidx > 0 ) name = ln[0 .. eidx].strip();
+				if( !isIdent(name) ) name = null;
+
+				// if it does, start a new row
+				if( name.length ){
+					if( in_parameter ){
+						renderTextLine(dst, desc, context);
+						dst.put("</td></tr>\n");
+					}
+
 					dst.put("<tr><td id=\"");
-					dst.put(pname);
+					dst.put(name);
 					dst.put("\">");
-					dst.put(pname);
-					dst.put("</td><td>\n");
-					renderTextLine(dst, pdesc, context);
-					in_dt = true;
-				}
+					dst.put(name);
+					dst.put("</td><td>");
+
+					desc = ln[eidx+1 .. $];
+					in_parameter = true;
+				} else if( in_parameter ) desc ~= "\n" ~ ln;
 			}
-			if( in_dt ) dst.put("</td>\n");
-			dst.put("</tr></table>\n");
+
+			if( in_parameter ){
+				renderTextLine(dst, desc, context);
+				dst.put("</td></tr>\n");
+			}
+
+			dst.put("</table>\n");
 			putFooter();
 			break;
 	}
@@ -575,19 +581,20 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 	string name;
 	foreach( string ln; lines ){
 		if( !ln.strip().length ) continue;
+		// macro definitions are of the form IDENT = ...
 		auto pidx = ln.indexOf('=');
 		if( pidx > 0 ){
 			auto tmpnam = ln[0 .. pidx].strip();
 			if( isIdent(tmpnam) ){
+				// got new macro definition
 				name = tmpnam;
-				ln = ln[pidx+1 .. $];
+				macros[name] = ln[pidx+1 .. $];
+				continue;
 			}
 		}
 
-		if( name.length ){
-			if( auto pv = name in macros ) *pv ~= "\n" ~ ln;
-			else macros[name] = ln;
-		}
+		// append to previous macro definition, if any
+		if( name.length ) macros[name] ~= "\n" ~ ln;
 	}
 }
 
