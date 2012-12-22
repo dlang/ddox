@@ -31,7 +31,7 @@ block ddox.members
 				table
 					col.caption
 					tr
-						th #{kindnames_sing[i]} name
+						th Name
 						th Description
 					- foreach( grp; getDocGroups!kind(info.mod) )
 						tr
@@ -50,7 +50,7 @@ block ddox.members
 				table
 					col.caption
 					tr
-						th #{tkindnames_sing[i]} name
+						th Name
 						th Type
 						th Description
 					- foreach( f; getDocGroups!kind(info.mod)  )
