@@ -5,7 +5,11 @@ block title
 	block ddox.title
 
 block navigation
-	block ddox.navigation
+	- if( info.settings.navPackageTree )
+		include ddox.inc.module-tree
+	- else
+		include ddox.inc.module-list
+
 
 block body
 	block ddox.description

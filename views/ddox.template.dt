@@ -11,12 +11,6 @@ block ddox.defs
 block ddox.title
 	- auto title = "Template " ~ item.nestedName;
 	
-block ddox.navigation
-	- if( info.settings.navPackageTree )
-		include ddox.inc.module-tree
-	- else
-		include ddox.inc.module-list
-		
 block ddox.description		
 	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")
 

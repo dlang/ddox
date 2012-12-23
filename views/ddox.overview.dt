@@ -6,12 +6,6 @@ block ddox.defs
 block ddox.title
 	- auto title = "API documentation";
 	
-block ddox.navigation
-	- if( info.settings.navPackageTree )
-		include ddox.inc.module-tree
-	- else
-		include ddox.inc.module-list
-
 block ddox.members
 
 	- void moduleInfoRec(Package pack)

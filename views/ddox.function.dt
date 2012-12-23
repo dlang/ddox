@@ -7,12 +7,6 @@ block ddox.defs
 block ddox.title
 	- auto title = (cast(CompositeTypeDeclaration)info.item.parent ? "Method " : "Function ") ~ info.item.nestedName;
 	
-block ddox.navigation
-	- if( info.settings.navPackageTree )
-		include ddox.inc.module-tree
-	- else
-		include ddox.inc.module-list
-		
 block ddox.members
 	- auto multi = info.docGroups.length > 1;
 
