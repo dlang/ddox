@@ -269,7 +269,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 					default: assert(false, "Unexpected line type "~to!string(lntype)~": "~lines[i]);
 					case SECTION:
 					case TEXT:
-						dst.put("<p>");
+						if( hlevel >= 0 ) dst.put("<p>");
 						auto j = skipBlock(i);
 						bool first = true;
 						foreach( ln; lines[i .. j] ){
@@ -277,7 +277,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 							else first = false;
 							renderTextLine(dst, ln.strip(), context);
 						}
-						dst.put("</p>\n");
+						if( hlevel >= 0 ) dst.put("</p>\n");
 						i = j;
 						break;
 					case CODE:
@@ -297,7 +297,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			break;
 		case "Params":
 			putHeader("Parameters");
-			dst.put("<table><col class=\"caption\"><tr><th>Parameter name</th><th>Description</th></tr>\n");
+			dst.put("<table><col class=\"caption\"><tr><th>Name</th><th>Description</th></tr>\n");
 			bool in_parameter = false;
 			string desc;
 			foreach( string ln; lines ){
