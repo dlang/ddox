@@ -90,7 +90,7 @@ void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool d
 	while( i < lines.length && getLineType(i) == BLANK ) i++;
 	if( i < lines.length && getLineType(i) == TEXT ){
 		auto j = skipBlock(i);
-		sections ~= Section("$Short", lines[i .. j].map!(l => l.strip()).join(" "));
+		sections ~= Section("$Short", lines[i .. j].map!(l => l.strip())().join(" "));
 		i = j;
 	}
 
