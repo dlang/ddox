@@ -15,7 +15,10 @@ block ddox.navigation
 
 block ddox.description		
 	- auto docgroup = info.docGroup;
-	section!= info.formatDoc(docgroup, 2, sec => sec == "$Short" || sec == "$Long")
+
+	p!= info.formatDoc(docgroup, 2, sec => sec == "$Short")
+
+	|!= info.formatDoc(docgroup, 2, sec => sec == "$Long")
 
 	section
 		h2 Declaration

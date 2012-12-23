@@ -18,7 +18,9 @@ block ddox.navigation
 		include ddox.inc.module-list
 		
 block ddox.description		
-	section!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
+	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")
+
+	|!= info.formatDoc(item.docGroup, 2, sec => sec == "$Long")
 
 	section
 		h2 Arguments

@@ -11,7 +11,7 @@ block ddox.defs
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
 block ddox.title
-	- auto title = to!string(item.kind) ~ " " ~item.nestedName ~ (item.templateArgs.length ? "!" ~ item.templateArgs : null);
+	- auto title = to!string(item.kind) ~ " " ~ item.nestedName ~ (item.templateArgs.length ? "!" ~ item.templateArgs : null);
 	
 block ddox.navigation
 	- if( info.settings.navPackageTree )
@@ -20,7 +20,9 @@ block ddox.navigation
 		include ddox.inc.module-list
 
 block ddox.description
-	section!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
+	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")
+
+	|!= info.formatDoc(item.docGroup, 2, sec => sec == "$Long")
 
 	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
 		section

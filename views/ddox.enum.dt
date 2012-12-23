@@ -17,7 +17,9 @@ block ddox.navigation
 		include ddox.inc.module-list
 
 block ddox.description
-	section!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short" || sec == "$Long")
+	p!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short")
+
+	|!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Long")
 		
 block ddox.sections
 	p The enum base type is

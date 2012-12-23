@@ -20,13 +20,16 @@ block ddox.members
 		- if( multi )
 			h2 Overload group
 
-		section!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec == "$Short" || sec == "$Long")
+		p!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec == "$Short")
 		
+		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec == "$Long")
+
 		section
+			- auto heading = docgroup.members.length > 1 ? "Prototypes" : "Prototype";
 			- if( multi )
-				h3 Prototypes
+				h3= heading
 			- else
-				h2 Prototypes
+				h2= heading
 			pre.code.prettyprint.lang-d.prototype
 				- auto mems = docgroup.members;
 				- foreach( size_t pi, pd; mems )
@@ -35,7 +38,7 @@ block ddox.members
 					- if( pi > 0 )
 						|
 					- if( proto.parameters.length )
-						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}(
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}(
 						- foreach( size_t i, p; proto.parameters )
 							|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
 						- if( proto.attributes.length )
@@ -43,9 +46,9 @@ block ddox.members
 						- else
 							|);
 					- else if( proto.attributes.length)
-						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}() #{join(proto.attributes, " ")};
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}() #{join(proto.attributes, " ")};
 					- else
-						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs.length ? "("~proto.templateArgs~")" : null}();
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}();
 
 		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
 
