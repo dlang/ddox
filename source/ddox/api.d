@@ -54,6 +54,11 @@ class DocGroupContext : DdocContext {
 			if( auto mod = cast(Module)n )
 				if( mod.qualifiedName != name )
 					continue;
+
+			// don't return links to the declaration itself, but
+			// the sepcial string # that will still print the identifier
+			// as code
+			if( n is def ) return "#";
 			
 			if( n ) return m_linkTo(n);
 		}

@@ -361,11 +361,15 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
 				if( link.length ){
-					dst.put("<a href=\"");
-					dst.put(link);
-					dst.put("\"><code class=\"prettyprint lang-d\">");
+					if( link != "#" ){
+						dst.put("<a href=\"");
+						dst.put(link);
+						dst.put("\">");
+					}
+					dst.put("<code class=\"prettyprint lang-d\">");
 					dst.put(ident);
-					dst.put("</code></a>");
+					dst.put("</code>");
+					if( link != "#" ) dst.put("</a>");
 				} else dst.put(ident.replace("._", "."));
 				break;
 		}
