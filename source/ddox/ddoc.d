@@ -366,7 +366,7 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 					dst.put("\"><code class=\"prettyprint lang-d\">");
 					dst.put(ident);
 					dst.put("</code></a>");
-				} else dst.put(ident);
+				} else dst.put(ident.replace("._", "."));
 				break;
 		}
 	}
