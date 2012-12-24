@@ -10,11 +10,33 @@ module ddox.ddoc;
 import vibe.core.log;
 import vibe.utils.string;
 
-import std.algorithm : map, min;
+import std.algorithm : countUntil, map, min, remove;
 import std.array;
 import std.conv;
 import std.string;
 import std.uni : isAlpha;
+
+
+static this()
+{
+	s_standardMacros = [
+		"P" : "<p>$0</p>",
+		"DL" : "<dl>$0</dl>",
+		"DT" : "<dt>$0</dt>",
+		"DD" : "<dd>$0</dd>",
+		"TABLE" : "<table>$0</table>",
+		"TR" : "<tr>$0</tr>",
+		"TH" : "<th>$0</th>",
+		"TD" : "<td>$0</td>",
+		"OL" : "<ol>$0</ol>",
+		"UL" : "<ul>$0</ul>",
+		"LI" : "<li>$0</li>",
+		"LINK" : "<a href=\"$0\">$0</a>",
+		"LINK2" : "<a href=\"$1\">$+</a>",
+		"LPAREN" : "(",
+		"RPAREN" : ")"
+	];
+}
 
 
 /**
@@ -25,102 +47,20 @@ import std.uni : isAlpha;
 */
 string formatDdocComment(string ddoc_, int hlevel = 2, bool delegate(string) display_section = null)
 {
-	return formatDdocComment(new BareContext(ddoc_), hlevel, display_section);
+	return formatDdocComment(ddoc_, new BareContext, hlevel, display_section);
 }
 /// ditto
-string formatDdocComment(DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
+string formatDdocComment(string text, DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
 {
 	auto dst = appender!string();
-	filterDdocComment(dst, context, hlevel, display_section);
+	filterDdocComment(dst, text, context, hlevel, display_section);
 	return dst.data;
 }
 /// ditto
-void filterDdocComment(R)(ref R dst, DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
+void filterDdocComment(R)(ref R dst, string text, DdocContext context, int hlevel = 2, bool delegate(string) display_section = null)
 {
-	auto lines = splitLines(context.docText);
-	if( !lines.length ) return;
-
-	string[string] macros;
-	parseMacros(macros, s_standardMacros);
-	parseMacros(macros, s_defaultMacros);
-	parseMacros(macros, context.defaultMacroDefinitions);
-
-	int getLineType(int i)
-	{
-		auto ln = strip(lines[i]);
-		if( ln.length == 0 ) return BLANK;
-		else if( ln.length >= 3 && ln.allOf("-") ) return CODE;
-		else if( ln.indexOf(':') > 0 && isIdent(ln[0 .. ln.indexOf(':')]) ) return SECTION;
-		return TEXT;
-	}
-
-	int skipCodeBlock(int start)
-	{
-		do {
-			start++;
-		} while(start < lines.length && getLineType(start) != CODE);
-		return start+1;
-	}
-
-	int skipSection(int start)
-	{
-		while(start < lines.length ){
-			if( getLineType(start) == SECTION ) break;
-			if( getLineType(start) == CODE )
-				start = skipCodeBlock(start);
-			else start++;
-		}
-		return start;
-	}
-
-	int skipBlock(int start)
-	{
-		do {
-			start++;
-		} while(start < lines.length && getLineType(start) == TEXT);
-		return start;
-	}
-
-
-	int i = 0;
-
-	Section[] sections;
-
-	// special case short description on the first line
-	while( i < lines.length && getLineType(i) == BLANK ) i++;
-	if( i < lines.length && getLineType(i) == TEXT ){
-		auto j = skipBlock(i);
-		sections ~= Section("$Short", lines[i .. j].map!(l => l.strip())().join(" "));
-		i = j;
-	}
-
-	// first section is implicitly the long description
-	{
-		auto j = skipSection(i);
-		if( j > i ) sections ~= Section("$Long", lines[i .. j]);
-		i = j;
-	}
-
-	// parse all other sections
-	while( i < lines.length ){
-		assert(getLineType(i) == SECTION);
-		auto j = skipSection(i+1);
-		auto pidx = lines[i].indexOf(':');
-		auto sect = strip(lines[i][0 .. pidx]);
-		lines[i] = strip(lines[i][pidx+1 .. $]);
-		if( lines[i].empty ) i++;
-		if( sect == "Macros" ) parseMacros(macros, lines[i .. j]);
-		else sections ~= Section(sect, lines[i .. j]);
-		i = j;
-	}
-
-	parseMacros(macros, s_overrideMacros);
-	parseMacros(macros, context.overrideMacroDefinitions);
-
-	foreach( s; sections ){
-		if( display_section && !display_section(s.name) ) continue;
-		parseSection(dst, s.name, s.lines, context, hlevel, macros);
-	}
+	auto comment = new DdocComment(text);
+	comment.renderSectionsR(dst, context, display_section, hlevel);
 }
 
 
@@ -132,7 +72,8 @@ void setDefaultDdocMacroFile(string filename)
 	import vibe.core.file;
 	import vibe.stream.stream;
 	auto text = readAllUtf8(openFile(filename));
-	s_defaultMacros = splitLines(text);
+	s_defaultMacros = null;
+	parseMacros(s_defaultMacros, splitLines(text));
 }
 
 
@@ -144,7 +85,148 @@ void setOverrideDdocMacroFile(string filename)
 	import vibe.core.file;
 	import vibe.stream.stream;
 	auto text = readAllUtf8(openFile(filename));
-	s_overrideMacros = splitLines(text);
+	s_overrideMacros = null;
+	parseMacros(s_overrideMacros, splitLines(text));
+}
+
+
+/**
+	Holds a DDOC comment and formats it sectionwise as HTML.
+*/
+class DdocComment {
+	private {
+		Section[string] m_sections;
+		string[] m_sectionNames;
+		string[string] m_macros;
+		bool m_isDitto = false;
+		bool m_isPrivate = false;
+	}
+
+	this(string text)
+	{
+		text = text.strip();
+
+		if( icmp(text, "ditto") == 0 ){ m_isDitto = true; return; }
+		if( icmp(text, "private") == 0 ){ m_isPrivate = true; return; }
+
+
+//		parseMacros(m_macros, context.defaultMacroDefinitions);
+
+		auto lines = splitLines(text);
+		if( !lines.length ) return;
+
+		int getLineType(int i)
+		{
+			auto ln = strip(lines[i]);
+			if( ln.length == 0 ) return BLANK;
+			else if( ln.length >= 3 && ln.allOf("-") ) return CODE;
+			else if( ln.indexOf(':') > 0 && isIdent(ln[0 .. ln.indexOf(':')]) ) return SECTION;
+			return TEXT;
+		}
+
+		int skipCodeBlock(int start)
+		{
+			do {
+				start++;
+			} while(start < lines.length && getLineType(start) != CODE);
+			return start+1;
+		}
+
+		int skipSection(int start)
+		{
+			while(start < lines.length ){
+				if( getLineType(start) == SECTION ) break;
+				if( getLineType(start) == CODE )
+					start = skipCodeBlock(start);
+				else start++;
+			}
+			return start;
+		}
+
+		int skipBlock(int start)
+		{
+			do {
+				start++;
+			} while(start < lines.length && getLineType(start) == TEXT);
+			return start;
+		}
+
+
+		int i = 0;
+
+		// special case short description on the first line
+		while( i < lines.length && getLineType(i) == BLANK ) i++;
+		if( i < lines.length && getLineType(i) == TEXT ){
+			auto j = skipBlock(i);
+			m_sections["$Short"] = Section("$Short", lines[i .. j]);
+			m_sectionNames ~= "$Short";
+			i = j;
+		}
+
+		// first section is implicitly the long description
+		{
+			auto j = skipSection(i);
+			if( j > i ) m_sections["$Long"] = Section("$Long", lines[i .. j]);
+			m_sectionNames ~= "$Long";
+			i = j;
+		}
+
+		// parse all other sections
+		while( i < lines.length ){
+			assert(getLineType(i) == SECTION);
+			auto j = skipSection(i+1);
+			auto pidx = lines[i].indexOf(':');
+			auto sect = strip(lines[i][0 .. pidx]);
+			lines[i] = strip(lines[i][pidx+1 .. $]);
+			if( lines[i].empty ) i++;
+			if( sect == "Macros" ) parseMacros(m_macros, lines[i .. j]);
+			else {
+				m_sections[sect] = Section(sect, lines[i .. j]);
+				m_sectionNames ~= sect;
+			}
+			i = j;
+		}
+
+//		parseMacros(m_macros, context.overrideMacroDefinitions);
+	}
+
+	@property bool isDitto() const { return m_isDitto; }
+	@property bool isPrivate() const { return m_isPrivate; }
+
+	bool hasSection(string name) const { return (name in m_sections) !is null; }
+
+	void renderSectionR(R)(ref R dst, string name, int hlevel = 2)
+	{
+		auto sect = name in m_sections;
+		if( !sect ) return null;
+
+		parseSection(dst, name, s.lines, context, hlevel, m_macros);
+	}
+
+	void renderSectionsR(R)(ref R dst, DdocContext context, bool delegate(string) display_section, int hlevel)
+	{
+		foreach( i, s; m_sectionNames ){
+			if( !display_section(s) ) continue;
+			parseSection(dst, s, m_sections[s].lines, context, hlevel, m_macros);
+		}
+	}
+
+	string renderSection(DdocContext context, string name, int hlevel = 2)
+	{
+		auto sect = name in m_sections;
+		if( !sect ) return null;
+
+		auto dst = appender!string();
+		parseSection(dst, name, sect.lines, context, hlevel, m_macros);
+		return dst.data;
+	}
+
+	string renderSections(DdocContext context, bool delegate(string) display_section, int hlevel)
+	{
+		auto dst = appender!string();
+		renderSectionsR(dst, context, display_section, hlevel);
+		return dst.data;
+	}
 }
 
 
@@ -152,9 +234,6 @@ void setOverrideDdocMacroFile(string filename)
 	Provides context information about the documented element.
 */
 interface DdocContext {
-	/// The DDOC text
-	@property string docText();
-
 	/// A line array with macro definitions
 	@property string[] defaultMacroDefinitions();
 
@@ -165,15 +244,8 @@ interface DdocContext {
 	string lookupScopeSymbolLink(string name);
 }
 
-private class BareContext : DdocContext {
-	private string m_ddoc;
-	
-	this(string ddoc)
-	{
-		m_ddoc = ddoc;
-	}
 
-	@property string docText() { return m_ddoc; }
+private class BareContext : DdocContext {
 	@property string[] defaultMacroDefinitions() { return null; }
 	@property string[] overrideMacroDefinitions() { return null; }
 	string lookupScopeSymbolLink(string name) { return null; }
@@ -198,8 +270,9 @@ private struct Section {
 }
 
 private {
-	string[] s_defaultMacros;
-	string[] s_overrideMacros;
+	string[string] s_standardMacros;
+	string[string] s_defaultMacros;
+	string[string] s_overrideMacros;
 }
 
 /// private
@@ -474,7 +547,12 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
 
-		if( auto pm = mname in macros ){
+		auto pm = mname in s_overrideMacros;
+		if( !pm ) pm = mname in macros;
+		if( !pm ) pm = mname in s_defaultMacros;
+		if( !pm ) pm = mname in s_standardMacros;
+
+		if( pm ){
 			logTrace("MACRO %s: %s", mname, *pm);
 			renderMacros(dst, *pm, context, macros, args);
 		} else {
@@ -621,21 +699,3 @@ private string unindent(string ln, int amount)
 		ln = ln[1 .. $], amount--;
 	return ln;
 }
-
-private immutable s_standardMacros = [
-	"P = <p>$0</p>",
-	"DL = <dl>$0</dl>",
-	"DT = <dt>$0</dt>",
-	"DD = <dd>$0</dd>",
-	"TABLE = <table>$0</table>",
-	"TR = <tr>$0</tr>",
-	"TH = <th>$0</th>",
-	"TD = <td>$0</td>",
-	"OL = <ol>$0</ol>",
-	"UL = <ul>$0</ul>",
-	"LI = <li>$0</li>",
-	"LINK = <a href=\"$0\">$0</a>",
-	"LINK2 = <a href=\"$1\">$+</a>",
-	"LPAREN= (",
-	"RPAREN= )"
-];

@@ -7,6 +7,7 @@
 */
 module ddox.entities;
 
+import ddox.ddoc;
 import std.string;
 import std.typecons;
 
@@ -140,11 +141,13 @@ class Entity {
 final class DocGroup {
 	Entity[] members;
 	string text;
+	DdocComment comment;
 
 	this(Entity entity, string text)
 	{
 		this.members = [entity];
 		this.text = text;
+		this.comment = new DdocComment(text);
 	}
 }
 

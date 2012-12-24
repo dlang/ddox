@@ -117,7 +117,7 @@ private struct Parser
 		}
 
 		mod.file = json.file.get!string;
-		mod.docGroup = new DocGroup(mod, json.comment.opt!string().strip());
+		mod.docGroup = new DocGroup(mod, json.comment.opt!string());
 		mod.members = parseDeclList(json.members, mod);
 	}
 
@@ -128,13 +128,12 @@ private struct Parser
 		Declaration[] ret;
 		foreach( mem; json ){
 			auto decl = parseDecl(mem, parent);
-			auto doc = decl.docGroup.text;
-			if( lastdoc && (doc == lastdoc.text && doc.length || icmp(doc, "ditto") == 0) ){
+			auto doc = decl.docGroup;
+			if( lastdoc && (doc.text == lastdoc.text && doc.text.length || doc.comment.isDitto) ){
 				lastdoc.members ~= decl;
 				decl.docGroup = lastdoc;
-			} else if( doc == "private" ){
+			} else if( doc.comment.isPrivate ){
 				decl.protection = Protection.Private;
-				decl.docGroup = new DocGroup(decl, null);
 				lastdoc = null;
 			} else lastdoc = decl.docGroup;
 			ret ~= decl;
@@ -184,7 +183,7 @@ private struct Parser
 
 		ret.protection = parseProtection(json.protection);
 		ret.line = json.line.get!int;
-		ret.docGroup = new DocGroup(ret, json.comment.opt!string().strip());
+		ret.docGroup = new DocGroup(ret, json.comment.opt!string());
 
 		return ret;
 	}
