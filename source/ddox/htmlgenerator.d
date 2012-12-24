@@ -36,6 +36,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	string linkTo(Entity ent, size_t level)
 	{
 		auto dst = appender!string();
+
 		if( level ) foreach( i; 0 .. level ) dst.put("../");
 		else dst.put("./");
 
@@ -44,6 +45,11 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				dst.put("index.html");
 				return dst.data();
 			}
+
+			auto dp = cast(VariableDeclaration)ent;
+			auto dfn = ent.parent ? cast(FunctionDeclaration)ent.parent : null;
+			if( dp && dfn ) ent = ent.parent;
+
 			Entity[] nodes;
 			size_t mod_idx = 0;
 			while( ent ){
@@ -64,7 +70,13 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				}
 				dst.put("html");
 			}
+
+			if( dp && dfn ){
+				dst.put('#');
+				dst.put(dp.name);
+			}
 		}
+
 		return dst.data();
 	}
 
@@ -120,7 +132,7 @@ class DocPageInfo {
 	string formatType(Type tp) { return .formatType(tp, linkTo); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
-		return formatDdocComment(new DocGroupContext(group, linkTo), hlevel, display_section);
+		return group.comment.renderSections(new DocGroupContext(group, linkTo), display_section, hlevel);
 	}
 }
 

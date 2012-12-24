@@ -32,10 +32,15 @@ body {
 	string linkTo(Entity ent, size_t level)
 	{
 		auto dst = appender!string();
+
 		if( level ) foreach( i; 0 .. level ) dst.put("../");
 		else dst.put("./");
 
 		if( ent !is null && ent.parent !is null ){
+			auto dp = cast(VariableDeclaration)ent;
+			auto dfn = cast(FunctionDeclaration)ent.parent;
+			if( dp && dfn ) ent = ent.parent;
+
 			Entity[] nodes;
 			size_t mod_idx = 0;
 			while( ent ){
@@ -52,7 +57,13 @@ body {
 				dst.put(n.name);
 				if( i > 0 ) dst.put('.');
 			}
+
+			if( dp && dfn ){
+				dst.put('#');
+				dst.put(dp.name);
+			}
 		}
+
 		return dst.data();
 	}
 

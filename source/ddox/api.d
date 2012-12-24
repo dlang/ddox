@@ -41,7 +41,7 @@ class DocGroupContext : DdocContext {
 			if( auto fn = cast(FunctionDeclaration)def ){
 				foreach( p; fn.parameters )
 					if( p.name == name )
-						return m_linkTo(fn)~"#"~name;
+						return m_linkTo(p);
 			}
 
 			// then look up the name in the outer scope
