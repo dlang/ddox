@@ -1,0 +1,29 @@
+- import ddox.entities;
+
+
+- void declNavTreeDecl(Declaration decl, bool open)
+	li.tree-view(class='#{open ? "" : "collapsed"}')
+		a(class="toLower(to!string(#{decl.kind}))", href="#{info.linkTo(decl)}")= decl.name
+		- if( open )
+			ul.tree-view
+				- decl.iterateChildren((ch){ if( auto cd = cast(Declaration)ch ) declNavTreeDecl(cd, false); return true; });
+
+- void declNavTreeMod(Module mod, bool open)
+	- if( open )
+		ul.tree-view
+			- foreach(d; mod.members)
+				- declNavTreeDecl(d, false);
+
+- void declNavTreePack(Package pack)
+	ul.tree-view
+		- foreach(p; pack.packages)
+			li.tree-view(class='#{!pack.parent || p.isAncestorOf(info.node) ? "" : "collapsed"}')
+				a.package(href="#")= p !is info.rootPackage ? p.name : null
+				- declNavTreePack(p);
+		- foreach(m; pack.modules)
+			li
+				- bool iscurmod = info.node is m || m.isAncestorOf(info.node);
+				a.module(href="#{info.linkTo(m)}", class='#{iscurmod ? "selected" : "collapsed"}')= m.name
+				- declNavTreeMod(m, iscurmod);
+
+- declNavTreePack(info.rootPackage);
