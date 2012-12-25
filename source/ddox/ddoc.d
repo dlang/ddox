@@ -166,9 +166,11 @@ class DdocComment {
 		// first section is implicitly the long description
 		{
 			auto j = skipSection(i);
-			if( j > i ) m_sections["$Long"] = Section("$Long", lines[i .. j]);
-			m_sectionNames ~= "$Long";
-			i = j;
+			if( j > i ){
+				m_sections["$Long"] = Section("$Long", lines[i .. j]);
+				m_sectionNames ~= "$Long";
+				i = j;
+			}
 		}
 
 		// parse all other sections
