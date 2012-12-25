@@ -37,12 +37,12 @@ int ddoxMain(string[] args)
 int cmdGenerateHtml(string[] args)
 {
 	string macrofile, overridemacrofile;
-	bool moduleTree;
+	NavigationType navtype;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
-		"module-tree", &moduleTree);
+		"navigation-type", &navtype);
 
 	if( args.length < 4 ){
 		showUsage(args);
@@ -57,7 +57,7 @@ int cmdGenerateHtml(string[] args)
 	auto pack = parseDocFile(args[2], docsettings);
 
 	auto gensettings = new GeneratorSettings;
-	gensettings.navPackageTree = moduleTree;
+	gensettings.navigationType = navtype;
 	generateHtmlDocs(Path(args[3]), pack, gensettings);
 
 	return 0;
@@ -66,12 +66,12 @@ int cmdGenerateHtml(string[] args)
 int cmdServeHtml(string[] args)
 {
 	string macrofile, overridemacrofile;
-	bool moduleTree;
+	NavigationType navtype;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
-		"module-tree", &moduleTree);
+		"module-tree", &navtype);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -87,7 +87,7 @@ int cmdServeHtml(string[] args)
 
 	// register the api routes and start the server
 	auto gensettings = new GeneratorSettings;
-	gensettings.navPackageTree = moduleTree;
+	gensettings.navigationType = navtype;
 	auto router = new UrlRouter;
 	registerApiDocs(router, pack, "", gensettings);
 

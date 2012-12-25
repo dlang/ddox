@@ -128,7 +128,7 @@ class DocPageInfo {
 	Package rootPackage;
 	Entity node;
 	
-	@property bool navPackageTree() const { return settings.navPackageTree; }
+	@property NavigationType navigationType() const { return settings.navigationType; }
 	string formatType(Type tp) { return .formatType(tp, linkTo); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{

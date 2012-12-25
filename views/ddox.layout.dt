@@ -5,10 +5,16 @@ block title
 	block ddox.title
 
 block navigation
-	- if( info.settings.navPackageTree )
-		include ddox.inc.module-tree
-	- else
-		include ddox.inc.module-list
+	- final switch( info.settings.navigationType )
+		- case NavigationType.ModuleTree:
+			include ddox.inc.module-tree
+			- break;
+		- case NavigationType.ModuleList:
+			include ddox.inc.module-list
+			- break;
+		- case NavigationType.DeclarationTree:
+			include ddox.inc.decl-tree
+			- break;
 
 
 block body

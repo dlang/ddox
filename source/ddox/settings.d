@@ -13,8 +13,14 @@ enum SortMode {
 	Name
 }
 
+enum NavigationType {
+	ModuleList,
+	ModuleTree,
+	DeclarationTree,
+}
+
 class DdoxSettings {
-	bool moduleNavAsTree = false;
+	NavigationType navigationType = NavigationType.ModuleTree;
 	SortMode moduleSort = SortMode.Name;
 	SortMode declSort = SortMode.None;
 	bool inheritDocumentation = true;
@@ -23,6 +29,6 @@ class DdoxSettings {
 
 
 class GeneratorSettings {
-	bool navPackageTree = true;
+	NavigationType navigationType = NavigationType.ModuleTree;
 }
 
