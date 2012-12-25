@@ -433,6 +433,17 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 			case 'a': .. case 'z':
 			case 'A': .. case 'Z':
 				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
+
+				auto url = skipUrl(line);
+				if( url.length ){
+					/*dst.put("<a href=\"");
+					dst.put(url);
+					dst.put("\">");*/
+					dst.put(url);
+					//dst.put("</a>");
+					break;
+				}
+
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
 				if( link.length ){
@@ -502,7 +513,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	if( line[0] >= '0' && line[0] <= '9' ){
 		int pidx = line[0]-'0';
 		if( pidx < params.length )
-			dst.put(strip(params[pidx]));
+			dst.put(params[pidx]);
 		line = line[1 .. $];
 	} else if( line[0] == '+' ){
 		if( params.length ){
@@ -615,6 +626,38 @@ no_match:
 	logTrace("Found stray '<' in DDOC string.");
 	ln.popFront();
 	return "$(LT)";
+}
+
+private string skipUrl(ref string ln)
+{
+	if( !ln.startsWith("http://") && !ln.startsWith("http://") )
+		return null;
+
+	bool saw_dot = false;
+	size_t i = 7;
+
+	for_loop:
+	while( i < ln.length ){
+		switch( ln[i] ){
+			default:
+				break for_loop;
+			case 'a': .. case 'z':
+			case 'A': .. case 'Z':
+			case '0': .. case '9':
+			case '_', '-', '?', '=', '%', '&', '/', '+', '#', '~':
+				break;
+			case '.':
+				saw_dot = true;
+				break;
+		}
+		i++;
+	}
+
+	if( saw_dot ){
+		auto ret = ln[0 .. i];
+		ln = ln[i .. $];
+		return ret;
+	} else return null;
 }
 
 private string skipWhitespace(ref string ln)
