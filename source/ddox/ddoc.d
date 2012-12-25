@@ -465,7 +465,7 @@ private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if( link.length ){
+				if( link.length && link != "#" ){
 					dst.put("<a href=\"");
 					dst.put(link);
 					dst.put("\">");
