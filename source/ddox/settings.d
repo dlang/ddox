@@ -7,6 +7,7 @@
 */
 module ddox.settings;
 
+import vibe.inet.url;
 
 enum SortMode {
 	None,
@@ -30,5 +31,7 @@ class DdoxSettings {
 
 class GeneratorSettings {
 	NavigationType navigationType = NavigationType.ModuleTree;
+	// used for sitemap generation and for determining the URL prefix in registerApiDocs()
+	Url siteUrl = Url.parse("http://localhost:8080/");
 }
 

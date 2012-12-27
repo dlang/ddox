@@ -89,7 +89,7 @@ int cmdServeHtml(string[] args)
 	auto gensettings = new GeneratorSettings;
 	gensettings.navigationType = navtype;
 	auto router = new UrlRouter;
-	registerApiDocs(router, pack, "", gensettings);
+	registerApiDocs(router, pack, gensettings);
 
 	writefln("Listening on port 8080...");
 	auto settings = new HttpServerSettings;

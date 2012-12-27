@@ -15,9 +15,9 @@ import std.array;
 import std.variant;
 import vibe.core.log;
 import vibe.core.file;
+import vibe.core.stream;
 import vibe.inet.path;
 import vibe.http.server : HttpServerRequest;
-import vibe.stream.stream;
 import vibe.templ.diet;
 
 
@@ -115,9 +115,18 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	}
 
 	if( !existsFile(dst_path) ) createDirectory(dst_path);
-	auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.CreateTrunc);
-	scope(exit) idxfile.close();
-	generateApiIndex(idxfile, root, settings, ent => linkTo(ent, 0));
+	
+	{
+		auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.CreateTrunc);
+		scope(exit) idxfile.close();
+		generateApiIndex(idxfile, root, settings, ent => linkTo(ent, 0));
+	}
+
+	{
+		auto smfile = openFile(dst_path ~ PathEntry("sitemap.xml"), FileMode.CreateTrunc);
+		scope(exit) smfile.close();
+		generateSitemap(smfile, root, settings, ent => linkTo(ent, 0));
+	}
 
 	visitPackage(root, dst_path);
 }
@@ -144,6 +153,33 @@ class DocDeclPageInfo : DocModulePageInfo {
 	Declaration item;
 	DocGroup docGroup;
 	DocGroup[] docGroups; // for multiple doc groups with the same name
+}
+
+void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
+{
+	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", false);
+	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n", false);
+	
+	void writeEntry(string[] parts...){
+		dst.write("<url><loc>", false);
+		foreach( p; parts )
+			dst.write(p, false);
+		dst.write("</loc></url>\n", false);
+	}
+
+	void writeEntityRec(Entity ent){
+		import std.string;
+		if( !cast(Package)ent || ent is root_package ){
+			auto link = link_to(ent);
+			if( indexOf(link, '#') < 0 ) // ignore URLs with anchors
+				writeEntry((settings.siteUrl ~ Path(link)).toString());
+		}
+		ent.iterateChildren((ch){ writeEntityRec(ch); return true; });
+	}
+
+	writeEntityRec(root_package);
+	
+	dst.write("</urlset>\n");
 }
 
 void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
@@ -191,6 +227,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declar
 		default: logWarn("Unknown API item kind: %s", item.kind); return;
 		case DeclarationKind.Variable:
 		case DeclarationKind.EnumMember:
+		case DeclarationKind.Alias:
 			dst.parseDietFileCompat!("ddox.variable.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Function:

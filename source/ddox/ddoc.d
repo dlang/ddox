@@ -70,7 +70,7 @@ void filterDdocComment(R)(ref R dst, string text, DdocContext context, int hleve
 void setDefaultDdocMacroFile(string filename)
 {
 	import vibe.core.file;
-	import vibe.stream.stream;
+	import vibe.stream.operations;
 	auto text = readAllUtf8(openFile(filename));
 	s_defaultMacros = null;
 	parseMacros(s_defaultMacros, splitLines(text));
@@ -83,7 +83,7 @@ void setDefaultDdocMacroFile(string filename)
 void setOverrideDdocMacroFile(string filename)
 {
 	import vibe.core.file;
-	import vibe.stream.stream;
+	import vibe.stream.operations;
 	auto text = readAllUtf8(openFile(filename));
 	s_overrideMacros = null;
 	parseMacros(s_overrideMacros, splitLines(text));

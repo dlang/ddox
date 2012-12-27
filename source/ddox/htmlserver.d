@@ -21,12 +21,8 @@ import vibe.http.router;
 import vibe.templ.diet; // just so that rdmd picks it up
 
 
-void registerApiDocs(UrlRouter router, Package pack, string path_prefix = "/api", GeneratorSettings settings = null)
-in {
-	assert(path_prefix.length == 0 || path_prefix[0] == '/');
-	assert(!path_prefix.endsWith('/'));
-}
-body {
+void registerApiDocs(UrlRouter router, Package pack, GeneratorSettings settings = null)
+{
 	if( !settings ) settings = new GeneratorSettings;
 
 	string linkTo(Entity ent, size_t level)
@@ -95,10 +91,22 @@ body {
 		generateDeclPage(res.bodyWriter, pack, mod, item, settings, ent => linkTo(ent, 1), req);
 	}
 
-	if( path_prefix.length ) router.get(path_prefix, staticRedirect(path_prefix~"/"));
+	void showSitemap(HttpServerRequest req, HttpServerResponse res)
+	{
+		res.contentType = "application/xml";
+		generateSitemap(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
+	}
+
+	auto path_prefix = settings.siteUrl.path.toString();
+	if( path_prefix.endsWith("/") ) path_prefix = path_prefix[0 .. $-1];
+
 	router.get(path_prefix~"/", &showApi);
-	router.get(path_prefix~"/:modulename", delegate(req, res){ res.redirect((path_prefix.length ? path_prefix ~ "/" : "/api/")~req.params["modulename"]~"/"); });
 	router.get(path_prefix~"/:modulename/", &showApiModule);
 	router.get(path_prefix~"/:modulename/:itemname", &showApiItem);
+	router.get(path_prefix~"/sitemap.xml", &showSitemap);
 	router.get("*", serveStaticFiles("public"));
+
+	// convenience redirects (when leaving off the trailing slash)
+	if( path_prefix.length ) router.get(path_prefix, staticRedirect(path_prefix~"/"));
+	router.get(path_prefix~"/:modulename", delegate(req, res){ res.redirect(path_prefix~"/"~req.params["modulename"]~"/"); });
 }
