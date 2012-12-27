@@ -17,30 +17,50 @@ block ddox.description
 	section
 		h2 Declaration
 		pre.code.prettyprint.lang-d.prototype
-			- Type type;
-			- Value value;
+			- string type;
+			- string value;
 			- if( auto var = cast(VariableDeclaration)info.item )
-				- type = var.type;
-				- value = var.initializer;
+				- type = info.formatType(var.type);
+				- if( var.initializer )
+					- value = var.initializer.valueString;
 			- else if( auto ev = cast(EnumMemberDeclaration)info.item )
-				- type = ev.type;
-				- value = ev.value;
+				- type = info.formatType(ev.type);
+				- if( ev.value )
+					- value = ev.value.valueString;
+			- else if( auto ad = cast(AliasDeclaration)info.item )
+				- type = "alias";
+				- if( ad.targetType )
+					- value = info.formatType(ad.targetType);
+				- else if( ad.targetDecl )
+					//- TODO!
 
-			- if( auto ctd = cast(Declaration)info.item.parent )
-				|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
-			- else
-				|<a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>
-			|{
-			|	// ...
 			- auto itemname = info.item.templateArgs.length ? info.item.name ~ "!" ~ info.item.templateArgs : info.item.name;
-			- if( value && value.valueString.length )
-				|	!{info.formatType(type)} #{itemname} = #{value.valueString};
-			- else if( type )
-				|	!{info.formatType(type)} #{itemname};
+			- if( auto m = cast(Module)info.item.parent )
+				|module <a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>;
+				|
+				|// ...
+				- if( value.length )
+					|!{type} #{itemname} = !{value};
+				- else if( type.length )
+					|!{type} #{itemname};
+				- else
+					|#{itemname};
+				|// ...
 			- else
-				|	#{itemname};
-			|	// ...
-			|}
+				- if( auto ctd = cast(Declaration)info.item.parent )
+					|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
+				- else
+					|<a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>
+				|{
+				|	// ...
+				- if( value.length )
+					|	!{type} #{itemname} = !{value};
+				- else if( type.length )
+					|	!{type} #{itemname};
+				- else
+					|	#{itemname};
+				|	// ...
+				|}
 
 block ddox.sections
 	|!= info.formatDoc(docgroup, 2, sec => sec != "$Short" && sec != "$Long")
