@@ -71,7 +71,7 @@ int cmdServeHtml(string[] args)
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
-		"module-tree", &navtype);
+		"navigation-type", &navtype);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -222,7 +222,8 @@ void showUsage(string[] args)
     --std-macros=FILE      File containing DDOC macros that will be available
     --override-macros=FILE File containing DDOC macros that will override local
                            definitions (Macros: section)
-    --module-tree          Use a tree instead of a list for module navigation
+    --navigation-type=TYPE Change the type of navigation (ModuleList,
+                           ModuleTree, DeclarationTree)
 `, args[0]);
 			break;
 		case "generate-html":
@@ -231,7 +232,8 @@ void showUsage(string[] args)
     --std-macros=FILE      File containing DDOC macros that will be available
     --override-macros=FILE File containing DDOC macros that will override local
                            definitions (Macros: section)
-    --module-tree          Use a tree instead of a list for module navigation
+    --navigation-type=TYPE Change the type of navigation (ModuleList,
+                           ModuleTree, DeclarationTree)
 `, args[0]);
 			break;
 		case "filter":
