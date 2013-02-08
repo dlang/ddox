@@ -6,6 +6,10 @@ import ddox.entities;
 import ddox.htmlgenerator;
 import ddox.htmlserver;
 import ddox.jsonparser;
+import ddox.jsonparser_old;
+import ddox.processors.eptemplates;
+import ddox.processors.inherit;
+import ddox.processors.sort;
 
 import vibe.core.core;
 import vibe.core.file;
@@ -195,9 +199,27 @@ Package parseDocFile(string filename, DdoxSettings settings)
 	writefln("Parsing JSON...");
 	auto json = parseJson(text, &line);
 	writefln("Parsing docs...");
-	auto ret = parseJsonDocs(json, settings);
+	Package root;
+	if( settings.oldJsonFormat ) root = parseJsonDocsOld(json, settings);
+	else root = parseJsonDocs(json, settings);
 	writefln("Finished parsing docs.");
-	return ret;
+
+	if( settings.inheritDocumentation ){
+		writefln("Searching for inherited docs...");
+		inheritDocs(root);
+	}
+	if( settings.mergeEponymousTemplates ){
+		mergeEponymousTemplates(root);
+	}
+	if( settings.moduleSort == SortMode.Name ){
+		writefln("Sorting modules...");
+		sortModules!((a, b) => a.name < b.name)(root);
+	}
+	if( settings.declSort == SortMode.Name ){
+		writefln("Sorting declarations...");
+		sortDecls!((a, b) => a.name < b.name)(root);
+	}
+	return root;
 }
 
 void showUsage(string[] args)

@@ -26,6 +26,7 @@ class DdoxSettings {
 	SortMode declSort = SortMode.None;
 	bool inheritDocumentation = true;
 	bool mergeEponymousTemplates = true;
+	bool oldJsonFormat; // DMD <= 2.061
 }
 
 

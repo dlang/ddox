@@ -1,11 +1,11 @@
 /**
-	Parses DMD JSON output and builds up a socumentation syntax tree (JSON format staring from DND 2.062).
+	Parses DMD JSON output and builds up a socumentation syntax tree (JSON format up to DMD 2.061).
 
 	Copyright: © 2012 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
-module ddox.jsonparser;
+module ddox.jsonparser_old;
 
 import ddox.ddox;
 import ddox.entities;
@@ -21,7 +21,7 @@ import vibe.core.log;
 import vibe.data.json;
 
 
-Package parseJsonDocs(Json json, DdoxSettings settings, Package root = null)
+Package parseJsonDocsOld(Json json, DdoxSettings settings, Package root = null)
 {
 	if( !root ) root = new Package(null, null);
 	Parser p;
@@ -109,7 +109,6 @@ private struct Parser
 		Declaration[] ret;
 		foreach( mem; json ){
 			auto decl = parseDecl(mem, parent);
-			if( !decl ) continue;
 			auto doc = decl.docGroup;
 			if( lastdoc && (doc.text == lastdoc.text && doc.text.length || doc.comment.isDitto) ){
 				lastdoc.members ~= decl;
@@ -133,10 +132,6 @@ private struct Parser
 		} else {
 			switch( json.kind.get!string ){
 				default: enforce(false, "Unknown declaration kind: "~json.kind.get!string); assert(false);
-				case "import":
-					// TODO: use for symbol resolving
-					return null;
-				case "destructor": return null;
 				case "alias":
 					ret = parseAliasDecl(json, parent);
 					break;
@@ -177,9 +172,11 @@ private struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json.name.get!string);
-		ret.targetType = parseType(json, parent, null);
-		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
-			ret.targetType = null;
+		if( auto pt = "type" in json ){
+			ret.targetType = parseType(*pt, parent, null);
+			if( ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
+				ret.targetType = null;
+		}
 		insertIntoTypeMap(ret);
 		return ret;
 	}
@@ -187,8 +184,7 @@ private struct Parser
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
 		auto ret = new FunctionDeclaration(parent, json.name.get!string);
-		ret.type = parseType(json, parent);
-		// TODO: use "storageClass" and "parameters" fields
+		ret.type = parseType(json["type"], parent);
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
 			ret.attributes = ret.type.attributes;
@@ -264,7 +260,7 @@ private struct Parser
 	auto parseVariableDecl(Json json, Entity parent)
 	{
 		auto ret = new VariableDeclaration(parent, json.name.get!string);
-		ret.type = parseType(json, parent);
+		ret.type = parseType(json["type"], parent);
 		return ret;
 	}
 
@@ -280,23 +276,10 @@ private struct Parser
 		return ret;
 	}
 
-	Type parseType(Json json, Entity sc, string def_type = "void")
+	Type parseType(Json tp, Entity sc, string def_type = "void")
 	{
-		import std.demangle;
-
-		string str;
-		if( json.type == Json.Type.Undefined ){
-			logWarn("No type found.");
-			str = def_type;
-		} else if( json.type == Json.Type.String ) str = json.get!string();
-		else if( auto pv = "type" in json ) str = pv.get!string();
-		else if( auto pv = "originalType" in json ) str = pv.get!string();
-		else if( auto pv = "deco" in json ) str = demangle(pv.get!string());
-
+		auto str = tp.opt!string;
 		if( str.length == 0 ) str = def_type;
-
-		if( !str.length ) return null;
-
 		auto tokens = tokenizeDSource(str);
 		
 		logDebug("parse type '%s'", str);
