@@ -10,6 +10,8 @@ module ddox.processors.eptemplates;
 import ddox.api;
 import ddox.entities;
 
+import std.algorithm;
+
 
 void mergeEponymousTemplates(Package root)
 {
@@ -17,15 +19,19 @@ void mergeEponymousTemplates(Package root)
 	{
 		foreach( ref d; decls ){
 			if( auto templ = cast(TemplateDeclaration)d ){
-				if( templ.members.length == 1 && templ.members[0].name == templ.name ){
-					templ.members[0].templateArgs = templ.templateArgs;
-					templ.members[0].parent = templ.parent;
-					templ.members[0].docGroup = templ.docGroup;
+				//if( templ.members.length == 1 && templ.members[0].name == templ.name ){
+				auto idx = templ.members.countUntil!(m => m.name == templ.name)();
+				if( idx >= 0 ){
+					templ.members[idx].templateArgs = templ.templateArgs;
+					templ.members[idx].parent = templ.parent;
+					templ.members[idx].docGroup = templ.docGroup;
 					foreach( ref m; templ.docGroup.members )
-						if( m is templ ) m = templ.members[0];
-					d = templ.members[0];
+						if( m is templ ) m = templ.members[idx];
+					d = templ.members[idx];
 				} else processDecls(templ.members);
-			} else if( auto comp = cast(CompositeTypeDeclaration)d ){
+			}
+
+			if( auto comp = cast(CompositeTypeDeclaration)d ){
 				processDecls(comp.members);
 			}
 		}
