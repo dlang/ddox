@@ -7,5 +7,6 @@
 	],
     "dependencies": {
     	"vibe-d": "~master"
-    }
+    },
+    "dflags": ["-version=JsonLineNumbers"]
 }

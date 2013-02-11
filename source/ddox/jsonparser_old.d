@@ -163,7 +163,7 @@ private struct Parser
 		}
 
 		ret.protection = parseProtection(json.protection);
-		ret.line = json.line.opt!int;
+		ret.line = json["line"].opt!int;
 		ret.docGroup = new DocGroup(ret, json.comment.opt!string());
 
 		return ret;
