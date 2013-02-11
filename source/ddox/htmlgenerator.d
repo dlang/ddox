@@ -109,13 +109,15 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	void visitPackage(Package p, Path path)
 	{
 		auto packpath = p.parent ? path ~ PathEntry(p.name) : path;
-		if( !existsFile(packpath) ) createDirectory(packpath);
+		if( !path.empty && !existsFile(packpath) ) createDirectory(packpath);
 		foreach( sp; p.packages ) visitPackage(sp, packpath);
 		foreach( m; p.modules ) visitModule(m, packpath);
 	}
 
-	if( !existsFile(dst_path) ) createDirectory(dst_path);
-	
+	dst_path.normalize();
+
+	if( !dst_path.empty && !existsFile(dst_path) ) createDirectory(dst_path);
+
 	{
 		auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.CreateTrunc);
 		scope(exit) idxfile.close();
