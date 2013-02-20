@@ -8,5 +8,5 @@
     "dependencies": {
     	"vibe-d": "~master"
     },
-    "dflags": ["-version=JsonLineNumbers"]
+    "versions": ["VibeCustomMain", "JsonLineNumbers"]
 }
