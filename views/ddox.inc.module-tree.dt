@@ -2,8 +2,8 @@
 
 - void moduleNavTree(Package pack)
 	ul.tree-view
-		- foreach(p; pack.packages)
-			li.tree-view(class='#{!pack.parent || p.isAncestorOf(info.node) ? "" : "collapsed"}')
+		- foreach(i, p; pack.packages)
+			li.tree-view(class='#{!pack.parent && i == 0 || p.isAncestorOf(info.node) ? "" : "collapsed"}')
 				a.package(href="#")= p !is info.rootPackage ? p.name : null
 				- moduleNavTree(p);
 		- foreach(m; pack.modules)
