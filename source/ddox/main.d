@@ -42,11 +42,13 @@ int cmdGenerateHtml(string[] args)
 {
 	string macrofile, overridemacrofile;
 	NavigationType navtype;
+	string[] pack_order;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
-		"navigation-type", &navtype);
+		"navigation-type", &navtype,
+		"package-order", &pack_order);
 
 	if( args.length < 4 ){
 		showUsage(args);
@@ -58,6 +60,7 @@ int cmdGenerateHtml(string[] args)
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
+	docsettings.packageOrder = pack_order;
 	auto pack = parseDocFile(args[2], docsettings);
 
 	auto gensettings = new GeneratorSettings;
@@ -71,11 +74,13 @@ int cmdServeHtml(string[] args)
 {
 	string macrofile, overridemacrofile;
 	NavigationType navtype;
+	string[] pack_order;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
-		"navigation-type", &navtype);
+		"navigation-type", &navtype,
+		"package-order", &pack_order);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -87,6 +92,7 @@ int cmdServeHtml(string[] args)
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
+	docsettings.packageOrder = pack_order;
 	auto pack = parseDocFile(args[2], docsettings);
 
 	// register the api routes and start the server
@@ -214,6 +220,16 @@ Package parseDocFile(string filename, DdoxSettings settings)
 	if( settings.moduleSort == SortMode.Name ){
 		writefln("Sorting modules...");
 		sortModules!((a, b) => a.name < b.name)(root);
+		
+		import std.algorithm;
+		bool package_order(Package a, Package b){
+			auto ia = settings.packageOrder.countUntil(a.name);
+			auto ib = settings.packageOrder.countUntil(b.name);
+			if( ia >= 0 && ib >= 0 ) return ia < ib;
+			if( ia >= 0 ) return true;
+			return false;
+		}
+		sort!(package_order, SwapStrategy.stable)(root.packages);
 	}
 	if( settings.declSort == SortMode.Name ){
 		writefln("Sorting declarations...");
@@ -246,6 +262,8 @@ void showUsage(string[] args)
                            definitions (Macros: section)
     --navigation-type=TYPE Change the type of navigation (ModuleList,
                            ModuleTree, DeclarationTree)
+    --package-order=NAME   Causes the specified module to be ordered first. Can
+                           be specified multiple times.
 `, args[0]);
 			break;
 		case "generate-html":
@@ -256,6 +274,8 @@ void showUsage(string[] args)
                            definitions (Macros: section)
     --navigation-type=TYPE Change the type of navigation (ModuleList,
                            ModuleTree, DeclarationTree)
+    --package-order=NAME   Causes the specified module to be ordered first. Can
+                           be specified multiple times.
 `, args[0]);
 			break;
 		case "filter":

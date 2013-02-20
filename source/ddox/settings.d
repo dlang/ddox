@@ -24,6 +24,7 @@ class DdoxSettings {
 	NavigationType navigationType = NavigationType.ModuleTree;
 	SortMode moduleSort = SortMode.Name;
 	SortMode declSort = SortMode.None;
+	string[] packageOrder;
 	bool inheritDocumentation = true;
 	bool mergeEponymousTemplates = true;
 	bool oldJsonFormat; // DMD <= 2.061
