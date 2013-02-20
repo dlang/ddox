@@ -185,7 +185,7 @@ int cmdFilterDocs(string[] args)
 
 	writefln("Writing filtered docs...");
 	auto buf = appender!string();
-	toPrettyJson(buf, Json(dst));
+	writePrettyJsonString(buf, Json(dst));
 	std.file.write(args[2], buf.data());
 
 	return 0;
