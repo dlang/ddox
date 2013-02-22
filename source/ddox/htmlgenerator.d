@@ -17,7 +17,7 @@ import vibe.core.log;
 import vibe.core.file;
 import vibe.core.stream;
 import vibe.inet.path;
-import vibe.http.server : HttpServerRequest;
+import vibe.http.server;
 import vibe.templ.diet;
 
 
