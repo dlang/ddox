@@ -128,11 +128,21 @@ int cmdFilterDocs(string[] args)
 		return 1;
 	}
 
-	Json filterProt(Json json)
+	Json filterProt(Json json, Json parent)
 	{
+		string templateName(Json j){
+			auto n = j.name.opt!string();
+			auto idx = n.indexOf('(');
+			if( idx >= 0 ) return n[0 .. idx];
+			return n;
+		}
+	
 		if( json.type == Json.Type.Object ){
 			auto comment = json.comment.opt!string().strip();
-			if( comment.empty && justdoc ) return Json.Undefined;
+			if( justdoc && comment.empty ){
+				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
+					return Json.Undefined;
+			}
 			
 			Protection prot = Protection.Public;
 			if( auto p = "protection" in json ){
@@ -147,12 +157,12 @@ int cmdFilterDocs(string[] args)
 			if( prot < minprot ) return Json.Undefined;
 
 			if( auto mem = "members" in json ){
-				json.members = filterProt(*mem);
+				json.members = filterProt(*mem, json);
 			}
 		} else if( json.type == Json.Type.Array ){
 			Json[] newmem;
 			foreach( m; json ){
-				auto mf = filterProt(m);
+				auto mf = filterProt(m, parent);
 				if( mf.type != Json.Type.Undefined )
 					newmem ~= mf;
 			}
@@ -186,7 +196,7 @@ int cmdFilterDocs(string[] args)
 				include = true;
 				break;
 			}
-		if( include ) dst ~= filterProt(m);
+		if( include ) dst ~= filterProt(m, Json.Undefined);
 	}
 
 	writefln("Writing filtered docs...");
