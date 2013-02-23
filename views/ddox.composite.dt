@@ -85,7 +85,9 @@ block ddox.members
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td
-							a(href="#{info.linkTo(f)}")= f.name ~ (f.inheritingDecl ? " [inherited]" : null)
+							a(href="#{info.linkTo(f)}")= f.name
+							- if( f.inheritingDecl )
+								| [inherited]
 						td!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
