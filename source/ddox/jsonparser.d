@@ -12,6 +12,7 @@ import ddox.entities;
 
 import std.algorithm;
 import std.conv;
+import std.demangle;
 import std.exception;
 import std.range;
 import std.stdio;
@@ -209,6 +210,10 @@ private struct Parser
 	{
 		auto ret = new EnumDeclaration(parent, json.name.get!string);
 		insertIntoTypeMap(ret);
+		if( "base" !in json ){ // FIXME: parse deco instead
+			if( auto pd = "baseDeco" in json )
+				json.base = demangle(pd.get!string());
+		}
 		ret.baseType = parseType(json.base, parent);
 		auto mems = parseDeclList(json.members, ret);
 		foreach( m; mems ){
@@ -283,8 +288,6 @@ private struct Parser
 
 	Type parseType(Json json, Entity sc, string def_type = "void")
 	{
-		import std.demangle;
-
 		string str;
 		if( json.type == Json.Type.Undefined ){
 			logWarn("No type found.");
