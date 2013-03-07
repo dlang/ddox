@@ -212,7 +212,7 @@ private struct Parser
 		insertIntoTypeMap(ret);
 		if( "base" !in json ){ // FIXME: parse deco instead
 			if( auto pd = "baseDeco" in json )
-				json.base = assumeUnique(demangleType(pd.get!string()));
+				json.base = demanglePrettyType(pd.get!string());
 		}
 		ret.baseType = parseType(json.base, parent);
 		auto mems = parseDeclList(json.members, ret);
@@ -295,7 +295,7 @@ private struct Parser
 		} else if( json.type == Json.Type.String ) str = json.get!string();
 		else if( auto pv = "type" in json ) str = pv.get!string();
 		else if( auto pv = "originalType" in json ) str = pv.get!string();
-		else if( auto pv = "deco" in json ) str = assumeUnique(demangleType(pv.get!string()));
+		else if( auto pv = "deco" in json ) str = demanglePrettyType(pv.get!string());
 
 		if( str.length == 0 ) str = def_type;
 
@@ -674,3 +674,11 @@ private struct Parser
 	}
 }
 
+string demanglePrettyType(string mangled_type)
+{
+	auto str = assumeUnique(demangleType(mangled_type));
+	str = str.replace("immutable(char)[]", "string");
+	str = str.replace("immutable(wchar)[]", "wstring");
+	str = str.replace("immutable(dchar)[]", "dstring");
+	return str;
+}
