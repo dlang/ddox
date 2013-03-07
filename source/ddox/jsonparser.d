@@ -12,7 +12,7 @@ import ddox.entities;
 
 import std.algorithm;
 import std.conv;
-import std.demangle;
+import ddox.internal.demangle; // std.demangle
 import std.exception;
 import std.range;
 import std.stdio;
@@ -212,7 +212,7 @@ private struct Parser
 		insertIntoTypeMap(ret);
 		if( "base" !in json ){ // FIXME: parse deco instead
 			if( auto pd = "baseDeco" in json )
-				json.base = demangle(pd.get!string());
+				json.base = assumeUnique(demangleType(pd.get!string()));
 		}
 		ret.baseType = parseType(json.base, parent);
 		auto mems = parseDeclList(json.members, ret);
@@ -295,7 +295,7 @@ private struct Parser
 		} else if( json.type == Json.Type.String ) str = json.get!string();
 		else if( auto pv = "type" in json ) str = pv.get!string();
 		else if( auto pv = "originalType" in json ) str = pv.get!string();
-		else if( auto pv = "deco" in json ) str = demangle(pv.get!string());
+		else if( auto pv = "deco" in json ) str = assumeUnique(demangleType(pv.get!string()));
 
 		if( str.length == 0 ) str = def_type;
 
