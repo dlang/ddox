@@ -115,6 +115,7 @@ int cmdFilterDocs(string[] args)
 	string[] excluded, included;
 	Protection minprot = Protection.Private;
 	bool keeputests = false;
+	bool keepinternals = false;
 	bool justdoc = false;
 	getopt(args,
 		//config.passThrough,
@@ -122,7 +123,10 @@ int cmdFilterDocs(string[] args)
 		"in", &included,
 		"min-protection", &minprot,
 		"only-documented", &justdoc,
-		"keep-unittests", &keeputests);
+		"keep-unittests", &keeputests,
+		"keep-internals", &keepinternals);
+
+	if( keeputests ) keepinternals = true;
 
 	string jsonfile;
 	if( args.length < 3 ){
@@ -157,6 +161,9 @@ int cmdFilterDocs(string[] args)
 			}
 			if( comment == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.Undefined;
+
+			if( keepinternals && json.name.opt!string().startsWith("__") )
+				return Json.Undefined;
 
 			if( !keeputests && json.name.opt!string().startsWith("__unittest") )
 				return Json.Undefined;
