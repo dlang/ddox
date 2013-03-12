@@ -114,13 +114,15 @@ int cmdFilterDocs(string[] args)
 {
 	string[] excluded, included;
 	Protection minprot = Protection.Private;
+	bool keeputests = false;
 	bool justdoc = false;
 	getopt(args,
 		//config.passThrough,
 		"ex", &excluded,
 		"in", &included,
 		"min-protection", &minprot,
-		"only-documented", &justdoc);
+		"only-documented", &justdoc,
+		"keep-unittests", &keeputests);
 
 	string jsonfile;
 	if( args.length < 3 ){
@@ -155,6 +157,9 @@ int cmdFilterDocs(string[] args)
 			}
 			if( comment == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.Undefined;
+
+			if( !keeputests && json.name.opt!string().startsWith("__unittest") )
+				return Json.Undefined;
 
 			if( auto mem = "members" in json ){
 				json.members = filterProt(*mem, json);
@@ -297,6 +302,7 @@ void showUsage(string[] args)
                            specified.
                            PROT can be: Public, Protected, Package, Private
     --only-documented      Remove undocumented entities
+    --keep-unittests       Does not remove unit tests from documentation
 `, args[0]);
 	}
 	if( args.length < 2 ){
