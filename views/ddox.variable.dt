@@ -19,6 +19,7 @@ block ddox.description
 		pre.code.prettyprint.lang-d.prototype
 			- string type;
 			- string value;
+			- string terminator = ";";
 			- if( auto var = cast(VariableDeclaration)info.item )
 				- if( var.type )
 					- type = info.formatType(var.type);
@@ -29,6 +30,7 @@ block ddox.description
 					- type = info.formatType(ev.type);
 				- if( ev.value )
 					- value = ev.value.valueString;
+				- terminator = ",";
 			- else if( auto ad = cast(AliasDeclaration)info.item )
 				- type = "alias";
 				- if( ad.targetType )
@@ -56,11 +58,11 @@ block ddox.description
 				|{
 				|	// ...
 				- if( value.length && type.length )
-					|	!{type} #{itemname} = !{value};
+					|	!{type} #{itemname} = !{value}!{terminator}
 				- else if( type.length )
-					|	!{type} #{itemname};
+					|	!{type} #{itemname}!{terminator}
 				- else
-					|	#{itemname};
+					|	#{itemname}!{terminator}
 				|	// ...
 				|}
 
