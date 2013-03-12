@@ -40,47 +40,48 @@ int ddoxMain(string[] args)
 
 int cmdGenerateHtml(string[] args)
 {
-	string macrofile, overridemacrofile;
-	NavigationType navtype;
-	string[] pack_order;
-	getopt(args,
-		//config.passThrough,
-		"std-macros", &macrofile,
-		"override-macros", &overridemacrofile,
-		"navigation-type", &navtype,
-		"package-order", &pack_order);
+	GeneratorSettings gensettings;
+	Package pack;
+	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
+		return ret;
 
-	if( args.length < 4 ){
-		showUsage(args);
-		return 1;
-	}
-
-	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
-	if( overridemacrofile.length ) setOverrideDdocMacroFile(overridemacrofile);
-
-	// parse the json output file
-	auto docsettings = new DdoxSettings;
-	docsettings.packageOrder = pack_order;
-	auto pack = parseDocFile(args[2], docsettings);
-
-	auto gensettings = new GeneratorSettings;
-	gensettings.navigationType = navtype;
 	generateHtmlDocs(Path(args[3]), pack, gensettings);
-
 	return 0;
 }
 
 int cmdServeHtml(string[] args)
 {
+	GeneratorSettings gensettings;
+	Package pack;
+	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
+		return ret;
+
+	// register the api routes and start the server
+	auto router = new UrlRouter;
+	registerApiDocs(router, pack, gensettings);
+
+	writefln("Listening on port 8080...");
+	auto settings = new HttpServerSettings;
+	settings.port = 8080;
+	listenHttp(settings, router);
+
+	startListening();
+	return runEventLoop();
+}
+
+int setupGeneratorInput(string[] args, out GeneratorSettings gensettings, out Package pack)
+{
 	string macrofile, overridemacrofile;
 	NavigationType navtype;
 	string[] pack_order;
+	string sitemapurl = "http://127.0.0.1/";
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofile,
 		"override-macros", &overridemacrofile,
 		"navigation-type", &navtype,
-		"package-order", &pack_order);
+		"package-order", &pack_order,
+		"sitemap-url", &sitemapurl);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -93,21 +94,12 @@ int cmdServeHtml(string[] args)
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
 	docsettings.packageOrder = pack_order;
-	auto pack = parseDocFile(args[2], docsettings);
+	pack = parseDocFile(args[2], docsettings);
 
-	// register the api routes and start the server
-	auto gensettings = new GeneratorSettings;
+	gensettings = new GeneratorSettings;
+	gensettings.siteUrl = Url(sitemapurl);
 	gensettings.navigationType = navtype;
-	auto router = new UrlRouter;
-	registerApiDocs(router, pack, gensettings);
-
-	writefln("Listening on port 8080...");
-	auto settings = new HttpServerSettings;
-	settings.port = 8080;
-	listenHttp(settings, router);
-
-	startListening();
-	return runEventLoop();
+	return 0;
 }
 
 int cmdFilterDocs(string[] args)
@@ -268,12 +260,15 @@ void showUsage(string[] args)
 	switch(cmd){
 		default:
 			writefln(
-`Usage: %s <COMMAND> [--help] (args...)
-	
-	<COMMAND> can be one of:
-		generate-html
-		serve-html
-		filter
+`Usage: %s <COMMAND> [args...]
+
+    <COMMAND> can be one of:
+        generate-html
+        serve-html
+        filter
+
+Specifying only the command with no further arguments will print detailed usage
+information.
 `, args[0]);
 			break;
 		case "serve-html":
@@ -286,6 +281,7 @@ void showUsage(string[] args)
                            ModuleTree, DeclarationTree)
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
+    --sitemap-url          Specifies the base URL used for sitemap generation
 `, args[0]);
 			break;
 		case "generate-html":
@@ -298,6 +294,7 @@ void showUsage(string[] args)
                            ModuleTree, DeclarationTree)
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
+    --sitemap-url          Specifies the base URL used for sitemap generation
 `, args[0]);
 			break;
 		case "filter":
