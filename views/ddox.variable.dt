@@ -20,11 +20,13 @@ block ddox.description
 			- string type;
 			- string value;
 			- if( auto var = cast(VariableDeclaration)info.item )
-				- type = info.formatType(var.type);
+				- if( var.type )
+					- type = info.formatType(var.type);
 				- if( var.initializer )
 					- value = var.initializer.valueString;
 			- else if( auto ev = cast(EnumMemberDeclaration)info.item )
-				- type = info.formatType(ev.type);
+				- if( ev.type )
+					- type = info.formatType(ev.type);
 				- if( ev.value )
 					- value = ev.value.valueString;
 			- else if( auto ad = cast(AliasDeclaration)info.item )
@@ -53,7 +55,7 @@ block ddox.description
 					|<a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>
 				|{
 				|	// ...
-				- if( value.length )
+				- if( value.length && type.length )
 					|	!{type} #{itemname} = !{value};
 				- else if( type.length )
 					|	!{type} #{itemname};
