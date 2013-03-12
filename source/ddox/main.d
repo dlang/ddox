@@ -308,8 +308,10 @@ void showUsage(string[] args)
     --min-protection=PROT  Remove items with lower protection level than
                            specified.
                            PROT can be: Public, Protected, Package, Private
-    --only-documented      Remove undocumented entities
-    --keep-unittests       Does not remove unit tests from documentation
+    --only-documented      Remove undocumented entities.
+    --keep-unittests       Do not remove unit tests from documentation.
+                           Implies --keep-internals.
+    --keep-internals       Do not remove symbols starting with two unterscores.
 `, args[0]);
 	}
 	if( args.length < 2 ){
