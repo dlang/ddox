@@ -288,7 +288,7 @@ final class FunctionDeclaration : TypedDeclaration {
 class CompositeTypeDeclaration : TypedDeclaration {
 	Declaration[] members;
 
-	override abstract @property DeclarationKind kind();
+	override abstract @property DeclarationKind kind() const;
  
 	this(Entity parent, string name){ super(parent, name); }
 
