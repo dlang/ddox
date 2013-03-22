@@ -154,11 +154,15 @@ int cmdFilterDocs(string[] args)
 			if( comment == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.Undefined;
 
-			if( keepinternals && json.name.opt!string().startsWith("__") )
-				return Json.Undefined;
+			auto name = json.name.opt!string();
+			bool is_internal = name.startsWith("__");
+			bool is_unittest = name.startsWith("__unittest");
+			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
+			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
+			
+			if (!keepinternals && is_internal) return Json.Undefined;
 
-			if( !keeputests && json.name.opt!string().startsWith("__unittest") )
-				return Json.Undefined;
+			if (!keeputests && is_unittest) return Json.Undefined;
 
 			if( auto mem = "members" in json ){
 				json.members = filterProt(*mem, json);
