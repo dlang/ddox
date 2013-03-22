@@ -69,7 +69,7 @@ int cmdServeHtml(string[] args)
 	return runEventLoop();
 }
 
-int setupGeneratorInput(string[] args, out GeneratorSettings gensettings, out Package pack)
+int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, out Package pack)
 {
 	string macrofile, overridemacrofile;
 	NavigationType navtype;
