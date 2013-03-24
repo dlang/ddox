@@ -39,15 +39,16 @@ void inheritDocs(Package root)
 
 			DocGroup idg;
 			foreach( dgm_; dg.members ){
+				if (dgm_.name == "this") continue;
 				auto dgm = cast(Declaration)dgm_;
 				auto match = findMatching(decl.members, dgm);
-				if( !match ){
+				if (!match) {
 					auto im = dgm.dup;
 					im.inheritingDecl = dgm;
 					if( !idg ) idg = new DocGroup(im, dg.text);
 					else idg.members ~= im;
 					decl.members ~= im;
-				} else if( dg.text.length ){
+				} else if (dg.text.length) {
 					match.docGroup.text = dg.text;
 				}
 			}
