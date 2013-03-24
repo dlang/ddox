@@ -81,7 +81,7 @@ block ddox.members
 				tr
 					th Name
 					th Type
-					th Descrption
+					th Description
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td
