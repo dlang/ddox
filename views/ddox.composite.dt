@@ -68,9 +68,7 @@ block ddox.members
 				- foreach( p; constructors )
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=p.protection)= p.name
-							- if( p.inheritingDecl )
-								| [inherited]
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- if( hasChild!VariableDeclaration(item) )
@@ -85,9 +83,7 @@ block ddox.members
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td
-							a(href="#{info.linkTo(f)}", class=f.protection)= f.name
-							- if( f.inheritingDecl )
-								| [inherited]
+							a(href="#{info.linkTo(f)}", class=declStyleClasses(f))= f.name
 						td!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
@@ -103,9 +99,7 @@ block ddox.members
 				- foreach( p; properties )
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=p.protection)= p.name
-							- if( p.inheritingDecl )
-								| [inherited]
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
 						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
 						td!= { foreach(ov; mems){ auto ovf = cast(FunctionDeclaration)ov; if( !ovf ) continue; auto rt = ovf.returnType; if( !canFind(["", "void"], rt.typeName) ) return info.formatType(rt); } return "-"; }()
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
@@ -121,9 +115,7 @@ block ddox.members
 				- foreach( p; methods )
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=p.protection)= p.name
-							- if( p.inheritingDecl )
-								| [inherited]
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- foreach( i, kind; kinds )
@@ -138,9 +130,7 @@ block ddox.members
 					- foreach( grp; getDocGroups!kind(item) )
 						tr
 							td
-								a(href="#{info.linkTo(grp)}", class=grp.protection)= grp.name
-								- if( grp.inheritingDecl )
-									| [inherited]
+								a(href="#{info.linkTo(grp)}", class=declStyleClasses(grp))= grp.name
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 block ddox.authors

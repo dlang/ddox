@@ -10,7 +10,9 @@ module ddox.api;
 public import ddox.ddox;
 public import ddox.ddoc;
 
+import std.algorithm;
 import std.array;
+import std.conv;
 import std.format;
 import std.string;
 import vibe.core.log;
@@ -128,6 +130,18 @@ T[] getDocGroups(T)(Declaration[] decls)
 			dg = d.docGroup;
 			name = d.name;
 		}
+	}
+	return ret;
+}
+
+string[] declStyleClasses(Declaration decl)
+{
+	string[] ret;
+	ret ~= decl.protection.to!string().toLower();
+	if (decl.inheritingDecl) ret ~= "inherited";
+	if (auto tdecl = cast(TypedDeclaration)decl) {
+		if (tdecl.type.attributes.canFind("@property")) ret ~= "property";
+		if (tdecl.type.attributes.canFind("static")) ret ~= "static";
 	}
 	return ret;
 }
