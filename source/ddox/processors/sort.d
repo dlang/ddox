@@ -29,10 +29,14 @@ void sortDecls(alias pred)(Package root)
 {
 	void sortDecl(Declaration decl)
 	{
-		if( auto td = cast(TemplateDeclaration)decl )
+		if( auto td = cast(TemplateDeclaration)decl ){
+			foreach (sd; td.members) sortDecl(sd);
 			sort!pred(td.members);
-		else if( auto ctd = cast(CompositeTypeDeclaration)decl )
+		}
+		else if( auto ctd = cast(CompositeTypeDeclaration)decl ){
+			foreach (sd; ctd.members) sortDecl(sd);
 			sort!pred(ctd.members);
+		}
 	}
 
 	void sortModule(Module mod)

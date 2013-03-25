@@ -95,3 +95,5 @@ ul.tree-view li {
 	padding: 0;
 	margin-left: 0;
 }
+
+a.Protected { font-style: italic; }

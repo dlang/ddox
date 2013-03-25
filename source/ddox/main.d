@@ -215,6 +215,25 @@ int cmdFilterDocs(string[] args)
 	return 0;
 }
 
+bool delegate(Entity, Entity) sortPred(SortMode mode)
+{
+	final switch (mode) {
+		case SortMode.none:
+			assert(false);
+		case SortMode.name:
+			return (a, b) => icmp(a.name, b.name) < 0;
+		case SortMode.protectionName:
+			return (a, b) {
+				auto pa = Protection.Public;
+				auto pb = Protection.Public;
+				if (auto da = cast(Declaration)a) pa = da.protection;
+				if (auto db = cast(Declaration)b) pb = db.protection;
+				if (pa != pb) return pa > pb;
+				return icmp(a.name, b.name) < 0;
+			};
+	}
+}
+
 Package parseDocFile(string filename, DdoxSettings settings)
 {
 	writefln("Reading doc file...");
@@ -235,9 +254,10 @@ Package parseDocFile(string filename, DdoxSettings settings)
 	if( settings.mergeEponymousTemplates ){
 		mergeEponymousTemplates(root);
 	}
-	if( settings.moduleSort == SortMode.Name ){
-		writefln("Sorting modules...");
-		sortModules!((a, b) => a.name < b.name)(root);
+	if( settings.moduleSort != SortMode.none ){
+		writefln("Sorting modules (%s)...", settings.moduleSort);
+		auto mpred = sortPred(settings.moduleSort);
+		sortModules!mpred(root);
 		
 		import std.algorithm;
 		bool package_order(Package a, Package b){
@@ -249,9 +269,10 @@ Package parseDocFile(string filename, DdoxSettings settings)
 		}
 		sort!(package_order, SwapStrategy.stable)(root.packages);
 	}
-	if( settings.declSort == SortMode.Name ){
-		writefln("Sorting declarations...");
-		sortDecls!((a, b) => a.name < b.name)(root);
+	if( settings.declSort != SortMode.none ){
+		writefln("Sorting declarations (%s)...", settings.declSort);
+		auto dpred = sortPred(settings.declSort);
+		sortDecls!dpred(root);
 	}
 	return root;
 }

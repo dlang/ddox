@@ -10,20 +10,28 @@ module ddox.settings;
 import vibe.inet.url;
 
 enum SortMode {
-	None,
-	Name
+	none,
+	name,
+	protectionName,
+
+	None = none,
+	Name = name
 }
 
 enum NavigationType {
-	ModuleList,
-	ModuleTree,
-	DeclarationTree,
+	moduleList,
+	moduleTree,
+	declarationTree,
+
+	ModuleList = moduleList,
+	ModuleTree = moduleTree,
+	DeclarationTree = declarationTree,
 }
 
 class DdoxSettings {
-	NavigationType navigationType = NavigationType.ModuleTree;
-	SortMode moduleSort = SortMode.Name;
-	SortMode declSort = SortMode.None;
+	NavigationType navigationType = NavigationType.moduleTree;
+	SortMode moduleSort = SortMode.protectionName;
+	SortMode declSort = SortMode.protectionName;
 	string[] packageOrder;
 	bool inheritDocumentation = true;
 	bool mergeEponymousTemplates = true;
@@ -32,7 +40,7 @@ class DdoxSettings {
 
 
 class GeneratorSettings {
-	NavigationType navigationType = NavigationType.ModuleTree;
+	NavigationType navigationType = NavigationType.moduleTree;
 	// used for sitemap generation and for determining the URL prefix in registerApiDocs()
 	Url siteUrl = Url.parse("http://localhost:8080/");
 }

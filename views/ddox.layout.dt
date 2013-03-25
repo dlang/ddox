@@ -6,13 +6,13 @@ block title
 
 block navigation
 	- final switch( info.settings.navigationType )
-		- case NavigationType.ModuleTree:
+		- case NavigationType.moduleTree:
 			include ddox.inc.module-tree
 			- break;
-		- case NavigationType.ModuleList:
+		- case NavigationType.moduleList:
 			include ddox.inc.module-list
 			- break;
-		- case NavigationType.DeclarationTree:
+		- case NavigationType.declarationTree:
 			include ddox.inc.decl-tree
 			- break;
 
