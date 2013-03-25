@@ -247,14 +247,15 @@ Package parseDocFile(string filename, DdoxSettings settings)
 	else root = parseJsonDocs(json, settings);
 	writefln("Finished parsing docs.");
 
-	if( settings.inheritDocumentation ){
+	if (settings.mergeEponymousTemplates) {
+		writefln("Detecting eponymous templates...");
+		mergeEponymousTemplates(root);
+	}
+	if (settings.inheritDocumentation) {
 		writefln("Searching for inherited docs...");
 		inheritDocs(root);
 	}
-	if( settings.mergeEponymousTemplates ){
-		mergeEponymousTemplates(root);
-	}
-	if( settings.moduleSort != SortMode.none ){
+	if (settings.moduleSort != SortMode.none) {
 		writefln("Sorting modules (%s)...", settings.moduleSort);
 		auto mpred = sortPred(settings.moduleSort);
 		sortModules!mpred(root);
