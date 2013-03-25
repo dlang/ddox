@@ -37,6 +37,8 @@ class DocGroupContext : DdocContext {
 	@property string[] defaultMacroDefinitions() { return null; }
 	string lookupScopeSymbolLink(string name)
 	{
+		if (name == "this") return null;
+		
 		foreach( def; m_group.members ){
 			// if this is a function, first search the parameters
 			// TODO: maybe do the same for function/delegate variables/type aliases
