@@ -231,6 +231,17 @@ bool delegate(Entity, Entity) sortPred(SortMode mode)
 				if (pa != pb) return pa > pb;
 				return icmp(a.name, b.name) < 0;
 			};
+		case SortMode.protectionInheritanceName:
+			return (a, b) {
+				auto pa = Protection.Public;
+				auto pb = Protection.Public;
+				bool ia, ib;
+				if (auto da = cast(Declaration)a) pa = da.protection, ia = da.inheritingDecl !is null;
+				if (auto db = cast(Declaration)b) pb = db.protection, ib = db.inheritingDecl !is null;
+				if (pa != pb) return pa > pb;
+				if (ia != ib) return ib;
+				return icmp(a.name, b.name) < 0;
+			};
 	}
 }
 

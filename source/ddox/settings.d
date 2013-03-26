@@ -13,6 +13,7 @@ enum SortMode {
 	none,
 	name,
 	protectionName,
+	protectionInheritanceName,
 
 	None = none,
 	Name = name
@@ -31,7 +32,7 @@ enum NavigationType {
 class DdoxSettings {
 	NavigationType navigationType = NavigationType.moduleTree;
 	SortMode moduleSort = SortMode.protectionName;
-	SortMode declSort = SortMode.protectionName;
+	SortMode declSort = SortMode.protectionInheritanceName;
 	string[] packageOrder;
 	bool inheritDocumentation = true;
 	bool mergeEponymousTemplates = true;
