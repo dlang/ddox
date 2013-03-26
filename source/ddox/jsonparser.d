@@ -194,6 +194,8 @@ private struct Parser
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
 			ret.attributes = ret.type.attributes;
+			if (auto sc = "storageClass" in json)
+				ret.attributes ~= deserializeJson!(string[])(*sc);
 			foreach( i, pt; ret.type.parameterTypes ){
 				auto decl = new VariableDeclaration(ret, ret.type._parameterNames[i]);
 				decl.type = pt;
