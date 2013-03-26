@@ -40,16 +40,18 @@ void inheritDocs(Package root)
 			foreach (parentmem; parentgrp.members.map!(m => cast(Declaration)m)()) {
 				if (parentmem.name == "this") continue;
 				auto childmem = findMatching(decl.members, parentmem);
-				if (!childmem) {
-					auto inhdecl = parentmem.dup;
-					if (!inhgrp) inhgrp = new DocGroup(inhdecl, parentgrp.text);
-					else inhgrp.members ~= inhdecl;
-					inhdecl.docGroup = inhgrp;
-					inhdecl.inheritingDecl = parentmem;
-					assert(inhdecl.inheritingDecl && inhdecl.inheritingDecl !is inhdecl);
-					decl.members ~= inhdecl;
-				} else if (!childmem.docGroup.text.length) {
-					childmem.docGroup.text = parentgrp.text;
+				if (!childmem || !childmem.docGroup.text.length) {
+					Declaration newdecl;
+					if (childmem) newdecl = childmem;
+					else newdecl = parentmem.dup;
+					if (!inhgrp) inhgrp = new DocGroup(newdecl, parentgrp.text);
+					else inhgrp.members ~= newdecl;
+					newdecl.docGroup = inhgrp;
+					if (!childmem) {
+						newdecl.inheritingDecl = parentmem;
+						assert(newdecl.inheritingDecl && newdecl.inheritingDecl !is newdecl);
+						decl.members ~= newdecl;
+					}
 				}
 			}
 		}
