@@ -357,7 +357,8 @@ private struct Parser
 
 	Type parseType(ref string[] tokens, Entity sc)
 	{
-		auto basic_type = parseBasicType(tokens, sc);
+		string[] attributes;
+		auto basic_type = parseBasicType(tokens, sc, attributes);
 
 		while( tokens.length > 0 && (tokens[0] == "function" || tokens[0] == "delegate" || tokens[0] == "(") ){
 			Type ret = new Type;
@@ -402,10 +403,11 @@ private struct Parser
 			basic_type = ret;
 		}
 		
+		basic_type.attributes = attributes;
 		return basic_type;	
 	}
 
-	Type parseBasicType(ref string[] tokens, Entity sc)
+	Type parseBasicType(ref string[] tokens, Entity sc, out string[] attributes)
 	{
 		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
 			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
@@ -417,7 +419,6 @@ private struct Parser
 		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "shared", "pure", "nothrow"];
 		
 			
-		string[] attributes;	
 		if( tokens.length > 0 && tokens[0] == "extern" ){
 			enforce(tokens[1] == "(");
 			enforce(tokens[3] == ")");
@@ -456,9 +457,10 @@ private struct Parser
 			
 			
 			if( modifiers.length > 0 ){
-				type = parseBasicType(tokens, sc);
-				type.attributes = attributes;
+				string[] subattrs;
+				type = parseBasicType(tokens, sc, subattrs);
 				type.modifiers = modifiers;
+				type.attributes = subattrs;
 				foreach( i; 0 .. modifiers.length ){
 					//enforce(tokens[i] == ")", "expected ')', got '"~tokens[i]~"'");
 					if( tokens[i] == ")" ) // FIXME: this is a hack to make parsing(const(immutable(char)[][]) somehow "work"
@@ -468,7 +470,6 @@ private struct Parser
 			} else {
 				type = new Type;
 				type.kind = TypeKind.Primitive;
-				type.attributes = attributes;
 				m_primTypes ~= tuple(type, sc);
 
 				size_t start = 0, end;
