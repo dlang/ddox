@@ -233,3 +233,16 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 		foreach( att; type.modifiers ) dst.put(')');
 	}
 }
+
+Type getPropertyType(Entity[] mems...)
+{
+	foreach (ov; mems) {
+		auto ovf = cast(FunctionDeclaration)ov;
+		if (!ovf) continue;
+		auto rt = ovf.returnType;
+		if (!canFind(["", "void"], rt.typeName)) return rt;
+		if (ovf.parameters.length == 0) continue;
+		return ovf.parameters[0].type;
+	}
+	return null;
+}

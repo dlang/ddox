@@ -101,7 +101,7 @@ block ddox.members
 						td
 							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
 						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
-						td!= { foreach(ov; mems){ auto ovf = cast(FunctionDeclaration)ov; if(!ovf) continue; auto rt = ovf.returnType; if( !canFind(["", "void"], rt.typeName) ) return info.formatType(rt); } return "-"; }()
+						td!= info.formatType(getPropertyType(mems))
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- if( methods.length )
