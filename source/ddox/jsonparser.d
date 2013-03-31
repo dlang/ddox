@@ -196,12 +196,18 @@ private struct Parser
 			ret.attributes = ret.type.attributes;
 			if (auto sc = "storageClass" in json)
 				ret.attributes ~= deserializeJson!(string[])(*sc);
-			foreach( i, pt; ret.type.parameterTypes ){
-				auto decl = new VariableDeclaration(ret, ret.type._parameterNames[i]);
+			auto params = json.parameters.opt!(Json[]);
+			foreach (i, pt; ret.type.parameterTypes) {
+				auto pname = ret.type._parameterNames[i];
+				auto pdefval = ret.type._parameterDefaultValues[i];
+				if (i < params.length) pname = params[i].name.get!string();
+				auto decl = new VariableDeclaration(ret, pname);
 				decl.type = pt;
-				decl.initializer = ret.type._parameterDefaultValues[i];
+				decl.initializer = pdefval;
 				ret.parameters ~= decl;
 			}
+			foreach (size_t i, pn; json.opt!(Json[]))
+				ret.parameters[i].name = pn.get!string();
 		} else {
 			logError("Expected function type for '%s'/'%s', got %s %s", json["type"].opt!string, demangleType(json["deco"].opt!string), ret.type.kind, ret.type.typeName);
 		}
