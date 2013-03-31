@@ -142,6 +142,7 @@ string[] declStyleClasses(Declaration decl)
 	ret ~= decl.protection.to!string().toLower();
 	if (decl.inheritingDecl) ret ~= "inherited";
 	if (auto tdecl = cast(TypedDeclaration)decl) {
+		assert(tdecl.type !is null, typeid(tdecl).name~" declaration without type!?");
 		if (tdecl.type.attributes.canFind("@property")) ret ~= "property";
 		if (tdecl.type.attributes.canFind("static")) ret ~= "static";
 	}

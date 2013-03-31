@@ -510,7 +510,7 @@ private struct Parser
 					auto arr = new Type;
 					arr.kind = TypeKind.StaticArray;
 					arr.elementType = type;
-					arr.arrayLength = to!int(tokens.front);
+					arr.arrayLength = tokens.front;//to!int(tokens.front);
 					tokens.popFront();
 					type = arr;
 				} else {

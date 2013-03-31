@@ -189,7 +189,7 @@ private struct Parser
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
 		auto ret = new FunctionDeclaration(parent, json.name.get!string);
-		ret.type = parseType(json, parent);
+		ret.type = parseType(json, parent, "void()");
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
@@ -203,7 +203,7 @@ private struct Parser
 				ret.parameters ~= decl;
 			}
 		} else {
-			logError("Expected function type for '%s', got %s", json["type"].opt!string, ret.type.kind);
+			logError("Expected function type for '%s'/'%s', got %s %s", json["type"].opt!string, demangleType(json["deco"].opt!string), ret.type.kind, ret.type.typeName);
 		}
 		return ret;
 	}
@@ -350,51 +350,15 @@ private struct Parser
 
 	Type parseTypeDecl(ref string[] tokens, Entity sc)
 	{
-		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
-			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
-			"__gshared", "scope", "static", "synchronize"];
-
-		static immutable parameter_attribute_keywords = ["auto", "const", "final", "immutable", "in", "inout",
-			"lazy", "out", "ref", "scope", "shared"];
-
-		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "shared", "pure", "nothrow"];
-		
-			
-		string[] attributes;	
-		if( tokens.length > 0 && tokens[0] == "extern" ){
-			enforce(tokens[1] == "(");
-			enforce(tokens[3] == ")");
-			attributes ~= join(tokens[0 .. 4]);
-			tokens = tokens[4 .. $];
-		}
-		
-		immutable string[] attribute_keywords = global_attribute_keywords ~ parameter_attribute_keywords ~ member_function_attribute_keywords;
-		/*final switch( sc ){
-			case DeclScope.Global: attribute_keywords = global_attribute_keywords; break;
-			case DeclScope.Parameter: attribute_keywords = parameter_attribute_keywords; break;
-			case DeclScope.Class: attribute_keywords = member_function_attribute_keywords; break;
-		}*/
-
-		while( tokens.length > 0 ){
-			if( tokens.front == "@" ){
-				tokens.popFront();
-				attributes ~= "@"~tokens.front;
-				tokens.popFront();
-			} else if( attribute_keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
-				attributes ~= tokens.front;
-				tokens.popFront();
-			} else break;
-		}
 
 		auto ret = parseType(tokens, sc);
-		ret.attributes = attributes;
 		return ret;
 	}
 
 	Type parseType(ref string[] tokens, Entity sc)
 	{
 		auto basic_type = parseBasicType(tokens, sc);
-		
+
 		while( tokens.length > 0 && (tokens[0] == "function" || tokens[0] == "delegate" || tokens[0] == "(") ){
 			Type ret = new Type;
 			ret.kind = tokens.front == "(" || tokens.front == "function" ? TypeKind.Function : TypeKind.Delegate;
@@ -402,6 +366,7 @@ private struct Parser
 			if( tokens.front != "(" ) tokens.popFront();
 			enforce(tokens.front == "(");
 			tokens.popFront();
+			if (!tokens.empty && tokens.front == ",") tokens.popFront(); // sometimes demangleType() returns something like "void(, ...)"
 			while(true){
 				if( tokens.front == ")" ) break;
 				enforce(!tokens.empty);
@@ -442,6 +407,42 @@ private struct Parser
 
 	Type parseBasicType(ref string[] tokens, Entity sc)
 	{
+		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
+			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
+			"__gshared", "scope", "static", "synchronize"];
+
+		static immutable parameter_attribute_keywords = ["auto", "const", "final", "immutable", "in", "inout",
+			"lazy", "out", "ref", "scope", "shared"];
+
+		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "shared", "pure", "nothrow"];
+		
+			
+		string[] attributes;	
+		if( tokens.length > 0 && tokens[0] == "extern" ){
+			enforce(tokens[1] == "(");
+			enforce(tokens[3] == ")");
+			attributes ~= join(tokens[0 .. 4]);
+			tokens = tokens[4 .. $];
+		}
+		
+		immutable string[] attribute_keywords = global_attribute_keywords ~ parameter_attribute_keywords ~ member_function_attribute_keywords;
+		/*final switch( sc ){
+			case DeclScope.Global: attribute_keywords = global_attribute_keywords; break;
+			case DeclScope.Parameter: attribute_keywords = parameter_attribute_keywords; break;
+			case DeclScope.Class: attribute_keywords = member_function_attribute_keywords; break;
+		}*/
+
+		while( tokens.length > 0 ){
+			if( tokens.front == "@" ){
+				tokens.popFront();
+				attributes ~= "@"~tokens.front;
+				tokens.popFront();
+			} else if( attribute_keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
+				attributes ~= tokens.front;
+				tokens.popFront();
+			} else break;
+		}
+
 		Type type;
 		{
 			static immutable const_modifiers = ["const", "immutable", "shared", "inout"];
@@ -456,6 +457,7 @@ private struct Parser
 			
 			if( modifiers.length > 0 ){
 				type = parseBasicType(tokens, sc);
+				type.attributes = attributes;
 				type.modifiers = modifiers;
 				foreach( i; 0 .. modifiers.length ){
 					//enforce(tokens[i] == ")", "expected ')', got '"~tokens[i]~"'");
@@ -466,6 +468,7 @@ private struct Parser
 			} else {
 				type = new Type;
 				type.kind = TypeKind.Primitive;
+				type.attributes = attributes;
 				m_primTypes ~= tuple(type, sc);
 
 				size_t start = 0, end;
@@ -491,8 +494,18 @@ private struct Parser
 					type.typeName = join(tokens[start .. end]);
 					//type.typeDecl = cast(Declaration)sc.lookup(type.typeName);
 					tokens.popFrontN(i);
-
-					if( !tokens.empty && tokens.front == "!" ){
+					
+					if (type.typeName == "typeof" && !tokens.empty && tokens.front == "(") {
+						type.typeName ~= "(";
+						tokens.popFront();
+						int level = 1;
+						while (!tokens.empty && level > 0) {
+							if (tokens.front == "(") level++;
+							else if( tokens.front == ")") level--;
+							type.typeName ~= tokens.front;
+							tokens.popFront();
+						}
+					} else if( !tokens.empty && tokens.front == "!" ){
 						tokens.popFront();
 						if( tokens.front == "(" ){
 							size_t j = 1;
@@ -509,6 +522,12 @@ private struct Parser
 						} else {
 							type.templateArgs = tokens[0];
 							tokens.popFront();
+						}
+						
+						// HACK: dropping the actual type name here!
+						while (!tokens.empty && tokens.front == ".") {
+							tokens.popFront();
+							if (!tokens.empty()) tokens.popFront();
 						}
 					}
 				}
@@ -529,21 +548,30 @@ private struct Parser
 					arr.kind = TypeKind.Array;
 					arr.elementType = type;
 					type = arr;
-				} else if( isDigit(tokens.front[0]) ){
-					auto arr = new Type;
-					arr.kind = TypeKind.StaticArray;
-					arr.elementType = type;
-					arr.arrayLength = to!int(tokens.front);
-					tokens.popFront();
-					type = arr;
 				} else {
-					auto keytp = parseType(tokens, sc);
-					logDebug("GOT TYPE: %s", keytp.toString());
-					auto aa = new Type;
-					aa.kind = TypeKind.AssociativeArray;
-					aa.elementType = type;
-					aa.keyType = keytp;
-					type = aa;
+					string[] tokens_copy = tokens;
+					Type keytp;
+					if (!isDigit(tokens.front[0])) keytp = parseType(tokens_copy, sc);
+					if (keytp && !tokens_copy.empty && tokens_copy.front == "]") {
+						tokens = tokens_copy;
+						logDebug("GOT TYPE: %s", keytp.toString());
+						auto aa = new Type;
+						aa.kind = TypeKind.AssociativeArray;
+						aa.elementType = type;
+						aa.keyType = keytp;
+						type = aa;
+					} else {
+						auto arr = new Type;
+						arr.kind = TypeKind.StaticArray;
+						arr.elementType = type;
+						arr.arrayLength = tokens.front;
+						tokens.popFront();
+						while (!tokens.empty && tokens.front != "]") {
+							arr.arrayLength ~= tokens.front;
+							tokens.popFront();
+						}
+						type = arr;
+					}
 				}
 				enforce(tokens.front == "]", "Expected ']', got '"~tokens.front~"'.");
 				tokens.popFront();

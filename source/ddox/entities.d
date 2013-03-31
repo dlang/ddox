@@ -301,7 +301,7 @@ final class FunctionDeclaration : TypedDeclaration {
 	}
 }
 
-class CompositeTypeDeclaration : TypedDeclaration {
+class CompositeTypeDeclaration : Declaration {
 	Declaration[] members;
 
 	override abstract @property DeclarationKind kind() const;
@@ -422,7 +422,7 @@ final class Type {
 	// P, A, SA, AA
 	Type elementType;
 	// SA
-	size_t arrayLength;
+	string arrayLength;
 	// AA
 	Type keyType;
 	// Function/Delegate
