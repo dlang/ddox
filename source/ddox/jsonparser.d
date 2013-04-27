@@ -188,7 +188,7 @@ private struct Parser
 
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
-		auto ret = new FunctionDeclaration(parent, json.name.get!string);
+		auto ret = new FunctionDeclaration(parent, json.name.opt!string);
 		ret.type = parseType(json, parent, "void()");
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
@@ -200,7 +200,8 @@ private struct Parser
 			foreach (i, pt; ret.type.parameterTypes) {
 				auto pname = ret.type._parameterNames[i];
 				auto pdefval = ret.type._parameterDefaultValues[i];
-				if (i < params.length) pname = params[i].name.get!string();
+				if (i < params.length && params[i].name.type == Json.Type.String)
+					pname = params[i].name.get!string();
 				auto decl = new VariableDeclaration(ret, pname);
 				decl.type = pt;
 				decl.initializer = pdefval;
