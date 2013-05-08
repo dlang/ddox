@@ -21,7 +21,7 @@ import vibe.core.log;
 import vibe.data.json;
 
 
-Package parseJsonDocsOld(Json json, DdoxSettings settings, Package root = null)
+Package parseJsonDocsOld(Json json, Package root = null)
 {
 	if( !root ) root = new Package(null, null);
 	Parser p;
