@@ -1,5 +1,5 @@
 /**
-	Parses DMD JSON output and builds up a socumentation syntax tree (JSON format staring from DND 2.062).
+	Parses DMD JSON output and builds up a documentation syntax tree (JSON format from DMD 2.063.2).
 
 	Copyright: © 2012 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
@@ -285,12 +285,24 @@ private struct Parser
 
 	auto parseTemplateDecl(Json json, Entity parent)
 	{
-		auto name = json.name.get!string().strip();
-		auto cidx = name.countUntil('(');
-		assert(cidx > 0 && name.endsWith(')'), "Template name must be of the form name(args)");
-
-		auto ret = new TemplateDeclaration(parent, name[0 .. cidx]);
-		ret.templateArgs = name[cidx .. $];
+		auto ret = new TemplateDeclaration(parent, json.name.get!string);
+		foreach (arg; json.parameters) {
+			if (ret.templateArgs.length != 0) ret.templateArgs ~= ", ";
+			switch (arg.kind.get!string) {
+				case "value":
+					ret.templateArgs ~= demanglePrettyType(arg.deco.get!string) ~ ' ';
+					goto default;
+				case "alias":
+					ret.templateArgs ~= "alias ";
+					goto default;
+				case "tuple":
+					ret.templateArgs ~= arg.name.get!string ~ "...";
+					break;
+				default:
+					ret.templateArgs ~= arg.name.get!string;
+			}
+		}
+		ret.templateArgs = '(' ~ ret.templateArgs ~ ')';
 		ret.members = parseDeclList(json.members, ret);
 		return ret;
 	}
