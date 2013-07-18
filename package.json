@@ -6,16 +6,16 @@
 		"Sönke Ludwig"
 	],
 	"dependencies": {
-  		"vibe-d": "~master"
- 	},
- 	"versions": ["JsonLineNumbers"],
- 	"configurations": [
-	 	{
-	 		"name": "application",
-	 		"targetType": "executable",
-	 		"versions": ["VibeCustomMain"]
-	 	},
-	 	{
+		"vibe-d": "==0.7.16"
+	},
+	"versions": ["JsonLineNumbers"],
+	"configurations": [
+		{
+			"name": "application",
+			"targetType": "executable",
+			"versions": ["VibeCustomMain"]
+		},
+		{
 			"name": "library",
 			"excludedSourceFiles": ["source/app.d"]
 		}
