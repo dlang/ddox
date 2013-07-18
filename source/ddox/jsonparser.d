@@ -290,7 +290,8 @@ private struct Parser
 			if (ret.templateArgs.length != 0) ret.templateArgs ~= ", ";
 			switch (arg.kind.get!string) {
 				case "value":
-					ret.templateArgs ~= demanglePrettyType(arg.deco.get!string) ~ ' ';
+					if (auto pt = "type" in arg) ret.templateArgs ~= pt.get!string ~ ' ';
+					else ret.templateArgs ~= demanglePrettyType(arg.deco.get!string) ~ ' ';
 					goto default;
 				case "alias":
 					ret.templateArgs ~= "alias ";
