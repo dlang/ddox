@@ -90,7 +90,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				visitDecl(mod, m, path);
 		}
 
-		auto file = openFile(path ~ PathEntry(decl.nestedName~".html"), FileMode.CreateTrunc);
+		auto file = openFile(path ~ PathEntry(decl.nestedName~".html"), FileMode.createTrunc);
 		scope(exit) file.close();
 		generateDeclPage(file, root, mod, decl, settings, ent => linkTo(ent, path.length-dst_path.length));
 	}
@@ -101,7 +101,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		if( !existsFile(modpath) ) createDirectory(modpath);
 		foreach( decl; mod.members ) visitDecl(mod, decl, modpath);
 		logInfo("Generating module: %s", mod.qualifiedName);
-		auto file = openFile(pack_path ~ PathEntry(mod.name~".html"), FileMode.CreateTrunc);
+		auto file = openFile(pack_path ~ PathEntry(mod.name~".html"), FileMode.createTrunc);
 		scope(exit) file.close();
 		generateModulePage(file, root, mod, settings, ent => linkTo(ent, pack_path.length-dst_path.length));
 	}
@@ -119,13 +119,13 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	if( !dst_path.empty && !existsFile(dst_path) ) createDirectory(dst_path);
 
 	{
-		auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.CreateTrunc);
+		auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.createTrunc);
 		scope(exit) idxfile.close();
 		generateApiIndex(idxfile, root, settings, ent => linkTo(ent, 0));
 	}
 
 	{
-		auto smfile = openFile(dst_path ~ PathEntry("sitemap.xml"), FileMode.CreateTrunc);
+		auto smfile = openFile(dst_path ~ PathEntry("sitemap.xml"), FileMode.createTrunc);
 		scope(exit) smfile.close();
 		generateSitemap(smfile, root, settings, ent => linkTo(ent, 0));
 	}
@@ -157,7 +157,7 @@ class DocDeclPageInfo : DocModulePageInfo {
 	DocGroup[] docGroups; // for multiple doc groups with the same name
 }
 
-void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
+void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
 	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", false);
 	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n", false);
@@ -184,7 +184,7 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 	dst.write("</urlset>\n");
 }
 
-void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
+void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
 	auto info = new DocPageInfo;
 	info.linkTo = link_to;
@@ -193,12 +193,12 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.node = root_package;
 
 	dst.parseDietFileCompat!("ddox.overview.dt",
-		HttpServerRequest, "req",
+		HTTPServerRequest, "req",
 		DocPageInfo, "info")
 		(Variant(req), Variant(info));
 }
 
-void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
+void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
 	auto info = new DocModulePageInfo;
 	info.linkTo = link_to;
@@ -208,12 +208,12 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.node = mod;
 
 	dst.parseDietFileCompat!("ddox.module.dt",
-		HttpServerRequest, "req",
+		HTTPServerRequest, "req",
 		DocModulePageInfo, "info")
 		(Variant(req), Variant(info));
 }
 
-void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declaration item, GeneratorSettings settings, string delegate(Entity) link_to, HttpServerRequest req = null)
+void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declaration item, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
 	auto info = new DocDeclPageInfo;
 	info.linkTo = link_to;
@@ -230,22 +230,22 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declar
 		case DeclarationKind.Variable:
 		case DeclarationKind.EnumMember:
 		case DeclarationKind.Alias:
-			dst.parseDietFileCompat!("ddox.variable.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			dst.parseDietFileCompat!("ddox.variable.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Function:
-			dst.parseDietFileCompat!("ddox.function.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			dst.parseDietFileCompat!("ddox.function.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Interface:
 		case DeclarationKind.Class:
 		case DeclarationKind.Struct:
 		case DeclarationKind.Union:
-			dst.parseDietFileCompat!("ddox.composite.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			dst.parseDietFileCompat!("ddox.composite.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Template:
-			dst.parseDietFileCompat!("ddox.template.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			dst.parseDietFileCompat!("ddox.template.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 		case DeclarationKind.Enum:
-			dst.parseDietFileCompat!("ddox.enum.dt", HttpServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
+			dst.parseDietFileCompat!("ddox.enum.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
 			break;
 	}
 }

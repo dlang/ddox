@@ -21,7 +21,7 @@ import vibe.http.router;
 import vibe.templ.diet; // just so that rdmd picks it up
 
 
-void registerApiDocs(UrlRouter router, Package pack, GeneratorSettings settings = null)
+void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings = null)
 {
 	if( !settings ) settings = new GeneratorSettings;
 
@@ -63,13 +63,13 @@ void registerApiDocs(UrlRouter router, Package pack, GeneratorSettings settings 
 		return dst.data();
 	}
 
-	void showApi(HttpServerRequest req, HttpServerResponse res)
+	void showApi(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		res.contentType = "text/html; charset=UTF-8";
 		generateApiIndex(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
 	}
 
-	void showApiModule(HttpServerRequest req, HttpServerResponse res)
+	void showApiModule(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto mod = cast(Module)pack.lookup(req.params["modulename"]);
 		if( !mod ) return;
@@ -78,7 +78,7 @@ void registerApiDocs(UrlRouter router, Package pack, GeneratorSettings settings 
 		generateModulePage(res.bodyWriter, pack, mod, settings, ent => linkTo(ent, 1), req);
 	}
 
-	void showApiItem(HttpServerRequest req, HttpServerResponse res)
+	void showApiItem(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto mod = pack.lookup!Module(req.params["modulename"]);
 		logDebug("mod: %s", mod !is null);
@@ -91,7 +91,7 @@ void registerApiDocs(UrlRouter router, Package pack, GeneratorSettings settings 
 		generateDeclPage(res.bodyWriter, pack, mod, item, settings, ent => linkTo(ent, 1), req);
 	}
 
-	void showSitemap(HttpServerRequest req, HttpServerResponse res)
+	void showSitemap(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		res.contentType = "application/xml";
 		generateSitemap(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);

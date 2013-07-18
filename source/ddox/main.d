@@ -54,13 +54,13 @@ int cmdServeHtml(string[] args)
 		return ret;
 
 	// register the api routes and start the server
-	auto router = new UrlRouter;
+	auto router = new URLRouter;
 	registerApiDocs(router, pack, gensettings);
 
 	writefln("Listening on port 8080...");
-	auto settings = new HttpServerSettings;
+	auto settings = new HTTPServerSettings;
 	settings.port = 8080;
-	listenHttp(settings, router);
+	listenHTTP(settings, router);
 
 	return runEventLoop();
 }
@@ -93,7 +93,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	pack = parseDocFile(args[2], docsettings);
 
 	gensettings = new GeneratorSettings;
-	gensettings.siteUrl = Url(sitemapurl);
+	gensettings.siteUrl = URL(sitemapurl);
 	gensettings.navigationType = navtype;
 	return 0;
 }
@@ -135,7 +135,7 @@ int cmdFilterDocs(string[] args)
 			auto comment = json.comment.opt!string().strip();
 			if( justdoc && comment.empty ){
 				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
-					return Json.Undefined;
+					return Json.undefined;
 			}
 			
 			Protection prot = Protection.Public;
@@ -148,7 +148,7 @@ int cmdFilterDocs(string[] args)
 				}
 			}
 			if( comment == "private" ) prot = Protection.Private;
-			if( prot < minprot ) return Json.Undefined;
+			if( prot < minprot ) return Json.undefined;
 
 			auto name = json.name.opt!string();
 			bool is_internal = name.startsWith("__");
@@ -156,9 +156,9 @@ int cmdFilterDocs(string[] args)
 			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
 			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
 			
-			if (!keepinternals && is_internal) return Json.Undefined;
+			if (!keepinternals && is_internal) return Json.undefined;
 
-			if (!keeputests && is_unittest) return Json.Undefined;
+			if (!keeputests && is_unittest) return Json.undefined;
 
 			if( auto mem = "members" in json ){
 				json.members = filterProt(*mem, json);
@@ -200,7 +200,7 @@ int cmdFilterDocs(string[] args)
 				include = true;
 				break;
 			}
-		if( include ) dst ~= filterProt(m, Json.Undefined);
+		if( include ) dst ~= filterProt(m, Json.undefined);
 	}
 
 	writefln("Writing filtered docs...");

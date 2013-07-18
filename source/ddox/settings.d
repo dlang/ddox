@@ -43,6 +43,6 @@ class DdoxSettings {
 class GeneratorSettings {
 	NavigationType navigationType = NavigationType.moduleTree;
 	// used for sitemap generation and for determining the URL prefix in registerApiDocs()
-	Url siteUrl = Url.parse("http://localhost:8080/");
+	URL siteUrl = URL("http://localhost:8080/");
 }
 

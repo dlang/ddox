@@ -71,7 +71,7 @@ void setDefaultDdocMacroFile(string filename)
 {
 	import vibe.core.file;
 	import vibe.stream.operations;
-	auto text = readAllUtf8(openFile(filename));
+	auto text = readAllUTF8(openFile(filename));
 	s_defaultMacros = null;
 	parseMacros(s_defaultMacros, splitLines(text));
 }
@@ -84,7 +84,7 @@ void setOverrideDdocMacroFile(string filename)
 {
 	import vibe.core.file;
 	import vibe.stream.operations;
-	auto text = readAllUtf8(openFile(filename));
+	auto text = readAllUTF8(openFile(filename));
 	s_overrideMacros = null;
 	parseMacros(s_overrideMacros, splitLines(text));
 }
