@@ -33,7 +33,8 @@ block ddox.members
 					- foreach( grp; getDocGroups!kind(info.mod) )
 						tr
 							td
-								a(id="#{grp.name}", href="#{info.linkTo(grp)}")= grp.name
+								a(id="#{grp.name}", href="#{info.linkTo(grp)}")
+									code= grp.name
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 	- alias TypeTuple!(EnumMemberDeclaration, VariableDeclaration, AliasDeclaration) tkinds;
@@ -53,7 +54,8 @@ block ddox.members
 					- foreach( f; getDocGroups!kind(info.mod)  )
 						tr
 							td
-								a(id="#{f.name}", href="#{info.linkTo(f)}")= f.name
+								a(id="#{f.name}", href="#{info.linkTo(f)}")
+									code= f.name
 							td
 								- if( f.type )
 									|!= info.formatType(f.type)
