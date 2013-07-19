@@ -28,8 +28,8 @@ block ddox.members
 				- auto mems = docgroup.members;
 				- foreach( size_t pi, pd; mems )
 					- auto proto = cast(FunctionDeclaration)pd;
-					- auto attribs = join(proto.attributes, " ");
 					- if( !proto ) continue;
+					- auto attribs = join(proto.attributes, " ");
 					- if( pi > 0 )
 						|
 					- if( proto.parameters.length )
