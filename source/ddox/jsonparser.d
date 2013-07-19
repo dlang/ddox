@@ -193,7 +193,7 @@ private struct Parser
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
-			ret.attributes = ret.type.attributes;
+			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
 			if (auto sc = "storageClass" in json)
 				ret.attributes ~= deserializeJson!(string[])(*sc);
 			auto params = json.parameters.opt!(Json[]);
@@ -379,51 +379,7 @@ private struct Parser
 	{
 		string[] attributes;
 		auto basic_type = parseBasicType(tokens, sc, attributes);
-
-		while( tokens.length > 0 && (tokens[0] == "function" || tokens[0] == "delegate" || tokens[0] == "(") ){
-			Type ret = new Type;
-			ret.kind = tokens.front == "(" || tokens.front == "function" ? TypeKind.Function : TypeKind.Delegate;
-			ret.returnType = basic_type;
-			if( tokens.front != "(" ) tokens.popFront();
-			enforce(tokens.front == "(");
-			tokens.popFront();
-			if (!tokens.empty && tokens.front == ",") tokens.popFront(); // sometimes demangleType() returns something like "void(, ...)"
-			while(true){
-				if( tokens.front == ")" ) break;
-				enforce(!tokens.empty);
-				ret.parameterTypes ~= parseTypeDecl(tokens, sc);
-				if( tokens.front != "," && tokens.front != ")" ){
-					ret._parameterNames ~= tokens.front;
-					tokens.popFront();
-				} else ret._parameterNames ~= null;
-				if( tokens.front == "..." ){
-					ret._parameterNames[$-1] ~= tokens.front;
-					tokens.popFront();
-				}
-				if( tokens.front == "=" ){
-					tokens.popFront();
-					string defval;
-					int ccount = 0;
-					while( !tokens.empty ){
-						if( ccount == 0 && (tokens.front == "," || tokens.front == ")") )
-							break;
-						if( tokens.front == "(" ) ccount++;
-						else if( tokens.front == ")" ) ccount--;
-						defval ~= tokens.front;
-						tokens.popFront();
-					}
-					ret._parameterDefaultValues ~= parseValue(defval);
-					logDebug("got defval %s", defval);
-				} else ret._parameterDefaultValues ~= null;
-				if( tokens.front == ")" ) break;
-				enforce(tokens.front == ",", "Expecting ',', got "~tokens.front);
-				tokens.popFront();
-			}
-			tokens.popFront();
-			basic_type = ret;
-		}
-		
-		basic_type.attributes = attributes;
+		basic_type.attributes ~= attributes;
 		return basic_type;	
 	}
 
@@ -465,91 +421,78 @@ private struct Parser
 		}
 
 		Type type;
-		{
-			static immutable const_modifiers = ["const", "immutable", "shared", "inout"];
-			string[] modifiers;
-			while( tokens.length > 2 ){
-				if( tokens[1] == "(" && const_modifiers.countUntil(tokens[0]) >= 0 ){
-					modifiers ~= tokens[0];
-					tokens.popFrontN(2);
-				} else break;
+		static immutable const_modifiers = ["const", "immutable", "shared", "inout"];
+		if (tokens.length > 2 && tokens[1] == "(" && const_modifiers.countUntil(tokens[0]) >= 0) {
+			auto mod = tokens.front;
+			tokens.popFrontN(2);
+			string[] subattrs;
+			type = parseBasicType(tokens, sc, subattrs);
+			type.modifiers ~= mod;
+			type.attributes ~= subattrs;
+			enforce(!tokens.empty && tokens.front == ")", format("Missing ')' for '%s('", mod));
+			tokens.popFront();
+		} else {
+			type = new Type;
+			type.kind = TypeKind.Primitive;
+			m_primTypes ~= tuple(type, sc);
+
+			size_t start = 0, end;
+			if( tokens[start] == "." ) start++;
+			for( end = start; end < tokens.length && isIdent(tokens[end]); ){
+				end++;
+				if( end >= tokens.length || tokens[end] != "." )
+					break;
+				end++;
 			}
-			
-			
-			if( modifiers.length > 0 ){
-				string[] subattrs;
-				type = parseBasicType(tokens, sc, subattrs);
-				type.modifiers = modifiers;
-				type.attributes = subattrs;
-				foreach( i; 0 .. modifiers.length ){
-					//enforce(tokens[i] == ")", "expected ')', got '"~tokens[i]~"'");
-					if( tokens[i] == ")" ) // FIXME: this is a hack to make parsing(const(immutable(char)[][]) somehow "work"
-						tokens.popFront();
-				}
-				//tokens.popFrontN(modifiers.length);
+
+			size_t i = end;
+
+			string type_name, nested_name;
+			if( i == 0 && tokens[0] == "..." ){
+				type_name = "...";
+				nested_name = null;
+			} else if( i == 0 && tokens[0] == "(" ){
+				type_name = "constructor";
+				nested_name = null;
 			} else {
-				type = new Type;
-				type.kind = TypeKind.Primitive;
-				m_primTypes ~= tuple(type, sc);
-
-				size_t start = 0, end;
-				if( tokens[start] == "." ) start++;
-				for( end = start; end < tokens.length && isIdent(tokens[end]); ){
-					end++;
-					if( end >= tokens.length || tokens[end] != "." )
-						break;
-					end++;
-				}
-
-				size_t i = end;
-
-				string type_name, nested_name;
-				if( i == 0 && tokens[0] == "..." ){
-					type_name = "...";
-					nested_name = null;
-				} else if( i == 0 && tokens[0] == "(" ){
-					type_name = "constructor";
-					nested_name = null;
-				} else {
-					enforce(i > 0, "Expected identifier but got "~tokens.front);
-					type.typeName = join(tokens[start .. end]);
-					//type.typeDecl = cast(Declaration)sc.lookup(type.typeName);
-					tokens.popFrontN(i);
+				enforce(i > 0, "Expected identifier but got "~tokens.front);
+				type.typeName = join(tokens[start .. end]);
+				//type.typeDecl = cast(Declaration)sc.lookup(type.typeName);
+				tokens.popFrontN(i);
+				
+				if (type.typeName == "typeof" && !tokens.empty && tokens.front == "(") {
+					type.typeName ~= "(";
+					tokens.popFront();
+					int level = 1;
+					while (!tokens.empty && level > 0) {
+						if (tokens.front == "(") level++;
+						else if( tokens.front == ")") level--;
+						type.typeName ~= tokens.front;
+						tokens.popFront();
+					}
+				} else if( !tokens.empty && tokens.front == "!" ){
+					tokens.popFront();
+					if( tokens.front == "(" ){
+						size_t j = 1;
+						int cc = 1;
+						while( cc > 0 ){
+							assert(j < tokens.length);
+							if( tokens[j] == "(" ) cc++;
+							else if( tokens[j] == ")") cc--;
+							j++;
+						}
+						type.templateArgs = join(tokens[0 .. j]);
+						tokens.popFrontN(j);
+						logDebug("templargs: %s", type.templateArgs);
+					} else {
+						type.templateArgs = tokens[0];
+						tokens.popFront();
+					}
 					
-					if (type.typeName == "typeof" && !tokens.empty && tokens.front == "(") {
-						type.typeName ~= "(";
+					// HACK: dropping the actual type name here!
+					while (!tokens.empty && tokens.front == ".") {
 						tokens.popFront();
-						int level = 1;
-						while (!tokens.empty && level > 0) {
-							if (tokens.front == "(") level++;
-							else if( tokens.front == ")") level--;
-							type.typeName ~= tokens.front;
-							tokens.popFront();
-						}
-					} else if( !tokens.empty && tokens.front == "!" ){
-						tokens.popFront();
-						if( tokens.front == "(" ){
-							size_t j = 1;
-							int cc = 1;
-							while( cc > 0 ){
-								assert(j < tokens.length);
-								if( tokens[j] == "(" ) cc++;
-								else if( tokens[j] == ")") cc--;
-								j++;
-							}
-							type.templateArgs = join(tokens[0 .. j]);
-							tokens.popFrontN(j);
-							logDebug("templargs: %s", type.templateArgs);
-						} else {
-							type.templateArgs = tokens[0];
-							tokens.popFront();
-						}
-						
-						// HACK: dropping the actual type name here!
-						while (!tokens.empty && tokens.front == ".") {
-							tokens.popFront();
-							if (!tokens.empty()) tokens.popFront();
-						}
+						if (!tokens.empty()) tokens.popFront();
 					}
 				}
 			}
@@ -599,6 +542,49 @@ private struct Parser
 			} else break;
 		}
 		
+		while (!tokens.empty && (tokens.front == "function" || tokens.front == "delegate" || tokens.front == "(")) {
+			Type ftype = new Type;
+			ftype.kind = tokens.front == "(" || tokens.front == "function" ? TypeKind.Function : TypeKind.Delegate;
+			ftype.returnType = type;
+			if (tokens.front != "(") tokens.popFront();
+			enforce(tokens.front == "(");
+			tokens.popFront();
+			if (!tokens.empty && tokens.front == ",") tokens.popFront(); // sometimes demangleType() returns something like "void(, ...)"
+			while (true) {
+				if (tokens.front == ")") break;
+				enforce(!tokens.empty);
+				ftype.parameterTypes ~= parseTypeDecl(tokens, sc);
+				if (tokens.front != "," && tokens.front != ")") {
+					ftype._parameterNames ~= tokens.front;
+					tokens.popFront();
+				} else ftype._parameterNames ~= null;
+				if (tokens.front == "...") {
+					ftype._parameterNames[$-1] ~= tokens.front;
+					tokens.popFront();
+				}
+				if (tokens.front == "=") {
+					tokens.popFront();
+					string defval;
+					int ccount = 0;
+					while (!tokens.empty) {
+						if (ccount == 0 && (tokens.front == "," || tokens.front == ")"))
+							break;
+						if (tokens.front == "(") ccount++;
+						else if (tokens.front == ")") ccount--;
+						defval ~= tokens.front;
+						tokens.popFront();
+					}
+					ftype._parameterDefaultValues ~= parseValue(defval);
+					logDebug("got defval %s", defval);
+				} else ftype._parameterDefaultValues ~= null;
+				if (tokens.front == ")") break;
+				enforce(tokens.front == ",", "Expecting ',', got "~tokens.front);
+				tokens.popFront();
+			}
+			tokens.popFront();
+			type = ftype;
+		}
+
 		return type;
 	}
 	
