@@ -28,6 +28,7 @@ block ddox.members
 				- auto mems = docgroup.members;
 				- foreach( size_t pi, pd; mems )
 					- auto proto = cast(FunctionDeclaration)pd;
+					- auto attribs = join(proto.attributes, " ");
 					- if( !proto ) continue;
 					- if( pi > 0 )
 						|
@@ -35,12 +36,12 @@ block ddox.members
 						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}(
 						- foreach( size_t i, p; proto.parameters )
 							|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
-						- if( proto.attributes.length )
-							|) #{join(proto.attributes, " ")};
+						- if( attribs.length )
+							|) #{attribs};
 						- else
 							|);
-					- else if( proto.attributes.length)
-						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}() #{join(proto.attributes, " ")};
+					- else if( attribs.length)
+						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}() #{attribs};
 					- else
 						|!{info.formatType(proto.returnType)} #{proto.name}#{proto.templateArgs}();
 
