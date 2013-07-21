@@ -97,10 +97,11 @@ block ddox.members
 					th Type
 					th Description
 				- foreach( p; properties )
+					- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
 					tr
 						td
 							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
-						- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
+							span.tableEntryAnnotation= anyPropertyGetter(mems) ? anyPropertySetter(mems) ? "[get, set]" : "[get]" : "[set]"
 						td!= info.formatType(getPropertyType(mems))
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 

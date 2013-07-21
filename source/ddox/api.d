@@ -246,3 +246,24 @@ Type getPropertyType(Entity[] mems...)
 	}
 	return null;
 }
+
+bool anyPropertyGetter(Entity[] mems...)
+{
+	foreach (ov; mems) {
+		auto ovf = cast(FunctionDeclaration)ov;
+		if (!ovf) continue;
+		if (["void", ""].canFind(ovf.returnType.typeName)) continue;
+		if (ovf.parameters.length == 0) return true;
+	}
+	return false;
+}
+
+bool anyPropertySetter(Entity[] mems...)
+{
+	foreach (ov; mems) {
+		auto ovf = cast(FunctionDeclaration)ov;
+		if (!ovf) continue;
+		if (ovf.parameters.length == 1) return true;
+	}
+	return false;
+}
