@@ -160,6 +160,7 @@ string formatType()(Type type, string delegate(Entity) link_to)
 
 void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 {
+	dst.put("<code class=\"prettyprint lang-d\">");
 	foreach( att; type.attributes){
 		dst.put(att); 
 		dst.put(' ');
@@ -232,6 +233,7 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
 		foreach( att; type.modifiers ) dst.put(')');
 	}
+	dst.put("</code>");
 }
 
 Type getPropertyType(Entity[] mems...)

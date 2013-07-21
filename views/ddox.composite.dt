@@ -68,7 +68,8 @@ block ddox.members
 				- foreach( p; constructors )
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))
+								code= p.name
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- if( hasChild!VariableDeclaration(item) )
@@ -83,7 +84,7 @@ block ddox.members
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td
-							a(href="#{info.linkTo(f)}", class=declStyleClasses(f))= f.name
+							a(href="#{info.linkTo(f)}", class=declStyleClasses(f)) <code>#{f.name}</code>
 						td!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
@@ -100,7 +101,7 @@ block ddox.members
 					- auto mems = p.docGroup ? p.docGroup.members : [cast(Entity)p];
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p)) <code>#{p.name}</code>
 							span.tableEntryAnnotation= anyPropertyGetter(mems) ? anyPropertySetter(mems) ? "[get, set]" : "[get]" : "[set]"
 						td!= info.formatType(getPropertyType(mems))
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
@@ -116,7 +117,8 @@ block ddox.members
 				- foreach( p; methods )
 					tr
 						td
-							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))= p.name
+							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))
+								code= p.name
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- foreach( i, kind; kinds )
@@ -131,7 +133,8 @@ block ddox.members
 					- foreach( grp; getDocGroups!kind(item) )
 						tr
 							td
-								a(href="#{info.linkTo(grp)}", class=declStyleClasses(grp))= grp.name
+								a(href="#{info.linkTo(grp)}", class=declStyleClasses(grp))
+									code= grp.name
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 block ddox.authors
