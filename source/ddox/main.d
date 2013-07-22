@@ -10,6 +10,7 @@ import ddox.jsonparser_old;
 
 import vibe.core.core;
 import vibe.core.file;
+import vibe.http.fileserver;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.data.json;
@@ -48,6 +49,11 @@ int cmdGenerateHtml(string[] args)
 
 int cmdServeHtml(string[] args)
 {
+	string[] webfiledirs;
+	getopt(args,
+		config.passThrough,
+		"web-file-dir", &webfiledirs);
+
 	GeneratorSettings gensettings;
 	Package pack;
 	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
@@ -56,6 +62,9 @@ int cmdServeHtml(string[] args)
 	// register the api routes and start the server
 	auto router = new URLRouter;
 	registerApiDocs(router, pack, gensettings);
+
+	foreach (dir; webfiledirs)
+		router.get("*", serveStaticFiles(dir));
 
 	writefln("Listening on port 8080...");
 	auto settings = new HTTPServerSettings;
@@ -258,6 +267,7 @@ information.
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
+    --web-file-dir=DIR     Make files from dir available on the served site
 `, args[0]);
 			break;
 		case "generate-html":
