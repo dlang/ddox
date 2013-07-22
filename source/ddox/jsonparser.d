@@ -179,7 +179,7 @@ private struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json.name.get!string);
-		ret.targetType = parseType(json, parent, null);
+		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
 			ret.targetType = null;
 		insertIntoTypeMap(ret);
@@ -189,7 +189,7 @@ private struct Parser
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
 		auto ret = new FunctionDeclaration(parent, json.name.opt!string);
-		ret.type = parseType(json, parent, "void()");
+		ret.type = parseType(json, ret, "void()");
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
@@ -223,7 +223,7 @@ private struct Parser
 			if( auto pd = "baseDeco" in json )
 				json.base = demanglePrettyType(pd.get!string());
 		}
-		ret.baseType = parseType(json.base, parent);
+		ret.baseType = parseType(json.base, ret);
 		auto mems = parseDeclList(json.members, ret);
 		foreach( m; mems ){
 			auto em = cast(EnumMemberDeclaration)m;
@@ -256,15 +256,15 @@ private struct Parser
 			case "class":
 				auto clsdecl = new ClassDeclaration(parent, json.name.get!string);
 				if( clsdecl.qualifiedName != "object.Object" )
-					clsdecl.baseClass = parseType(json.base, parent, "Object");
+					clsdecl.baseClass = parseType(json.base, clsdecl, "Object", false);
 				foreach( intf; json.interfaces.opt!(Json[]) )
-					clsdecl.derivedInterfaces ~= parseType(intf, parent);
+					clsdecl.derivedInterfaces ~= parseType(intf, clsdecl);
 				ret = clsdecl;
 				break;
 			case "interface":
 				auto intfdecl = new InterfaceDeclaration(parent, json.name.get!string);
 				foreach( intf; json.interfaces.opt!(Json[]) )
-					intfdecl.derivedInterfaces ~= parseType(intf, parent);
+					intfdecl.derivedInterfaces ~= parseType(intf, intfdecl);
 				ret = intfdecl;
 				break;
 		}
@@ -279,7 +279,7 @@ private struct Parser
 	auto parseVariableDecl(Json json, Entity parent)
 	{
 		auto ret = new VariableDeclaration(parent, json.name.get!string);
-		ret.type = parseType(json, parent);
+		ret.type = parseType(json, ret);
 		return ret;
 	}
 
@@ -308,11 +308,11 @@ private struct Parser
 		return ret;
 	}
 
-	Type parseType(Json json, Entity sc, string def_type = "void")
+	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_id_not_exists = true)
 	{
 		string str;
 		if( json.type == Json.Type.Undefined ){
-			logWarn("No type found.");
+			if (warn_id_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
 			str = def_type;
 		} else if( json.type == Json.Type.String ) str = json.get!string();
 		else if( auto pv = "type" in json ) str = pv.get!string();
