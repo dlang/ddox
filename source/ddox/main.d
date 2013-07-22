@@ -76,14 +76,15 @@ int cmdServeHtml(string[] args)
 
 int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, out Package pack)
 {
-	string macrofile, overridemacrofile;
+	string[] macrofiles;
+	string[] overridemacrofiles;
 	NavigationType navtype;
 	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
 	getopt(args,
 		//config.passThrough,
-		"std-macros", &macrofile,
-		"override-macros", &overridemacrofile,
+		"std-macros", &macrofiles,
+		"override-macros", &overridemacrofiles,
 		"navigation-type", &navtype,
 		"package-order", &pack_order,
 		"sitemap-url", &sitemapurl);
@@ -93,8 +94,8 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 		return 1;
 	}
 
-	if( macrofile.length ) setDefaultDdocMacroFile(macrofile);
-	if( overridemacrofile.length ) setOverrideDdocMacroFile(overridemacrofile);
+	setDefaultDdocMacroFiles(macrofiles);
+	setOverrideDdocMacroFiles(overridemacrofiles);
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;

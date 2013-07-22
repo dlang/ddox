@@ -67,26 +67,30 @@ void filterDdocComment(R)(ref R dst, string text, DdocContext context, int hleve
 /**
 	Sets a set of macros that will be available to all calls to formatDdocComment.
 */
-void setDefaultDdocMacroFile(string filename)
+void setDefaultDdocMacroFiles(string[] filenames)
 {
 	import vibe.core.file;
 	import vibe.stream.operations;
-	auto text = readAllUTF8(openFile(filename));
 	s_defaultMacros = null;
-	parseMacros(s_defaultMacros, splitLines(text));
+	foreach (filename; filenames) {
+		auto text = readAllUTF8(openFile(filename));
+		parseMacros(s_defaultMacros, splitLines(text));
+	}
 }
 
 
 /**
 	Sets a set of macros that will be available to all calls to formatDdocComment and override local macro definitions.
 */
-void setOverrideDdocMacroFile(string filename)
+void setOverrideDdocMacroFiles(string[] filenames)
 {
 	import vibe.core.file;
 	import vibe.stream.operations;
-	auto text = readAllUTF8(openFile(filename));
 	s_overrideMacros = null;
-	parseMacros(s_overrideMacros, splitLines(text));
+	foreach (filename; filenames) {
+		auto text = readAllUTF8(openFile(filename));
+		parseMacros(s_overrideMacros, splitLines(text));
+	}
 }
 
 
