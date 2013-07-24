@@ -315,9 +315,9 @@ private struct Parser
 			if (warn_id_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
 			str = def_type;
 		} else if( json.type == Json.Type.String ) str = json.get!string();
+		else if( auto pv = "deco" in json ) str = demanglePrettyType(pv.get!string());
 		else if( auto pv = "type" in json ) str = pv.get!string();
 		else if( auto pv = "originalType" in json ) str = pv.get!string();
-		else if( auto pv = "deco" in json ) str = demanglePrettyType(pv.get!string());
 
 		if( str.length == 0 ) str = def_type;
 
@@ -515,7 +515,7 @@ private struct Parser
 				} else {
 					string[] tokens_copy = tokens;
 					Type keytp;
-					if (!isDigit(tokens.front[0])) keytp = parseType(tokens_copy, sc);
+					if (!isDigit(tokens.front[0]) && tokens.front != "!") keytp = parseType(tokens_copy, sc);
 					if (keytp && !tokens_copy.empty && tokens_copy.front == "]") {
 						tokens = tokens_copy;
 						logDebug("GOT TYPE: %s", keytp.toString());
