@@ -159,14 +159,14 @@ class DocDeclPageInfo : DocModulePageInfo {
 
 void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
-	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", false);
-	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n", false);
+	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 	
 	void writeEntry(string[] parts...){
-		dst.write("<url><loc>", false);
+		dst.write("<url><loc>");
 		foreach( p; parts )
-			dst.write(p, false);
-		dst.write("</loc></url>\n", false);
+			dst.write(p);
+		dst.write("</loc></url>\n");
 	}
 
 	void writeEntityRec(Entity ent){
@@ -182,6 +182,7 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 	writeEntityRec(root_package);
 	
 	dst.write("</urlset>\n");
+	dst.flush();
 }
 
 void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
