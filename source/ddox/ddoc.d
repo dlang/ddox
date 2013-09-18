@@ -108,7 +108,6 @@ class DdocComment {
 
 	this(string text)
 	{
-		text = text.strip();
 
 		if( icmp(text, "ditto") == 0 ){ m_isDitto = true; return; }
 		if( icmp(text, "private") == 0 ){ m_isPrivate = true; return; }
@@ -183,7 +182,7 @@ class DdocComment {
 			auto j = skipSection(i+1);
 			auto pidx = lines[i].indexOf(':');
 			auto sect = strip(lines[i][0 .. pidx]);
-			lines[i] = strip(lines[i][pidx+1 .. $]);
+			lines[i] = stripLeftDD(lines[i][pidx+1 .. $]);
 			if( lines[i].empty ) i++;
 			if( sect == "Macros" ) parseMacros(m_macros, lines[i .. j]);
 			else {
@@ -212,7 +211,7 @@ class DdocComment {
 	void renderSectionsR(R)(ref R dst, DdocContext context, bool delegate(string) display_section, int hlevel)
 	{
 		foreach( i, s; m_sectionNames ){
-			if( !display_section(s) ) continue;
+			if (display_section && !display_section(s)) continue;
 			parseSection(dst, s, m_sections[s].lines, context, hlevel, m_macros);
 		}
 	}
@@ -342,20 +341,19 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			while( i < lines.length ){
 				int lntype = getLineType(i);
 
-				if( lntype == BLANK ){ i++; continue; }
-
 				switch( lntype ){
 					default: assert(false, "Unexpected line type "~to!string(lntype)~": "~lines[i]);
+					case BLANK:
+						dst.put('\n');
+						i++;
+						continue;
 					case SECTION:
 					case TEXT:
 						if( hlevel >= 0 ) dst.put("<p>");
 						auto j = skipBlock(i);
 						bool first = true;
-						foreach( ln; lines[i .. j] ){
-							if( !first ) dst.put(' ');
-							else first = false;
-							renderTextLine(dst, ln.strip(), context);
-						}
+						renderTextLine(dst, lines[i .. j].join("\n"), context);
+						dst.put('\n');
 						if( hlevel >= 0 ) dst.put("</p>\n");
 						i = j;
 						break;
@@ -522,7 +520,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	} else if( line[0] == '+' ){
 		if( params.length ){
 			auto idx = params[0].indexOf(',');
-			if( idx >= 0 ) dst.put(params[0][idx+1 .. $]);
+			if( idx >= 0 ) dst.put(params[0][idx+1 .. $].stripLeftDD());
 		}
 		line = line[1 .. $];
 	} else if( line[0] == '(' ){
@@ -559,7 +557,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 				args ~= argtext.data();
 			}
 		}
-		args = join(args, ",") ~ args;
+		args = join(args, ",").stripLeftDD() ~ args.map!(s => s.stripLeftDD()).array;
 
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
@@ -664,17 +662,6 @@ private string skipUrl(ref string ln)
 	} else return null;
 }
 
-private string skipWhitespace(ref string ln)
-{
-	string ret = ln;
-	while( ln.length > 0 ){
-		if( ln[0] == ' ' || ln[0] == '\t' )
-			break;
-		ln = ln[1 .. $];
-	}
-	return ret[0 .. ret.length - ln.length];
-}
-
 private string skipIdent(ref string str)
 {
 	string strcopy = str;
@@ -710,8 +697,7 @@ private bool isIdent(string str)
 private void parseMacros(ref string[string] macros, in string[] lines)
 {
 	string name;
-	foreach( string ln; lines ){
-		if( !ln.strip().length ) continue;
+	foreach (string ln; lines) {
 		// macro definitions are of the form IDENT = ...
 		auto pidx = ln.indexOf('=');
 		if( pidx > 0 ){
@@ -719,13 +705,13 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 			if( isIdent(tmpnam) ){
 				// got new macro definition
 				name = tmpnam;
-				macros[name] = ln[pidx+1 .. $];
+				macros[name] = stripLeftDD(ln[pidx+1 .. $]);
 				continue;
 			}
 		}
 
 		// append to previous macro definition, if any
-		if( name.length ) macros[name] ~= "\n" ~ ln;
+		if (name.length) macros[name] ~= "\n" ~ ln;
 	}
 }
 
@@ -747,4 +733,38 @@ private string unindent(string ln, int amount)
 	while( amount > 0 && ln.length > 0 && (ln[0] == ' ' || ln[0] == '\t') )
 		ln = ln[1 .. $], amount--;
 	return ln;
+}
+
+private string stripLeftDD(string s)
+{
+	while (!s.empty && (s.front == ' ' || s.front == '\t'))
+		s.popFront();
+	return s;
+}
+
+
+import std.stdio;
+unittest {
+	auto src = "$(M a b)\n$(M a\nb)\nMacros:\n	M =     -$0-\n";
+	auto dst = "-a b-\n-a\nb-\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "\n  $(M a b)\n$(M a  \nb)\nMacros:\n	M =     -$0-  \n\nN=$0";
+	auto dst = "  -a b-  \n\n-a  \nb-  \n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "$(M a, b)\n$(M a,\n    b)\nMacros:\n	M = -$1-\n\n	+$2+\n\n	N=$0";
+	auto dst = "-a-\n\n	+b+\n\n-a-\n\n	+\n    b+\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "$(GLOSSARY a\nb)\nMacros:\n	GLOSSARY = $(LINK2 glossary.html#$0, $0)";
+	auto dst = "<a href=\"glossary.html#a\nb\">a\nb</a>\n";
+//writeln(formatDdocComment(src).splitLines().map!(s => "|"~s~"|").join("\n"));
+	assert(formatDdocComment(src) == dst);
 }
