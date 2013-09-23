@@ -4,5 +4,6 @@ import ddox.main;
 
 int main(string[] args)
 {
-	return ddoxMain(args);
+	version(unittest) return 0;
+	else return ddoxMain(args);
 }
