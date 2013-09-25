@@ -426,6 +426,15 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 			case '<':
 				dst.put(skipHtmlTag(line));
 				break;
+			case '>':
+				dst.put("&gt;");
+				line.popFront();
+				break;
+			case '&':
+				if (line.length >= 2 && (line[1].isAlpha || line[1] == '#')) dst.put('&');
+				else dst.put("&amp;");
+				line.popFront();
+				break;
 			case '_':
 				line = line[1 .. $];
 				auto ident = skipIdent(line);
@@ -602,32 +611,35 @@ private string skipHtmlTag(ref string ln)
 {
 	assert(ln[0] == '<');
 
-	// too short for a tag
-	if( ln.length < 3 ) goto no_match;
-
 	// skip HTML comment
-	if( ln.startsWith("<!--") ){
+	if (ln.startsWith("<!--")) {
 		auto idx = ln[4 .. $].indexOf("-->");
-		if( idx < 0 ) goto no_match;
+		if (idx < 0) {
+			ln.popFront();
+			return "&lt;";
+		}
 		auto ret = ln[0 .. idx+7];
 		ln = ln[ret.length .. $];
 		return ret;
 	}
 
-	// skip over regular start/end tag
-	if( ln[1].isAlpha() || ln[1] == '/' && ln[2].isAlpha() ){
-		auto idx = ln.indexOf(">");
-		if( idx < 0 ) goto no_match;
-		auto ret = ln[0 .. idx+1];
-		ln = ln[ret.length .. $];
-		return ret;
+	// too short for a tag
+	if (ln.length < 2 || (!ln[1].isAlpha && ln[1] != '#' && ln[1] != '/')) {
+		// found no match, return escaped '<'
+		logTrace("Found stray '<' in DDOC string.");
+		ln.popFront();
+		return "&lt;";
 	}
 
-no_match:
-	// found no match, return escaped '<'
-	logTrace("Found stray '<' in DDOC string.");
-	ln.popFront();
-	return "$(LT)";
+	// skip over regular start/end tag
+	auto idx = ln.indexOf(">");
+	if (idx < 0) {
+		ln.popFront();
+		return "<";
+	}
+	auto ret = ln[0 .. idx+1];
+	ln = ln[ret.length .. $];
+	return ret;
 }
 
 private string skipUrl(ref string ln)
@@ -765,6 +777,24 @@ unittest {
 unittest {
 	auto src = "$(GLOSSARY a\nb)\nMacros:\n	GLOSSARY = $(LINK2 glossary.html#$0, $0)";
 	auto dst = "<a href=\"glossary.html#a\nb\">a\nb</a>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "a > b < < c > <a <# </ <br> <abc> <.abc> <-abc> <+abc> <0abc> <abc-> <> <!-- c --> <!--> <! > <!-- > >a.";
+	auto dst = "a &gt; b &lt; &lt; c &gt; <a <# </ <br> <abc> &lt;.abc&gt; &lt;-abc&gt; &lt;+abc&gt; &lt;0abc&gt; <abc-> &lt;&gt; <!-- c --> &lt;!--&gt; &lt;! &gt; &lt;!-- &gt; &gt;a.\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "& &a &lt; &#lt; &- &03; &;";
+	auto dst = "&amp; &a &lt; &#lt; &amp;- &amp;03; &amp;;\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "<a href=\"abc\">test $(LT)peter@parker.com$(GT)</a>\nMacros:\nLT = &lt;\nGT = &gt;";
+	auto dst = "<a href=\"abc\">test &lt;peter@parker.com&gt;</a>\n";
 //writeln(formatDdocComment(src).splitLines().map!(s => "|"~s~"|").join("\n"));
 	assert(formatDdocComment(src) == dst);
 }
