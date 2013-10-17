@@ -2,6 +2,7 @@
 	"name": "ddox",
 	"description": "Powerful alternative to DMD's DDOC engine.",
 	"homepage": "https://github.com/rejectedsoftware/ddox",
+	"license": "MIT",
 	"authors": [
 		"Sönke Ludwig"
 	],
