@@ -10,11 +10,13 @@ import ddox.jsonparser_old;
 
 import vibe.core.core;
 import vibe.core.file;
+import vibe.data.json;
 import vibe.http.fileserver;
 import vibe.http.router;
 import vibe.http.server;
-import vibe.data.json;
+import vibe.stream.operations;
 import std.array;
+import std.exception : enforce;
 import std.file;
 import std.getopt;
 import std.stdio;
@@ -114,6 +116,7 @@ int cmdFilterDocs(string[] args)
 	Protection minprot = Protection.Private;
 	bool keeputests = false;
 	bool keepinternals = false;
+	bool unittestexamples = false;
 	bool justdoc = false;
 	getopt(args,
 		//config.passThrough,
@@ -122,7 +125,8 @@ int cmdFilterDocs(string[] args)
 		"min-protection", &minprot,
 		"only-documented", &justdoc,
 		"keep-unittests", &keeputests,
-		"keep-internals", &keepinternals);
+		"keep-internals", &keepinternals,
+		"unittest-examples", &unittestexamples);
 
 	if( keeputests ) keepinternals = true;
 
@@ -132,7 +136,7 @@ int cmdFilterDocs(string[] args)
 		return 1;
 	}
 
-	Json filterProt(Json json, Json parent)
+	Json filterProt(Json json, Json parent, Json last_decl, Json mod)
 	{
 		string templateName(Json j){
 			auto n = j.name.opt!string();
@@ -165,20 +169,32 @@ int cmdFilterDocs(string[] args)
 			bool is_unittest = name.startsWith("__unittest");
 			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
 			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
+
+			if (unittestexamples && is_unittest && !comment.empty) {
+				try {
+					string source = extractUnittestSourceCode(json, mod);
+					last_decl.comment ~= "Example:\n"~comment~"\n---\n"~source~"\n---\n";
+				} catch (Exception e) {
+					writefln("Failed to add documented unit test %s:%s as example: %s",
+						mod.file.get!string(), json["line"].get!long, e.msg);
+					return Json.undefined;
+				}
+			}
 			
 			if (!keepinternals && is_internal) return Json.undefined;
 
 			if (!keeputests && is_unittest) return Json.undefined;
 
-			if( auto mem = "members" in json ){
-				json.members = filterProt(*mem, json);
-			}
+			if (auto mem = "members" in json)
+				json.members = filterProt(*mem, json, Json.emptyObject, mod);
 		} else if( json.type == Json.Type.Array ){
+			auto last_child_decl = Json.emptyObject;
 			Json[] newmem;
-			foreach( m; json ){
-				auto mf = filterProt(m, parent);
-				if( mf.type != Json.Type.Undefined )
-					newmem ~= mf;
+			foreach (m; json) {
+				auto mf = filterProt(m, parent, last_child_decl, mod);
+				if (mf.type == Json.Type.Undefined) continue;
+				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittext")) last_child_decl = mf;
+				newmem ~= mf;
 			}
 			return Json(newmem);
 		}
@@ -193,24 +209,24 @@ int cmdFilterDocs(string[] args)
 
 	writefln("Filtering modules...");
 	Json[] dst;
-	foreach( m; json ){
-		if( "name" !in m ){
+	foreach (m; json) {
+		if ("name" !in m) {
 			writefln("No name for module %s - ignoring", m.file.opt!string);
 			continue;
 		}
 		auto n = m.name.get!string;
 		bool include = true;
-		foreach( ex; excluded )
-			if( n.startsWith(ex) ){
+		foreach (ex; excluded)
+			if (n.startsWith(ex)) {
 				include = false;
 				break;
 			}
-		foreach( inc; included )
-			if( n.startsWith(inc) ){
+		foreach (inc; included)
+			if (n.startsWith(inc)) {
 				include = true;
 				break;
 			}
-		if( include ) dst ~= filterProt(m, Json.undefined);
+		if (include) dst ~= filterProt(m, Json.undefined, Json.emptyObject, m);
 	}
 
 	writefln("Writing filtered docs...");
@@ -296,10 +312,44 @@ information.
     --keep-unittests       Do not remove unit tests from documentation.
                            Implies --keep-internals.
     --keep-internals       Do not remove symbols starting with two unterscores.
+    --unittest-examples    Add documented unit tests as examples to the
+                           preceeding declaration.
 `, args[0]);
 	}
 	if( args.length < 2 ){
 	} else {
 
 	}
+}
+
+private string extractUnittestSourceCode(Json decl, Json mod)
+{
+	auto filename = mod.file.get!string();
+	enforce("line" in decl && "endline" in decl, "Missing line/endline fields.");
+	auto from = decl["line"].get!long;
+	auto to = decl.endline.get!long;
+
+	auto app = appender!string();
+	long ln = 1;
+	foreach (str; File(filename).byLine) {
+		if (ln >= from) {
+			app.put(str);
+			app.put('\n');
+		}
+		if (++ln > to) break;
+	}
+
+	auto ret = app.data;
+
+	auto idx = ret.indexOf("unittest");
+	enforce(idx >= 0, format("Missing 'unittest' for unit test at %s:%s.", filename, from));
+	ret = ret[idx .. $];
+
+	idx = ret.indexOf("{");
+	enforce(idx >= 0, format("Missing opening '{' for unit test at %s:%s.", filename, from));
+	ret = ret[idx+1 .. $];
+
+	idx = ret.lastIndexOf("}");
+	enforce(idx >= 0, format("Missing closing '}' for unit test at %s:%s.", filename, from));
+	return ret[0 .. idx].strip();
 }
