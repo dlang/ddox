@@ -196,7 +196,7 @@ private struct Parser
 			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
 			if (auto psc = "storageClass" in json)
 				foreach (sc; *psc)
-					if (!ret.attributes.canFind(sc))
+					if (!ret.attributes.canFind(sc.get!string))
 						ret.attributes ~= sc.get!string;
 			auto params = json.parameters.opt!(Json[]);
 			foreach (i, pt; ret.type.parameterTypes) {
