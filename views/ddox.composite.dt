@@ -11,7 +11,7 @@ block ddox.defs
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
 block ddox.title
-	- auto title = to!string(item.kind) ~ " " ~ item.nestedName ~ (item.templateArgs.length ? "!" ~ item.templateArgs : null);
+	- auto title = to!string(item.kind) ~ " " ~ item.nestedName ~ item.templateArgsString;
 	
 block ddox.description
 	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")

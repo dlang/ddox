@@ -174,7 +174,7 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 	switch( type.kind ){
 		default:
 		case TypeKind.Primitive:
-			if( type.typeDecl ){
+			if (type.typeDecl && !cast(TemplateParameterDeclaration)type.typeDecl) {
 				auto mn = type.typeDecl.module_.qualifiedName;
 				auto qn = type.typeDecl.nestedName;
 				if( qn.startsWith(mn~".") ) qn = qn[mn.length+1 .. $];

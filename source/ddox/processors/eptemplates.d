@@ -23,6 +23,7 @@ void mergeEponymousTemplates(Package root)
 				auto idx = templ.members.countUntil!(m => m.name == templ.name)();
 				if( idx >= 0 ){
 					templ.members[idx].templateArgs = templ.templateArgs;
+					templ.members[idx].isTemplate = true;
 					templ.members[idx].parent = templ.parent;
 					templ.members[idx].docGroup = templ.docGroup;
 					templ.members[idx].inheritingDecl = templ.inheritingDecl;

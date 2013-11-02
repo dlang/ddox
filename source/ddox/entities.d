@@ -8,6 +8,8 @@
 module ddox.entities;
 
 import ddox.ddoc;
+import std.algorithm : countUntil, joiner, map;
+import std.range;
 import std.string;
 import std.typecons;
 
@@ -91,6 +93,12 @@ class Entity {
 			} else {
 				auto r = e.findChild!T(p);
 				if( r ) return r;
+			}
+		}
+		static if (is(T == Declaration)) {
+			if (auto decl = cast(Declaration)this) {
+				auto idx = decl.templateArgs.countUntil!(p => p.name == qualified_name);
+				if (idx >= 0) return decl.templateArgs[idx];
 			}
 		}
 		if( recurse && parent ) return parent.lookup!T(qualified_name);
@@ -204,8 +212,9 @@ enum DeclarationKind {
 	Interface,
 	Enum,
 	EnumMember,
-	Alias,	
+	Alias,
 	Template,
+	TemplateParameter
 }
 
 enum Protection {
@@ -219,7 +228,8 @@ class Declaration : Entity {
 	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
 	int line;
-	string templateArgs;
+	bool isTemplate;
+	TemplateParameterDeclaration[] templateArgs;
 
 	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind();
@@ -239,6 +249,11 @@ class Declaration : Entity {
 			e = e.parent;
 		}
 		assert(false, "Declaration without module?");
+	}
+
+	@property string templateArgsString() const {
+		if (!isTemplate) return null;
+		return format("(%s)", (cast(string[])templateArgs.map!(a => a.name).array).join(", "));
 	}
 
 	this(Entity parent, string name){ super(parent, name); }
@@ -387,12 +402,21 @@ final class TemplateDeclaration : Declaration {
 	override @property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.copyFrom(this); ret.members = members.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Template; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name){ super(parent, name); isTemplate = true; }
 
 	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( m; members ) del(m);
 	}
+}
+
+final class TemplateParameterDeclaration : TypedDeclaration {
+	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }
+	override @property DeclarationKind kind() const { return DeclarationKind.TemplateParameter; }
+
+	this(Entity parent, string name){ super(parent, name); type = new Type(this); }
+
+	override void iterateChildren(bool delegate(Entity) del) {}
 }
 
 final class Value {

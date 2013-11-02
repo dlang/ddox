@@ -52,16 +52,18 @@ private struct Parser
 					return true;
 				case DeclarationKind.Alias:
 					return (cast(AliasDeclaration)a).targetType !is null;
+				case DeclarationKind.TemplateParameter:
+					return true;
 			}
 		}
 
-		foreach( t; m_primTypes ){
-			auto decl = cast(Declaration)t[1].lookup(t[0].typeName);
-			if( !decl || !isTypeDecl(decl) ){
+		foreach (t; m_primTypes) {
+			auto decl = t[1].lookup!Declaration(t[0].typeName);
+			if (!decl || !isTypeDecl(decl)) {
 				auto pd = t[0].typeName in m_typeMap;
-				if( pd ) decl = *pd;
+				if (pd) decl = *pd;
 			}
-			if( decl && isTypeDecl(decl) )
+			if (decl && isTypeDecl(decl))
 				t[0].typeDecl = decl;
 		}
 
@@ -289,23 +291,23 @@ private struct Parser
 	{
 		auto ret = new TemplateDeclaration(parent, json.name.get!string);
 		foreach (arg; json.parameters.opt!(Json[])) {
-			if (ret.templateArgs.length != 0) ret.templateArgs ~= ", ";
+			string argstr;
 			switch (arg.kind.get!string) {
 				case "value":
-					if (auto pt = "type" in arg) ret.templateArgs ~= pt.get!string ~ ' ';
-					else ret.templateArgs ~= demanglePrettyType(arg.deco.get!string) ~ ' ';
+					if (auto pt = "type" in arg) argstr = pt.get!string ~ ' ';
+					else argstr = demanglePrettyType(arg.deco.get!string) ~ ' ';
 					goto default;
 				case "alias":
-					ret.templateArgs ~= "alias ";
+					argstr = "alias ";
 					goto default;
 				case "tuple":
-					ret.templateArgs ~= arg.name.get!string ~ "...";
+					argstr ~= arg.name.get!string ~ "...";
 					break;
 				default:
-					ret.templateArgs ~= arg.name.get!string;
+					argstr ~= arg.name.get!string;
 			}
+			ret.templateArgs ~= new TemplateParameterDeclaration(ret, argstr);
 		}
-		ret.templateArgs = '(' ~ ret.templateArgs ~ ')';
 		ret.members = parseDeclList(json.members, ret);
 		return ret;
 	}

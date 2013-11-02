@@ -271,7 +271,7 @@ private struct Parser
 		assert(cidx > 0 && name.endsWith(')'), "Template name must be of the form name(args)");
 
 		auto ret = new TemplateDeclaration(parent, name[0 .. cidx]);
-		ret.templateArgs = name[cidx .. $];
+		ret.templateArgs = name[cidx+1 .. $-1].split(",").map!(a => new TemplateParameterDeclaration(ret, a.strip)).array;
 		ret.members = parseDeclList(json.members, ret);
 		return ret;
 	}

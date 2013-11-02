@@ -44,12 +44,12 @@ block ddox.members
 								- break;
 					- auto attribsstr = attribs.length ? " " ~ attribs.join(" ") : "";
 					- if (proto.parameters.length)
-						|!{rettype}#{proto.name}#{proto.templateArgs}(
+						|!{rettype}#{proto.name}#{proto.templateArgsString}(
 						- foreach (size_t i, p; proto.parameters)
-							|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
+							|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
 						|)#{attribsstr};
 					- else
-						|!{rettype}#{proto.name}#{proto.templateArgs}()#{attribsstr};
+						|!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribsstr};
 
 		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
 

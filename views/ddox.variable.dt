@@ -38,7 +38,7 @@ block ddox.description
 				- else if( ad.targetDecl )
 					//- TODO!
 
-			- auto itemname = info.item.templateArgs.length ? info.item.name ~ "!" ~ info.item.templateArgs : info.item.name;
+			- auto itemname = info.item.name ~ info.item.templateArgsString;
 			- if( auto m = cast(Module)info.item.parent )
 				|module <a href="#{info.linkTo(info.item.parent)}">#{info.item.parent.qualifiedName}</a>;
 				|

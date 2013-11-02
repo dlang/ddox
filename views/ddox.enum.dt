@@ -8,7 +8,7 @@ block ddox.defs
 	- assert(enum_item !is null);
 
 block ddox.title
-	- auto title = "Enum " ~ info.item.nestedName;
+	- auto title = "Enum " ~ info.item.nestedName ~ info.item.templateArgsString;
 
 block ddox.description
 	p!= info.formatDoc(info.item.docGroup, 2, sec => sec == "$Short")
