@@ -194,8 +194,10 @@ private struct Parser
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
 			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
-			if (auto sc = "storageClass" in json)
-				ret.attributes ~= deserializeJson!(string[])(*sc);
+			if (auto psc = "storageClass" in json)
+				foreach (sc; *psc)
+					if (!ret.attributes.canFind(sc))
+						ret.attributes ~= sc.get!string;
 			auto params = json.parameters.opt!(Json[]);
 			foreach (i, pt; ret.type.parameterTypes) {
 				auto pname = ret.type._parameterNames[i];
