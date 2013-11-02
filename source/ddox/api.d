@@ -189,13 +189,13 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 			break;
 		case TypeKind.Function:
 		case TypeKind.Delegate:
-			formatType(dst, type.returnType, link_to);
+			formatType(dst, type.returnType, link_to, false);
 			dst.put(' ');
 			dst.put(type.kind == TypeKind.Function ? "function" : "delegate");
 			dst.put('(');
 			foreach( size_t i, pt; type.parameterTypes ){
 				if( i > 0 ) dst.put(", ");
-				formatType(dst, pt, link_to);
+				formatType(dst, pt, link_to, false);
 				if( type._parameterNames[i].length ){
 					dst.put(' ');
 					dst.put(type._parameterNames[i]);
@@ -212,21 +212,21 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 			}
 			break;
 		case TypeKind.Pointer:
-			formatType(dst, type.elementType, link_to);
+			formatType(dst, type.elementType, link_to, false);
 			dst.put('*');
 			break;
 		case TypeKind.Array:
-			formatType(dst, type.elementType, link_to);
+			formatType(dst, type.elementType, link_to, false);
 			dst.put("[]");
 			break;
 		case TypeKind.StaticArray:
-			formatType(dst, type.elementType, link_to);
+			formatType(dst, type.elementType, link_to, false);
 			formattedWrite(dst, "[%s]", type.arrayLength);
 			break;
 		case TypeKind.AssociativeArray:
-			formatType(dst, type.elementType, link_to);
+			formatType(dst, type.elementType, link_to, false);
 			dst.put('[');
-			formatType(dst, type.keyType, link_to);
+			formatType(dst, type.keyType, link_to, false);
 			dst.put(']');
 			break;
 	}
