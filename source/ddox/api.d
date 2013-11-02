@@ -149,18 +149,18 @@ string[] declStyleClasses(Declaration decl)
 	return ret;
 }
 
-string formatType()(Type type, string delegate(Entity) link_to)
+string formatType()(Type type, string delegate(Entity) link_to, bool include_code_tags = true)
 {
 	if( !type ) return "{null}";
 	//logDebug("format type: %s", type);
 	auto ret = appender!string();
-	formatType(ret, type, link_to);
+	formatType(ret, type, link_to, include_code_tags);
 	return ret.data();
 }
 
-void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
+void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool include_code_tags = true)
 {
-	dst.put("<code class=\"prettyprint lang-d\">");
+	if (include_code_tags) dst.put("<code class=\"prettyprint lang-d\">");
 	foreach( att; type.attributes){
 		dst.put(att); 
 		dst.put(' ');
@@ -233,7 +233,7 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to)
 	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
 		foreach( att; type.modifiers ) dst.put(')');
 	}
-	dst.put("</code>");
+	if (include_code_tags) dst.put("</code>");
 }
 
 Type getPropertyType(Entity[] mems...)

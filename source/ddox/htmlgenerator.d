@@ -140,7 +140,7 @@ class DocPageInfo {
 	Entity node;
 	
 	@property NavigationType navigationType() const { return settings.navigationType; }
-	string formatType(Type tp) { return .formatType(tp, linkTo); }
+	string formatType(Type tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
 		return group.comment.renderSections(new DocGroupContext(group, linkTo), display_section, hlevel);

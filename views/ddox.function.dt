@@ -29,22 +29,27 @@ block ddox.members
 				- foreach( size_t pi, pd; mems )
 					- auto proto = cast(FunctionDeclaration)pd;
 					- if( !proto ) continue;
-					- auto attribs = join(proto.attributes, " ");
+					- string[] attribs = proto.attributes;
 					- if( pi > 0 )
 						|
-					- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType) ~ " ";
-					- if( proto.parameters.length )
+					- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
+					- if (rettype.length == 1)
+						- rettype ~= "fghfgh";
+						- static immutable scs = ["auto", "const", "immutable"];
+						- foreach (i, attr; attribs)
+							- if (scs.canFind(attr))
+								- rettype = attr ~ " ";
+								- attribs[i] = attribs[$-1];
+								- attribs.length--;
+								- break;
+					- auto attribsstr = attribs.length ? " " ~ attribs.join(" ") : "";
+					- if (proto.parameters.length)
 						|!{rettype}#{proto.name}#{proto.templateArgs}(
-						- foreach( size_t i, p; proto.parameters )
+						- foreach (size_t i, p; proto.parameters)
 							|&nbsp;&nbsp;!{info.formatType(p.type)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
-						- if( attribs.length )
-							|) #{attribs};
-						- else
-							|);
-					- else if( attribs.length)
-						|!{rettype}#{proto.name}#{proto.templateArgs}() #{attribs};
+						|)#{attribsstr};
 					- else
-						|!{rettype}#{proto.name}#{proto.templateArgs}();
+						|!{rettype}#{proto.name}#{proto.templateArgs}()#{attribsstr};
 
 		|!= info.formatDoc(docgroup, multi ? 3 : 2, sec => sec != "$Short" && sec != "$Long")
 
