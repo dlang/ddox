@@ -170,7 +170,7 @@ int cmdFilterDocs(string[] args)
 			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
 			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
 
-			if (unittestexamples && is_unittest && !comment.empty) {
+			if (unittestexamples && is_unittest && "comment" in json) {
 				try {
 					string source = extractUnittestSourceCode(json, mod);
 					last_decl.comment ~= "Example:\n"~comment~"\n---\n"~source~"\n---\n";
@@ -193,7 +193,8 @@ int cmdFilterDocs(string[] args)
 			foreach (m; json) {
 				auto mf = filterProt(m, parent, last_child_decl, mod);
 				if (mf.type == Json.Type.Undefined) continue;
-				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittext")) last_child_decl = mf;
+				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittext") && mf.comment.opt!string.strip != "ditto")
+					last_child_decl = mf;
 				newmem ~= mf;
 			}
 			return Json(newmem);
@@ -329,18 +330,19 @@ private string extractUnittestSourceCode(Json decl, Json mod)
 	auto from = decl["line"].get!long;
 	auto to = decl.endline.get!long;
 
+	// read the matching lines out of the file
 	auto app = appender!string();
-	long ln = 1;
+	long lc = 1;
 	foreach (str; File(filename).byLine) {
-		if (ln >= from) {
+		if (lc >= from) {
 			app.put(str);
 			app.put('\n');
 		}
-		if (++ln > to) break;
+		if (++lc > to) break;
 	}
-
 	auto ret = app.data;
 
+	// strip the "unittest { .. }" surroundings
 	auto idx = ret.indexOf("unittest");
 	enforce(idx >= 0, format("Missing 'unittest' for unit test at %s:%s.", filename, from));
 	ret = ret[idx .. $];
@@ -351,5 +353,28 @@ private string extractUnittestSourceCode(Json decl, Json mod)
 
 	idx = ret.lastIndexOf("}");
 	enforce(idx >= 0, format("Missing closing '}' for unit test at %s:%s.", filename, from));
-	return ret[0 .. idx].strip();
+	ret = ret[0 .. idx];
+
+	// unindent lines according to the indentation of the first line
+	app = appender!string();
+	string indent;
+	foreach (i, ln; ret.splitLines) {
+		if (i == 1) {
+			foreach (j; 0 .. ln.length)
+				if (ln[j] != ' ' && ln[i] != '\t') {
+					indent = ln[0 .. j];
+					break;
+				}
+		}
+		if (i > 0 || ln.strip.length > 0) {
+			size_t j = 0;
+			while (j < indent.length && !ln.empty) {
+				if (ln.front != indent[j]) break;
+				ln.popFront();
+			}
+			app.put(ln);
+			app.put('\n');
+		}
+	}
+	return app.data;
 }
