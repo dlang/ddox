@@ -286,7 +286,7 @@ private struct Parser
 	auto parseTemplateDecl(Json json, Entity parent)
 	{
 		auto ret = new TemplateDeclaration(parent, json.name.get!string);
-		foreach (arg; json.parameters) {
+		foreach (arg; json.parameters.opt!(Json[])) {
 			if (ret.templateArgs.length != 0) ret.templateArgs ~= ", ";
 			switch (arg.kind.get!string) {
 				case "value":
