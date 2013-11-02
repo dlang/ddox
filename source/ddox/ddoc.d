@@ -109,8 +109,8 @@ class DdocComment {
 	this(string text)
 	{
 
-		if( icmp(text, "ditto") == 0 ){ m_isDitto = true; return; }
-		if( icmp(text, "private") == 0 ){ m_isPrivate = true; return; }
+		if (text.strip.icmp("ditto") == 0) { m_isDitto = true; return; }
+		if (text.strip.icmp("private") == 0) { m_isPrivate = true; return; }
 
 
 //		parseMacros(m_macros, context.defaultMacroDefinitions);
