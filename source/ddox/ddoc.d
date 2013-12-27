@@ -10,7 +10,7 @@ module ddox.ddoc;
 import vibe.core.log;
 import vibe.utils.string;
 
-import std.algorithm : countUntil, map, min, remove;
+import std.algorithm : canFind, countUntil, map, min, remove;
 import std.array;
 import std.conv;
 import std.string;
@@ -99,8 +99,7 @@ void setOverrideDdocMacroFiles(string[] filenames)
 */
 class DdocComment {
 	private {
-		Section[string] m_sections;
-		string[] m_sectionNames;
+		Section[] m_sections;
 		string[string] m_macros;
 		bool m_isDitto = false;
 		bool m_isPrivate = false;
@@ -161,8 +160,7 @@ class DdocComment {
 		while( i < lines.length && getLineType(i) == BLANK ) i++;
 		if( i < lines.length && getLineType(i) == TEXT ){
 			auto j = skipBlock(i);
-			m_sections["$Short"] = Section("$Short", lines[i .. j]);
-			m_sectionNames ~= "$Short";
+			m_sections ~= Section("$Short", lines[i .. j]);
 			i = j;
 		}
 
@@ -170,8 +168,7 @@ class DdocComment {
 		{
 			auto j = skipSection(i);
 			if( j > i ){
-				m_sections["$Long"] = Section("$Long", lines[i .. j]);
-				m_sectionNames ~= "$Long";
+				m_sections ~= Section("$Long", lines[i .. j]);
 				i = j;
 			}
 		}
@@ -186,8 +183,7 @@ class DdocComment {
 			if( lines[i].empty ) i++;
 			if( sect == "Macros" ) parseMacros(m_macros, lines[i .. j]);
 			else {
-				m_sections[sect] = Section(sect, lines[i .. j]);
-				m_sectionNames ~= sect;
+				m_sections ~= Section(sect, lines[i .. j]);
 			}
 			i = j;
 		}
@@ -198,31 +194,27 @@ class DdocComment {
 	@property bool isDitto() const { return m_isDitto; }
 	@property bool isPrivate() const { return m_isPrivate; }
 
-	bool hasSection(string name) const { return (name in m_sections) !is null; }
+	bool hasSection(string name) const { return m_sections.canFind!(s => s.name == name); }
 
-	void renderSectionR(R)(ref R dst, string name, int hlevel = 2)
+	void renderSectionR(R)(ref R dst, DdocContext context, string name, int hlevel = 2)
 	{
-		auto sect = name in m_sections;
-		if( !sect ) return null;
-
-		parseSection(dst, name, s.lines, context, hlevel, m_macros);
+		foreach (s; m_sections)
+			if (s.name == name)
+				parseSection(dst, name, s.lines, context, hlevel, m_macros);
 	}
 
 	void renderSectionsR(R)(ref R dst, DdocContext context, bool delegate(string) display_section, int hlevel)
 	{
-		foreach( i, s; m_sectionNames ){
-			if (display_section && !display_section(s)) continue;
-			parseSection(dst, s, m_sections[s].lines, context, hlevel, m_macros);
+		foreach (s; m_sections) {
+			if (display_section && !display_section(s.name)) continue;
+			parseSection(dst, s.name, s.lines, context, hlevel, m_macros);
 		}
 	}
 
 	string renderSection(DdocContext context, string name, int hlevel = 2)
 	{
-		auto sect = name in m_sections;
-		if( !sect ) return null;
-
 		auto dst = appender!string();
-		parseSection(dst, name, sect.lines, context, hlevel, m_macros);
+		renderSectionR(dst, context, name, hlevel);
 		return dst.data;
 	}
 
