@@ -138,6 +138,8 @@ int cmdFilterDocs(string[] args)
 
 	Json filterProt(Json json, Json parent, Json last_decl, Json mod)
 	{
+		if (last_decl.type == Json.Type.undefined) last_decl = parent;
+
 		string templateName(Json j){
 			auto n = j.name.opt!string();
 			auto idx = n.indexOf('(');
@@ -171,9 +173,14 @@ int cmdFilterDocs(string[] args)
 			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
 
 			if (unittestexamples && is_unittest && "comment" in json) {
+				assert(last_decl.type == Json.Type.object, "Don't have a last_decl context.");
 				try {
 					string source = extractUnittestSourceCode(json, mod);
-					last_decl.comment ~= "Example:\n"~comment~"\n---\n"~source~"\n---\n";
+					if (last_decl.comment.opt!string.empty) {
+						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl.name.opt!string);
+					} else {
+						last_decl.comment ~= format("Example:\n%s\n---\n%s\n---\n", comment, source);
+					}
 				} catch (Exception e) {
 					writefln("Failed to add documented unit test %s:%s as example: %s",
 						mod.file.get!string(), json["line"].get!long, e.msg);
@@ -186,14 +193,14 @@ int cmdFilterDocs(string[] args)
 			if (!keeputests && is_unittest) return Json.undefined;
 
 			if (auto mem = "members" in json)
-				json.members = filterProt(*mem, json, Json.emptyObject, mod);
+				json.members = filterProt(*mem, json, Json.undefined, mod);
 		} else if( json.type == Json.Type.Array ){
-			auto last_child_decl = Json.emptyObject;
+			auto last_child_decl = Json.undefined;
 			Json[] newmem;
 			foreach (m; json) {
 				auto mf = filterProt(m, parent, last_child_decl, mod);
-				if (mf.type == Json.Type.Undefined) continue;
-				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittext") && mf.comment.opt!string.strip != "ditto")
+				if (mf.type == Json.Type.undefined) continue;
+				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittest") && mf.comment.opt!string.strip != "ditto")
 					last_child_decl = mf;
 				newmem ~= mf;
 			}
@@ -227,7 +234,7 @@ int cmdFilterDocs(string[] args)
 				include = true;
 				break;
 			}
-		if (include) dst ~= filterProt(m, Json.undefined, Json.emptyObject, m);
+		if (include) dst ~= filterProt(m, Json.undefined, Json.undefined, m);
 	}
 
 	writefln("Writing filtered docs...");
