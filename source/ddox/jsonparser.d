@@ -136,6 +136,7 @@ private struct Parser
 		} else {
 			switch( json.kind.get!string ){
 				default: enforce(false, "Unknown declaration kind: "~json.kind.get!string); assert(false);
+				case "mixin":
 				case "import":
 				case "static import":
 					// TODO: use for symbol resolving
