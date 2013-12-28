@@ -167,7 +167,7 @@ final class Package : Entity {
 
 	Module createModule(string name)
 	{
-		assert(findChild(name) is null, "Module already present");
+		assert(cast(Module)findChild(name) is null, "Module already present");
 		auto mod = new Module(this, name);
 		modules ~= mod;
 		return mod;
