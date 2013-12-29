@@ -71,7 +71,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 
 	void showApiModule(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		auto mod = cast(Module)pack.lookup(req.params["modulename"]);
+		auto mod = pack.lookup!Module(req.params["modulename"]);
 		if( !mod ) return;
 
 		res.contentType = "text/html; charset=UTF-8";
