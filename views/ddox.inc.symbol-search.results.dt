@@ -1,0 +1,8 @@
+- import vibe.data.json;
+
+ul#symbolSearchResults(style="display: none")
+
+script(type="application/javascript", src="#{info.linkTo(null)}symbols.js")
+script(type="application/javascript")
+	var symbolSearchRootDir = #{Json(info.linkTo(null)).toString()};
+	$('#symbolSearchPane').show();

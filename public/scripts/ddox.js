@@ -19,14 +19,17 @@ function toggleTree()
 var searchCounter = 0;
 var lastSearchString = "";
 
-function performSymbolSearch()
+function performSymbolSearch(maxlen)
 {
+	if (maxlen === 'undefined') maxlen = 26;
+	
 	var searchstring = $("#symbolSearch").val().toLowerCase();
 
 	if (searchstring == lastSearchString) return;
 	lastSearchString = searchstring;
 
 	var scnt = ++searchCounter;
+	$('#symbolSearchResults').hide();
 	$('#symbolSearchResults').empty();
 
 	var terms = $.trim(searchstring).split(/\s+/);
@@ -85,7 +88,7 @@ function performSymbolSearch()
 			var nameparts = name.split(".");
 			var np = nameparts.length-1;
 			var shortname = "." + nameparts[np];
-			while (np > 0 && nameparts[np-1].length + shortname.length <= 26) {
+			while (np > 0 && nameparts[np-1].length + shortname.length <= maxlen) {
 				np--;
 				shortname = "." + nameparts[np] + shortname;
 			}
@@ -99,4 +102,6 @@ function performSymbolSearch()
 	if (results.length > 100) {
 		$('#symbolSearchResults').append("<li>&hellip;"+(results.length-100)+" additional results</li>");
 	}
+
+	$('#symbolSearchResults').show();
 }
