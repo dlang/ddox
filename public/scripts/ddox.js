@@ -54,10 +54,15 @@ function performSymbolSearch()
 		var aname = a.name.toLowerCase();
 		var bname = b.name.toLowerCase();
 
-		var alen = aname.split(".").length;
-		var blen = bname.split(".").length;
-		if (alen < blen) return -1;
-		if (alen > blen) return 1;
+		var anameparts = aname.split(".");
+		var bnameparts = bname.split(".");
+
+		var aexact = terms.indexOf(anameparts[anameparts.length-1]) >= 0;
+		var bexact = terms.indexOf(bnameparts[bnameparts.length-1]) >= 0;
+		if (aexact != bexact) return bexact - aexact;
+
+		if (anameparts.length < bnameparts.length) return -1;
+		if (anameparts.length > bnameparts.length) return 1;
 
 		if (aname < bname) return -1;
 		if (aname > bname) return 1;
@@ -73,10 +78,21 @@ function performSymbolSearch()
 			el.addClass(sym.kind);
 			for (j in sym.attributes)
 				el.addClass(sym.attributes[j]);
-			//var lidx = sym.name.lastIndexOf(".");
-			//var name = lidx >= 0 ? sym.name.substr(lidx+1) : sym.name;
+
 			var name = sym.name;
-			el.append('<a href="'+symbolSearchRootDir+sym.path+'" title="'+name+'">'+name+'</a>');
+
+			// compute a length limited representation of the full name
+			var nameparts = name.split(".");
+			var np = nameparts.length-1;
+			var shortname = "." + nameparts[np];
+			while (np > 0 && nameparts[np-1].length + shortname.length <= 26) {
+				np--;
+				shortname = "." + nameparts[np] + shortname;
+			}
+			if (np > 0) shortname = ".." + shortname;
+			else shortname = shortname.substr(1);
+
+			el.append('<a href="'+symbolSearchRootDir+sym.path+'" title="'+name+'">'+shortname+'</a>');
 			$('#symbolSearchResults').append(el);
 		}
 
