@@ -12,7 +12,8 @@ import ddox.entities;
 import ddox.settings;
 
 import std.array;
-import std.string : format, startsWith, toLower;
+import std.format : formattedWrite;
+import std.string : startsWith, toLower;
 import std.variant;
 import vibe.core.log;
 import vibe.core.file;
@@ -194,22 +195,21 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 
 void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to)
 {
-	string last_entry;
+	bool[string] visited;
 
 	void writeEntry(Entity ent) {
 		if (cast(Package)ent || cast(TemplateParameterDeclaration)ent) return;
+		if (ent.qualifiedName in visited) return;
+		visited[ent.qualifiedName] = true;
+
 		string kind = ent.classinfo.name.split(".")[$-1].toLower;
 		string[] attributes;
 		if (auto fdecl = cast(FunctionDeclaration)ent) attributes = fdecl.attributes;
 		else if (auto adecl = cast(AliasDeclaration)ent) attributes = adecl.attributes;
 		else if (auto tdecl = cast(TypedDeclaration)ent) attributes = tdecl.type.attributes;
 		attributes = attributes.map!(a => a.startsWith("@") ? a[1 .. $] : a).array;
-		auto entry = format(`{name: "%s", kind: "%s", path: "%s", attributes: %s},`, ent.qualifiedName, kind, link_to(ent), attributes);
-		if (entry != last_entry) {
-			last_entry = entry;
-			dst.put(entry);
-			dst.put('\n');
-		}
+		dst.formattedWrite(`{name: "%s", kind: "%s", path: "%s", attributes: %s},`, ent.qualifiedName, kind, link_to(ent), attributes);
+		dst.put('\n');
 	}
 
 	void writeEntryRec(Entity ent) {
