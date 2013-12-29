@@ -182,6 +182,7 @@ private struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json.name.get!string);
+		ret.attributes = json.storageClass.opt!(Json[]).map!(j => j.get!string).array;
 		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
 			ret.targetType = null;

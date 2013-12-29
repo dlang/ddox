@@ -97,6 +97,12 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		generateSitemap(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
 	}
 
+	void showSymbolJS(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		res.contentType = "application/javascript";
+		generateSymbolsJS(res.bodyWriter, pack, settings, ent => linkTo(ent, 0));
+	}
+
 	auto path_prefix = settings.siteUrl.path.toString();
 	if( path_prefix.endsWith("/") ) path_prefix = path_prefix[0 .. $-1];
 
@@ -104,6 +110,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 	router.get(path_prefix~"/:modulename/", &showApiModule);
 	router.get(path_prefix~"/:modulename/:itemname", &showApiItem);
 	router.get(path_prefix~"/sitemap.xml", &showSitemap);
+	router.get(path_prefix~"/symbols.js", &showSymbolJS);
 	router.get("*", serveStaticFiles("public"));
 
 	// convenience redirects (when leaving off the trailing slash)

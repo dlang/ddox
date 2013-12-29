@@ -1,0 +1,13 @@
+#symbolSearchPane
+	- import vibe.data.json;
+	script(type="application/javascript", src="#{info.linkTo(null)}symbols.js")
+	script(type="application/javascript") var symbolSearchRootDir = #{Json(info.linkTo(null)).toString()};
+
+	noscript
+		p(style="color: red") The search functionality needs JavaScript enabled
+
+	p
+		label(for="symbolSearch") Search:
+		input#symbolSearch(type="text", name="symbolSearch", onchange="performSymbolSearch();", onkeypress="this.onchange();", onpaste="this.onchange();", oninput="this.onchange();")
+
+	ul#symbolSearchResults

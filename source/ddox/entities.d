@@ -384,6 +384,7 @@ final class EnumMemberDeclaration : Declaration {
 }
 
 final class AliasDeclaration : Declaration {
+	string[] attributes;
 	Declaration targetDecl;
 	Type targetType;
 

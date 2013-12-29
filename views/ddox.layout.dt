@@ -16,6 +16,7 @@ block navigation
 			include ddox.inc.decl-tree
 			- break;
 
+	include ddox.inc.symbol-search
 
 block body
 	block ddox.description
