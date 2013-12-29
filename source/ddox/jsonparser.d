@@ -135,13 +135,15 @@ private struct Parser
 			ret = parseTemplateDecl(json, parent);
 		} else {
 			switch( json.kind.get!string ){
-				default: enforce(false, "Unknown declaration kind: "~json.kind.get!string); assert(false);
-				case "mixin":
+				default:
+					logWarn("Unknown declaration kind: %s", json.kind.get!string);
+					return null;
 				case "import":
 				case "static import":
 					// TODO: use for symbol resolving
 					return null;
 				case "destructor": return null;
+				case "mixin": return null; // TODO: support documented mixins
 				case "alias":
 					ret = parseAliasDecl(json, parent);
 					break;
