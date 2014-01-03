@@ -242,7 +242,7 @@ Type getPropertyType(Entity[] mems...)
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
 		auto rt = ovf.returnType;
-		if (!canFind(["", "void"], rt.typeName)) return rt;
+		if (rt.typeName != "void") return rt;
 		if (ovf.parameters.length == 0) continue;
 		return ovf.parameters[0].type;
 	}
@@ -254,7 +254,7 @@ bool anyPropertyGetter(Entity[] mems...)
 	foreach (ov; mems) {
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
-		if (["void", ""].canFind(ovf.returnType.typeName)) continue;
+		if (ovf.returnType.typeName == "void") continue;
 		if (ovf.parameters.length == 0) return true;
 	}
 	return false;
