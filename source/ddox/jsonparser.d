@@ -12,12 +12,12 @@ import ddox.entities;
 
 import std.algorithm;
 import std.conv;
-import ddox.internal.demangle; // std.demangle
 import std.exception;
 import std.range;
 import std.stdio;
 import std.string;
 import std.typecons;
+import core.demangle;
 import vibe.core.log;
 import vibe.data.json;
 
