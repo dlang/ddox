@@ -7,7 +7,7 @@
 		"Sönke Ludwig"
 	],
 	"dependencies": {
-  		"vibe-d": "~master"
+		"vibe-d": ">=0.7.18"
  	},
  	"versions": ["JsonLineNumbers"],
  	"configurations": [
