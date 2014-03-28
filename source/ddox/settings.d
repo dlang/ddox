@@ -44,5 +44,7 @@ class GeneratorSettings {
 	NavigationType navigationType = NavigationType.moduleTree;
 	// used for sitemap generation and for determining the URL prefix in registerApiDocs()
 	URL siteUrl = URL("http://localhost:8080/");
+	bool focusSearchField = true; /// focus search field on load
+	bool enableKeyNavigation = true; /// enable JS keyboard navigation
 }
 
