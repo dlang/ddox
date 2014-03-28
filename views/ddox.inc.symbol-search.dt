@@ -6,3 +6,19 @@ noscript
 		input#symbolSearch(type="text", placeholder="Search for symbols", onchange="performSymbolSearch(24);", onkeypress="this.onchange();", onpaste="this.onchange();", oninput="this.onchange();")
 
 	include ddox.inc.symbol-search.results
+
+- if (info.settings.enableKeyNavigation)
+	script(type="text/javascript", src="#{info.linkTo(null)}scripts/mousetrap.js")
+	script(type="text/javascript")
+		$(document).ready(function() {
+			Mousetrap.bind('s', function(e) {
+				$("#symbolSearch").focus();
+				return false;
+			});
+		});
+
+- if (info.settings.focusSearchField)
+	script(type="text/javascript")
+		$(document).ready(function() {
+			$("#symbolSearch").focus();
+		});
