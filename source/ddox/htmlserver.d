@@ -88,7 +88,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		if( !item ) return;
 
 		res.contentType = "text/html; charset=UTF-8";
-		generateDeclPage(res.bodyWriter, pack, mod, item, settings, ent => linkTo(ent, 1), req);
+		generateDeclPage(res.bodyWriter, pack, mod, item.nestedName, [item.docGroup], settings, ent => linkTo(ent, 1), req);
 	}
 
 	void showSitemap(HTTPServerRequest req, HTTPServerResponse res)

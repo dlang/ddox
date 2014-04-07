@@ -1,26 +1,14 @@
-extends ddox.layout
+- import ddox.api;
+- import std.algorithm;
+- import std.typetuple;
 
-block ddox.defs
-	- import ddox.api;
-	- import std.algorithm;
-	- import std.typetuple;
-
-	- auto item = cast(CompositeTypeDeclaration)info.item;
-	- assert(item !is null);
+- void outputCompositeDescription(CompositeTypeDeclaration item)
 	- auto cls_item = cast(ClassDeclaration)item;
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
-block ddox.title
-	- auto title = to!string(item.kind) ~ " " ~ item.nestedName ~ item.templateArgsString;
-	
-block ddox.description
-	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")
-
-	|!= info.formatDoc(item.docGroup, 2, sec => sec == "$Long")
-
 	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
 		section
-			h2 Inherits from
+			h3 Inherits from
 
 			ul
 				- if( cls_item.baseClass )
@@ -33,17 +21,15 @@ block ddox.description
 	
 	- if( intf_item && intf_item.derivedInterfaces.length )
 		section
-			h2 Inherits from
+			h3 Inherits from
 
 			ul
 				- foreach( intf; intf_item.derivedInterfaces )
 					li
 						code.prettyprint.lang-d!= info.formatType(intf)
 
-block ddox.sections
-	|!= info.formatDoc(item.docGroup, 2, sec => sec != "$Short" && sec != "$Long" && sec != "Copyright" && sec != "Authors" && sec != "License")
 
-block ddox.members
+- void outputCompositeMembers(CompositeTypeDeclaration item)
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
@@ -59,7 +45,7 @@ block ddox.members
 
 	- if( constructors.length )
 		section
-			h2 Constructors
+			h3 Constructors
 			table
 				col.caption
 				tr
@@ -74,7 +60,7 @@ block ddox.members
 
 	- if( hasChild!VariableDeclaration(item) )
 		section
-			h2 Fields
+			h3 Fields
 			table
 				col.caption
 				tr
@@ -90,7 +76,7 @@ block ddox.members
 
 	- if( properties.length )
 		section
-			h2 Properties
+			h3 Properties
 			table
 				col.caption
 				tr
@@ -108,7 +94,7 @@ block ddox.members
 
 	- if( methods.length )
 		section
-			h2 Methods
+			h3 Methods
 			table
 				col.caption
 				tr
@@ -124,7 +110,7 @@ block ddox.members
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(item) )
 			section
-				h2= kindnames[i]
+				h3= kindnames[i]
 				table
 					col.caption
 					tr
@@ -136,10 +122,3 @@ block ddox.members
 								a(href="#{info.linkTo(grp)}", class=declStyleClasses(grp))
 									code= grp.name
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
-
-block ddox.authors
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
-block ddox.license
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
-block ddox.copyright
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")

@@ -1,0 +1,34 @@
+- import ddox.api;
+- import std.algorithm;
+
+- void outputFunctionDescription(FunctionDeclaration item)
+	- auto docgroup = item.docGroup;
+	section
+		- auto heading = docgroup.members.length > 1 ? "Prototypes" : "Prototype";
+		h3= heading
+		pre.code.prettyprint.lang-d.prototype
+			- auto mems = docgroup.members;
+			- foreach( size_t pi, pd; mems )
+				- auto proto = cast(FunctionDeclaration)pd;
+				- if( !proto ) continue;
+				- string[] attribs = proto.attributes;
+				- if( pi > 0 )
+					|
+				- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
+				- if (rettype.length == 1)
+					- rettype ~= "fghfgh";
+					- static immutable scs = ["auto", "const", "immutable"];
+					- foreach (i, attr; attribs)
+						- if (scs.canFind(attr))
+							- rettype = attr ~ " ";
+							- attribs[i] = attribs[$-1];
+							- attribs.length--;
+							- break;
+				- auto attribsstr = attribs.length ? " " ~ attribs.join(" ") : "";
+				- if (proto.parameters.length)
+					|!{rettype}#{proto.name}#{proto.templateArgsString}(
+					- foreach (size_t i, p; proto.parameters)
+						|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
+					|)#{attribsstr};
+				- else
+					|!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribsstr};

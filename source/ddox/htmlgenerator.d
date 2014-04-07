@@ -67,12 +67,14 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 			else {
 				dst.put('/');
 				foreach_reverse(n; nodes[0 .. mod_idx]){
-					dst.put(n.name);
+					if (settings.lowerCaseNames) dst.put(n.name.toLower);
+					else dst.put(n.name);
 					dst.put('.');
 				}
 				dst.put("html");
 			}
 
+			// FIXME: must also work for multiple function overloads in separate doc groups!
 			if( dp && dfn ){
 				dst.put('#');
 				dst.put(dp.name);
@@ -82,30 +84,39 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		return dst.data();
 	}
 
-	void visitDecl(Module mod, Declaration decl, Path path)
+	void collectChildren(Entity parent, ref DocGroup[][string] pages)
 	{
-		if( auto ctd = cast(CompositeTypeDeclaration)decl ){
-			foreach( m; ctd.members )
-				visitDecl(mod, m, path);
-		} else if( auto td = cast(TemplateDeclaration)decl ){
-			foreach( m; td.members )
-				visitDecl(mod, m, path);
-		}
+		Declaration[] members;
+		if (auto mod = cast(Module)parent) members = mod.members;
+		else if (auto ctd = cast(CompositeTypeDeclaration)parent) members = ctd.members;
+		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
 
-		auto file = openFile(path ~ PathEntry(decl.nestedName~".html"), FileMode.createTrunc);
-		scope(exit) file.close();
-		generateDeclPage(file, root, mod, decl, settings, ent => linkTo(ent, path.length-dst_path.length));
+		foreach (decl; members) {
+			auto name = settings.lowerCaseNames ? decl.nestedName.toLower : decl.nestedName;
+			auto pl = name in pages;
+			if (pl && !canFind(*pl, decl.docGroup)) *pl ~= decl.docGroup;
+			else if (!pl) pages[name] = [decl.docGroup];
+
+			collectChildren(decl, pages);
+		}
 	}
 
 	void visitModule(Module mod, Path pack_path)
 	{
 		auto modpath = pack_path ~ PathEntry(mod.name);
-		if( !existsFile(modpath) ) createDirectory(modpath);
-		foreach( decl; mod.members ) visitDecl(mod, decl, modpath);
+		if (!existsFile(modpath)) createDirectory(modpath);
 		logInfo("Generating module: %s", mod.qualifiedName);
 		auto file = openFile(pack_path ~ PathEntry(mod.name~".html"), FileMode.createTrunc);
 		scope(exit) file.close();
 		generateModulePage(file, root, mod, settings, ent => linkTo(ent, pack_path.length-dst_path.length));
+
+		DocGroup[][string] pages;
+		collectChildren(mod, pages);
+		foreach (name, decls; pages) {
+			auto file = openFile(modpath ~ PathEntry(name~".html"), FileMode.createTrunc);
+			scope(exit) file.close();
+			generateDeclPage(file, root, mod, name, decls, settings, ent => linkTo(ent, modpath.length-dst_path.length));
+		}
 	}
 
 	void visitPackage(Package p, Path path)
@@ -146,6 +157,9 @@ class DocPageInfo {
 	GeneratorSettings settings;
 	Package rootPackage;
 	Entity node;
+	Module mod;
+	DocGroup[] docGroups; // for multiple doc groups with the same name
+	string nestedName;
 	
 	@property NavigationType navigationType() const { return settings.navigationType; }
 	string formatType(Type tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
@@ -153,16 +167,6 @@ class DocPageInfo {
 	{
 		return group.comment.renderSections(new DocGroupContext(group, linkTo), display_section, hlevel);
 	}
-}
-
-class DocModulePageInfo : DocPageInfo {
-	Module mod;
-}
-
-class DocDeclPageInfo : DocModulePageInfo {
-	Declaration item;
-	DocGroup docGroup;
-	DocGroup[] docGroups; // for multiple doc groups with the same name
 }
 
 void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
@@ -240,52 +244,63 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 
 void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
-	auto info = new DocModulePageInfo;
+	auto info = new DocPageInfo;
 	info.linkTo = link_to;
 	info.settings = settings;
 	info.rootPackage = root_package;
 	info.mod = mod;
 	info.node = mod;
+	info.docGroups = null;
 
-	dst.parseDietFileCompat!("ddox.module.dt",
-		HTTPServerRequest, "req",
-		DocModulePageInfo, "info")
-		(Variant(req), Variant(info));
+	dst.parseDietFile!("ddox.module.dt", req, info);
 }
 
-void generateDeclPage(OutputStream dst, Package root_package, Module mod, Declaration item, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
+void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
 {
-	auto info = new DocDeclPageInfo;
+	import std.algorithm : sort;
+
+	auto info = new DocPageInfo;
 	info.linkTo = link_to;
 	info.settings = settings;
 	info.rootPackage = root_package;
-	info.node = item;
 	info.mod = mod;
-	info.item = item;
-	info.docGroup = item.docGroup;
-	info.docGroups = docGroups(mod.lookupAll!Declaration(item.nestedName));
+	info.node = mod;
+	info.docGroups = docgroups;//docGroups(mod.lookupAll!Declaration(nested_name));
+	sort!((a, b) => cmpKind(a.members[0], b.members[0]))(info.docGroups);
+	info.nestedName = nested_name;
 
-	switch( info.item.kind ){
-		default: logWarn("Unknown API item kind: %s", item.kind); return;
-		case DeclarationKind.Variable:
-		case DeclarationKind.EnumMember:
-		case DeclarationKind.Alias:
-			dst.parseDietFileCompat!("ddox.variable.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
-			break;
-		case DeclarationKind.Function:
-			dst.parseDietFileCompat!("ddox.function.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
-			break;
-		case DeclarationKind.Interface:
-		case DeclarationKind.Class:
-		case DeclarationKind.Struct:
-		case DeclarationKind.Union:
-			dst.parseDietFileCompat!("ddox.composite.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
-			break;
-		case DeclarationKind.Template:
-			dst.parseDietFileCompat!("ddox.template.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
-			break;
-		case DeclarationKind.Enum:
-			dst.parseDietFileCompat!("ddox.enum.dt", HTTPServerRequest, "req", DocDeclPageInfo, "info")(Variant(req), Variant(info));
-			break;
-	}
+	dst.parseDietFile!("ddox.docpage.dt", req, info);
+}
+
+private bool cmpKind(Entity a, Entity b)
+{
+	static immutable kinds = [
+		DeclarationKind.Variable,
+		DeclarationKind.Function,
+		DeclarationKind.Struct,
+		DeclarationKind.Union,
+		DeclarationKind.Class,
+		DeclarationKind.Interface,
+		DeclarationKind.Enum,
+		DeclarationKind.EnumMember,
+		DeclarationKind.Template,
+		DeclarationKind.TemplateParameter,
+		DeclarationKind.Alias
+	];
+
+	auto ad = cast(Declaration)a;
+	auto bd = cast(Declaration)b;
+
+	if (!ad && !bd) return false;
+	if (!ad) return false;
+	if (!bd) return true;
+
+	auto ak = kinds.countUntil(ad.kind);
+	auto bk = kinds.countUntil(bd.kind);
+
+	if (ak < 0 && bk < 0) return false;
+	if (ak < 0) return false;
+	if (bk < 0) return true;
+
+	return ak < bk;
 }

@@ -1,0 +1,23 @@
+- import ddox.api;
+- import std.algorithm;
+
+- void outputEnumDescription(EnumDeclaration enum_item)
+	p The enum base type is
+		code.prettyprint.lang-d!= info.formatType(enum_item.baseType)
+		|.
+
+- void outputEnumMembers(EnumDeclaration enum_item)
+	section
+		h3 Enum members
+
+		table
+			col.caption
+			tr
+				th Name
+				th Description
+			- foreach( mem; enum_item.members )
+				tr
+					td
+						a(href="#{info.linkTo(mem)}")
+							code= mem.name
+					td!= info.formatDoc(mem.docGroup, 3, sec => sec == "$Short")

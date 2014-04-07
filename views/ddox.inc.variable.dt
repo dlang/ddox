@@ -1,0 +1,56 @@
+- import ddox.api;
+- import std.algorithm;
+
+- void outputVariableDescription(Declaration item)
+	- auto docgroup = item.docGroup;
+	section
+		h3 Declaration
+		pre.code.prettyprint.lang-d.prototype
+			- string type;
+			- string value;
+			- string terminator = ";";
+			- if( auto var = cast(VariableDeclaration)item )
+				- if( var.type )
+					- type = info.formatType(var.type);
+				- if( var.initializer )
+					- value = var.initializer.valueString;
+			- else if( auto ev = cast(EnumMemberDeclaration)item )
+				- if( ev.type )
+					- type = info.formatType(ev.type);
+				- if( ev.value )
+					- value = ev.value.valueString;
+				- terminator = ",";
+			- else if( auto ad = cast(AliasDeclaration)item )
+				- type = "alias";
+				- if( ad.targetType )
+					- value = info.formatType(ad.targetType);
+				- else if( ad.targetDecl )
+					//- TODO!
+
+			- auto itemname = item.name ~ item.templateArgsString;
+			- if( auto m = cast(Module)item.parent )
+				|module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
+				|
+				|// ...
+				- if( value.length )
+					|!{type} #{itemname} = !{value};
+				- else if( type.length )
+					|!{type} #{itemname};
+				- else
+					|#{itemname};
+				|// ...
+			- else
+				- if( auto ctd = cast(Declaration)item.parent )
+					|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
+				- else
+					|<a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>
+				|{
+				|	// ...
+				- if( value.length && type.length )
+					|	!{type} #{itemname} = !{value}!{terminator}
+				- else if( type.length )
+					|	!{type} #{itemname}!{terminator}
+				- else
+					|	#{itemname}!{terminator}
+				|	// ...
+				|}

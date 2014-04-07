@@ -56,6 +56,8 @@ class Entity {
 		return s;
 	}
 
+	@property string kindCaption() const { return "Entity"; }
+
 	bool isAncestorOf(in Entity node)
 	const {
 		auto n = rebindable(node);
@@ -165,6 +167,8 @@ final class Package : Entity {
 
 	this(Entity parent, string name){ super(parent, name); }
 
+	override @property string kindCaption() const { return "Package"; }
+
 	Module createModule(string name)
 	{
 		assert(findChild!Module(name) is null, "Module already present");
@@ -196,6 +200,8 @@ final class Module : Entity{
 	string file;
 
 	this(Entity parent, string name){ super(parent, name); }
+
+	override @property string kindCaption() const { return "Module"; }
 
 	override void iterateChildren(bool delegate(Entity) del)
 	{
@@ -231,6 +237,7 @@ class Declaration : Entity {
 	bool isTemplate;
 	TemplateParameterDeclaration[] templateArgs;
 
+	override @property string kindCaption() const { return "Declaration"; }
 	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind();
 	@property inout(Declaration) parentDeclaration() inout { return cast(inout(Declaration))parent; }
@@ -273,9 +280,11 @@ class Declaration : Entity {
 class TypedDeclaration : Declaration {
 	Type type;
 
-	abstract override @property DeclarationKind kind() const;
-
 	this(Entity parent, string name){ super(parent, name); }
+
+	override @property string kindCaption() const { return "Typed declaration"; }
+
+	abstract override @property DeclarationKind kind() const;
 
 	abstract override void iterateChildren(bool delegate(Entity) del);
 
@@ -290,6 +299,7 @@ class TypedDeclaration : Declaration {
 final class VariableDeclaration : TypedDeclaration {
 	Value initializer;
 
+	override @property string kindCaption() const { return "Variable"; }
 	override @property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.copyFrom(this); ret.initializer = initializer; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Variable; }
 
@@ -303,6 +313,7 @@ final class FunctionDeclaration : TypedDeclaration {
 	VariableDeclaration[] parameters;
 	string[] attributes;
 
+	override @property string kindCaption() const { return "Function"; }
 	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.copyFrom(this); ret.returnType = returnType; ret.parameters = parameters.dup; ret.attributes = attributes; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Function; }
 
@@ -319,6 +330,7 @@ final class FunctionDeclaration : TypedDeclaration {
 class CompositeTypeDeclaration : Declaration {
 	Declaration[] members;
 
+	override @property string kindCaption() const { return "Composite type"; }
 	override abstract @property DeclarationKind kind() const;
  
 	this(Entity parent, string name){ super(parent, name); }
@@ -330,6 +342,7 @@ class CompositeTypeDeclaration : Declaration {
 }
 
 final class StructDeclaration : CompositeTypeDeclaration {
+	override @property string kindCaption() const { return "Struct"; }
 	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.copyFrom(this); ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Struct; }
 
@@ -337,6 +350,7 @@ final class StructDeclaration : CompositeTypeDeclaration {
 }
 
 final class UnionDeclaration : CompositeTypeDeclaration {
+	override @property string kindCaption() const { return "Union"; }
 	override @property UnionDeclaration dup() { auto ret = new UnionDeclaration(parent, name); ret.copyFrom(this); ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Union; }
 
@@ -346,6 +360,7 @@ final class UnionDeclaration : CompositeTypeDeclaration {
 final class InterfaceDeclaration : CompositeTypeDeclaration {
 	Type[] derivedInterfaces;
 
+	override @property string kindCaption() const { return "Interface"; }
 	override @property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.derivedInterfaces = derivedInterfaces.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
@@ -356,6 +371,7 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 	Type baseClass;
 	Type[] derivedInterfaces;
 
+	override @property string kindCaption() const { return "Class"; }
 	override @property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Class; }
 
@@ -365,6 +381,7 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 final class EnumDeclaration : CompositeTypeDeclaration {
 	Type baseType;
 
+	override @property string kindCaption() const { return "Enum"; }
 	override @property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.baseType = baseType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Enum; }
 
@@ -374,6 +391,7 @@ final class EnumDeclaration : CompositeTypeDeclaration {
 final class EnumMemberDeclaration : Declaration {
 	Value value;
 
+	override @property string kindCaption() const { return "Enum member"; }
 	override @property EnumMemberDeclaration dup() { auto ret = new EnumMemberDeclaration(parent, name); ret.copyFrom(this); ret.value = value; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
 	@property Type type() { if( !value ) return null; return value.type; }
@@ -388,6 +406,7 @@ final class AliasDeclaration : Declaration {
 	Declaration targetDecl;
 	Type targetType;
 
+	override @property string kindCaption() const { return "Alias"; }
 	override @property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.copyFrom(this); ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Alias; }
 	@property Type type() { return targetType; }
@@ -400,6 +419,7 @@ final class AliasDeclaration : Declaration {
 final class TemplateDeclaration : Declaration {
 	Declaration[] members;
 
+	override @property string kindCaption() const { return "Template"; }
 	override @property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.copyFrom(this); ret.members = members.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Template; }
 
@@ -412,6 +432,7 @@ final class TemplateDeclaration : Declaration {
 }
 
 final class TemplateParameterDeclaration : TypedDeclaration {
+	override @property string kindCaption() const { return "Template parameter"; }
 	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.TemplateParameter; }
 

@@ -1,35 +1,22 @@
-extends ddox.layout
+- import ddox.api;
+- import std.algorithm;
+- import std.typetuple;
 
-block ddox.defs
-	- import ddox.api;
-	- import std.algorithm;
-	- import std.typetuple;
-
-	- auto item = cast(TemplateDeclaration)info.item;
-	- assert(item !is null);
-
-block ddox.title
-	- auto title = "Template " ~ item.nestedName;
-	
-block ddox.description		
-	p!= info.formatDoc(item.docGroup, 2, sec => sec == "$Short")
-
-	|!= info.formatDoc(item.docGroup, 2, sec => sec == "$Long")
-
+- void outputTemplateDescription(TemplateDeclaration item)
 	section
 		h2 Arguments
 
 		pre.code.prettyprint.lang-d.prototype
 			|template #{item.name}#{item.templateArgsString};
 
-block ddox.members
+- void outputTemplateMembers(TemplateDeclaration item)
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Union",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section
-			h2 Variables
+			h3 Variables
 			table
 				col.caption
 				tr
@@ -48,7 +35,7 @@ block ddox.members
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(item) )
 			section
-				h2= kindnames[i]
+				h3= kindnames[i]
 				table
 					col.caption
 					tr
@@ -61,13 +48,3 @@ block ddox.members
 								- if( grp.inheritingDecl )
 									| [inherited]
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
-
-block ddox.sections
-	|!= info.formatDoc(item.docGroup, 2, sec => sec != "$Short" && sec != "$Long" && sec != "Authors" && sec != "License" && sec != "Copyright")
-
-block ddox.authors
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
-block ddox.license
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "License")
-block ddox.copyright
-	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Copyright")

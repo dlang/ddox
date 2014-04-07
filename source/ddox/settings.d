@@ -42,9 +42,13 @@ class DdoxSettings {
 
 class GeneratorSettings {
 	NavigationType navigationType = NavigationType.moduleTree;
-	// used for sitemap generation and for determining the URL prefix in registerApiDocs()
+	/// used for sitemap generation and for determining the URL prefix in registerApiDocs()
 	URL siteUrl = URL("http://localhost:8080/");
-	bool focusSearchField = true; /// focus search field on load
-	bool enableKeyNavigation = true; /// enable JS keyboard navigation
+	/// focus search field on load
+	bool focusSearchField = true;
+	/// enable JS keyboard navigation
+	bool enableKeyNavigation = true;
+	/// Use only lower case file names and aggregate matching entities (useful for case insensitive file systems)
+	bool lowerCaseNames = false;
 }
 

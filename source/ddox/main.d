@@ -83,13 +83,15 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	NavigationType navtype;
 	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
+	bool lowercasenames = false;
 	getopt(args,
 		//config.passThrough,
 		"std-macros", &macrofiles,
 		"override-macros", &overridemacrofiles,
 		"navigation-type", &navtype,
 		"package-order", &pack_order,
-		"sitemap-url", &sitemapurl);
+		"sitemap-url", &sitemapurl,
+		"lowercase-names", &lowercasenames);
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -107,6 +109,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	gensettings = new GeneratorSettings;
 	gensettings.siteUrl = URL(sitemapurl);
 	gensettings.navigationType = navtype;
+	gensettings.lowerCaseNames = lowercasenames;
 	return 0;
 }
 
@@ -306,6 +309,8 @@ information.
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
+    --lowercase-names      Outputs all file names in lower case. This option is
+                           useful on case insensitive file systems.
 `, args[0]);
 			break;
 		case "filter":
