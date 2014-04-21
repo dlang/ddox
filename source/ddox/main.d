@@ -119,7 +119,8 @@ int cmdFilterDocs(string[] args)
 	Protection minprot = Protection.Private;
 	bool keeputests = false;
 	bool keepinternals = false;
-	bool unittestexamples = false;
+	bool unittestexamples = true;
+	bool nounittestexamples = false;
 	bool justdoc = false;
 	getopt(args,
 		//config.passThrough,
@@ -129,9 +130,11 @@ int cmdFilterDocs(string[] args)
 		"only-documented", &justdoc,
 		"keep-unittests", &keeputests,
 		"keep-internals", &keepinternals,
-		"unittest-examples", &unittestexamples);
+		"unittest-examples", &unittestexamples, // deprecated, kept to not break existing scripts
+		"no-unittest-examples", &nounittestexamples);
 
-	if( keeputests ) keepinternals = true;
+	if (keeputests) keepinternals = true;
+	if (nounittestexamples) unittestexamples = false;
 
 	string jsonfile;
 	if( args.length < 3 ){
@@ -326,7 +329,9 @@ information.
                            Implies --keep-internals.
     --keep-internals       Do not remove symbols starting with two unterscores.
     --unittest-examples    Add documented unit tests as examples to the
-                           preceeding declaration.
+                           preceeding declaration (deprecated, enabled by
+                           default)
+    --no-unittest-examples Don't convert documented unit tests to examples
 `, args[0]);
 	}
 	if( args.length < 2 ){
