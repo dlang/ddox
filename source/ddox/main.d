@@ -378,7 +378,7 @@ private string extractUnittestSourceCode(Json decl, Json mod)
 	foreach (i, ln; ret.splitLines) {
 		if (i == 1) {
 			foreach (j; 0 .. ln.length)
-				if (ln[j] != ' ' && ln[i] != '\t') {
+				if (ln[j] != ' ' && ln[j] != '\t') {
 					indent = ln[0 .. j];
 					break;
 				}
@@ -388,6 +388,7 @@ private string extractUnittestSourceCode(Json decl, Json mod)
 			while (j < indent.length && !ln.empty) {
 				if (ln.front != indent[j]) break;
 				ln.popFront();
+				j++;
 			}
 			app.put(ln);
 			app.put('\n');
