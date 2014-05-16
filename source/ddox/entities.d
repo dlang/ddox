@@ -159,6 +159,13 @@ final class DocGroup {
 		this.text = text;
 		this.comment = new DdocComment(text);
 	}
+
+	this(Entity entity, string text, DdocComment comment)
+	{
+		this.members = [entity];
+		this.text = text;
+		this.comment = comment;
+	}
 }
 
 final class Package : Entity {

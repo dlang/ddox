@@ -24,6 +24,7 @@ void processDocs(Package root, DdoxSettings settings)
 	import ddox.processors.eptemplates;
 	import ddox.processors.inherit;
 	import ddox.processors.sort;
+	import ddox.processors.split;
 
 	if (settings.mergeEponymousTemplates) {
 		mergeEponymousTemplates(root);
@@ -31,6 +32,9 @@ void processDocs(Package root, DdoxSettings settings)
 	if (settings.inheritDocumentation) {
 		inheritDocs(root);
 	}
+
+	splitDocGroups(root, true, true, false);
+
 	if (settings.moduleSort != SortMode.none) {
 		auto mpred = sortPred(settings.moduleSort);
 		sortModules!((a, b)  => mpred(a, b))(root);
