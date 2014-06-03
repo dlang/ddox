@@ -45,7 +45,7 @@ class GeneratorSettings {
 	/// used for sitemap generation and for determining the URL prefix in registerApiDocs()
 	URL siteUrl = URL("http://localhost:8080/");
 	/// focus search field on load
-	bool focusSearchField = true;
+	bool focusSearchField = false;
 	/// enable JS keyboard navigation
 	bool enableKeyNavigation = true;
 	/// Use only lower case file names and aggregate matching entities (useful for case insensitive file systems)
