@@ -9,7 +9,7 @@ noscript
 
 - if (info.settings.enableKeyNavigation)
 	script(type="text/javascript", src="#{info.linkTo(null)}scripts/mousetrap.js")
-	script(type="text/javascript")
+	script(type="text/javascript").
 		$(document).ready(function() {
 			Mousetrap.bind('s', function(e) {
 				$("#symbolSearch").focus();
@@ -18,7 +18,7 @@ noscript
 		});
 
 - if (info.settings.focusSearchField)
-	script(type="text/javascript")
+	script(type="text/javascript").
 		$(document).ready(function() {
 			$("#symbolSearch").focus();
 		});
