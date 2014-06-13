@@ -33,6 +33,9 @@ import vibe.templ.diet;
 
 void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = null)
 {
+	import std.algorithm : splitter;
+	import vibe.web.common : adjustMethodStyle;
+
 	if( !settings ) settings = new GeneratorSettings;
 
 	string linkTo(Entity ent, size_t level)
@@ -67,8 +70,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 			else {
 				dst.put('/');
 				foreach_reverse(n; nodes[0 .. mod_idx]){
-					if (settings.lowerCaseNames) dst.put(n.name.toLower);
-					else dst.put(n.name);
+					dst.put(adjustMethodStyle(n.name, settings.fileNameStyle));
 					dst.put('.');
 				}
 				dst.put("html");
@@ -92,7 +94,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
 
 		foreach (decl; members) {
-			auto name = settings.lowerCaseNames ? decl.nestedName.toLower : decl.nestedName;
+			auto name = decl.nestedName.splitter(".").map!(n => adjustMethodStyle(n, settings.fileNameStyle)).join(".");
 			auto pl = name in pages;
 			if (pl && !canFind(*pl, decl.docGroup)) *pl ~= decl.docGroup;
 			else if (!pl) pages[name] = [decl.docGroup];

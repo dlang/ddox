@@ -8,6 +8,7 @@
 module ddox.settings;
 
 import vibe.inet.url;
+public import vibe.web.common : MethodStyle;
 
 enum SortMode {
 	none,
@@ -48,7 +49,11 @@ class GeneratorSettings {
 	bool focusSearchField = false;
 	/// enable JS keyboard navigation
 	bool enableKeyNavigation = true;
-	/// Use only lower case file names and aggregate matching entities (useful for case insensitive file systems)
-	bool lowerCaseNames = false;
-}
+	/// Defines how symbol names are mapped to file names when generating file based documentation (useful for case insensitive file systems)
+	MethodStyle fileNameStyle = MethodStyle.unaltered;
 
+	deprecated("Use fileNameStyle = MethodStyle.lowerCase instead.")
+	@property bool lowerCase() const { return fileNameStyle == MethodStyle.lowerCase; }
+	deprecated("Use fileNameStyle = MethodStyle.lowerCase instead.")
+	@property void lowerCase(bool v) { fileNameStyle = MethodStyle.lowerCase; }
+}

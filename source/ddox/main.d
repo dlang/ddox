@@ -83,6 +83,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	NavigationType navtype;
 	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
+	MethodStyle file_name_style = MethodStyle.unaltered;
 	bool lowercasenames = false;
 	getopt(args,
 		//config.passThrough,
@@ -91,7 +92,10 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 		"navigation-type", &navtype,
 		"package-order", &pack_order,
 		"sitemap-url", &sitemapurl,
+		"file-name-style", &file_name_style,
 		"lowercase-names", &lowercasenames);
+
+	if (lowercasenames) file_name_style = MethodStyle.lowerCase;
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -109,7 +113,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	gensettings = new GeneratorSettings;
 	gensettings.siteUrl = URL(sitemapurl);
 	gensettings.navigationType = navtype;
-	gensettings.lowerCaseNames = lowercasenames;
+	gensettings.fileNameStyle = file_name_style;
 	return 0;
 }
 
@@ -312,8 +316,14 @@ information.
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
-    --lowercase-names      Outputs all file names in lower case. This option is
-                           useful on case insensitive file systems.
+    --file-name-style=STY  Sets a translation style for symbol names to file
+                           names. Use this instead of --lowercase-name.
+                           Possible values for STY:
+                             unaltered, camelCase, pascalCase, lowerCase,
+                             upperCase, lowerUnderscored, upperUnderscored
+    --lowercase-names      DEPRECATED: Outputs all file names in lower case.
+                           This option is useful on case insensitive file
+                           systems.
 `, args[0]);
 			break;
 		case "filter":
