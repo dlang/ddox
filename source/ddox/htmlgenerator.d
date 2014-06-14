@@ -94,7 +94,8 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
 
 		foreach (decl; members) {
-			auto name = decl.nestedName.splitter(".").map!(n => adjustMethodStyle(n, settings.fileNameStyle)).join(".");
+			auto style = settings.fileNameStyle; // workaround for invalid value when directly used inside lamba
+			auto name = decl.nestedName.splitter(".").map!(n => adjustMethodStyle(n, style)).join(".");
 			auto pl = name in pages;
 			if (pl && !canFind(*pl, decl.docGroup)) *pl ~= decl.docGroup;
 			else if (!pl) pages[name] = [decl.docGroup];
