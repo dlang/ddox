@@ -55,7 +55,7 @@ private struct Parser
 				case DeclarationKind.TemplateParameter:
 					return true;
 				case DeclarationKind.Template:
-					// support eponymous templates
+					// support eponymous template types
 					auto td = cast(TemplateDeclaration)a;
 					auto mi = td.members.countUntil!(m => m.name == a.name);
 					if (mi < 0) return false;
