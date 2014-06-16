@@ -54,6 +54,12 @@ private struct Parser
 					return (cast(AliasDeclaration)a).targetType !is null;
 				case DeclarationKind.TemplateParameter:
 					return true;
+				case DeclarationKind.Template:
+					// support eponymous templates
+					auto td = cast(TemplateDeclaration)a;
+					auto mi = td.members.countUntil!(m => m.name == a.name);
+					if (mi < 0) return false;
+					return isTypeDecl(td.members[mi]);
 			}
 		}
 
