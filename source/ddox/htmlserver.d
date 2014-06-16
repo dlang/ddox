@@ -97,10 +97,28 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		generateSitemap(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
 	}
 
+	string symbols_js;
+	string symbols_js_md5;
+
 	void showSymbolJS(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.contentType = "application/javascript";
-		generateSymbolsJS(res.bodyWriter, pack, settings, ent => linkTo(ent, 0));
+		if (!symbols_js.length) {
+			import std.digest.md;
+			import vibe.stream.memory;
+			auto os = new MemoryOutputStream;
+			generateSymbolsJS(os, pack, settings, ent => linkTo(ent, 0));
+			symbols_js = cast(string)os.data;
+			symbols_js_md5 = '"' ~ md5Of(symbols_js).toHexString().idup ~ '"';
+		}
+
+		if (req.headers.get("If-None-Match", "") == symbols_js_md5) {
+			res.statusCode = HTTPStatus.NotModified;
+			res.writeVoidBody();
+			return;
+		}
+
+		res.headers["ETag"] = symbols_js_md5;
+		res.writeBody(symbols_js, "application/javascript");
 	}
 
 	auto path_prefix = settings.siteUrl.path.toString();
