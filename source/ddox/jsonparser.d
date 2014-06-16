@@ -57,9 +57,11 @@ private struct Parser
 				case DeclarationKind.Template:
 					// support eponymous template types
 					auto td = cast(TemplateDeclaration)a;
+					// be optimistic for templates without content that they are in fact types
+					if (!td.members.length) return true;
+					// otherwise require an actual eponymous type member
 					auto mi = td.members.countUntil!(m => m.name == a.name);
-					if (mi < 0) return false;
-					return isTypeDecl(td.members[mi]);
+					return mi >= 0 && isTypeDecl(td.members[mi]);
 			}
 		}
 
