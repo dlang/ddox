@@ -178,9 +178,9 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 				auto mn = type.typeDecl.module_.qualifiedName;
 				auto qn = type.typeDecl.nestedName;
 				if( qn.startsWith(mn~".") ) qn = qn[mn.length+1 .. $];
-				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), qn);
+				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), qn.replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			} else {
-				dst.put(type.typeName);
+				dst.put(type.typeName.replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			}
 			if( type.templateArgs.length ){
 				dst.put('!');
