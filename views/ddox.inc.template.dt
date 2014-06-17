@@ -29,7 +29,7 @@
 							a(href="#{info.linkTo(f)}")= f.name
 							- if( f.inheritingDecl )
 								| [inherited]
-						td!= info.formatType(f.type)
+						td.typecol!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
 	- foreach( i, kind; kinds )

@@ -71,7 +71,7 @@
 					tr
 						td
 							a(href="#{info.linkTo(f)}", class=declStyleClasses(f)) <code>#{f.name}</code>
-						td!= info.formatType(f.type)
+						td.typecol!= info.formatType(f.type)
 						td!= info.formatDoc(f.docGroup, 3, sec => sec == "$Short")
 
 	- if( properties.length )
@@ -89,7 +89,7 @@
 						td
 							a(href="#{info.linkTo(p)}", class=declStyleClasses(p)) <code>#{p.name}</code>
 							span.tableEntryAnnotation= anyPropertyGetter(mems) ? anyPropertySetter(mems) ? "[get, set]" : "[get]" : "[set]"
-						td!= info.formatType(getPropertyType(mems))
+						td.typecol!= info.formatType(getPropertyType(mems))
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- if( methods.length )
