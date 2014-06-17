@@ -50,23 +50,35 @@ function performSymbolSearch(maxlen)
 	}
 
 	function compare(a, b) {
+		// prefer non-deprecated matches
 		var adep = a.attributes.indexOf("deprecated") >= 0;
 		var bdep = b.attributes.indexOf("deprecated") >= 0;
 		if (adep != bdep) return adep - bdep;
 
+		// normalize the names
 		var aname = a.name.toLowerCase();
 		var bname = b.name.toLowerCase();
 
 		var anameparts = aname.split(".");
 		var bnameparts = bname.split(".");
 
-		var aexact = terms.indexOf(anameparts[anameparts.length-1]) >= 0;
-		var bexact = terms.indexOf(bnameparts[bnameparts.length-1]) >= 0;
+		var asname = anameparts[anameparts.length-1];
+		var bsname = bnameparts[bnameparts.length-1];
+
+		// prefer exact matches
+		var aexact = terms.indexOf(asname) >= 0;
+		var bexact = terms.indexOf(bsname) >= 0;
 		if (aexact != bexact) return bexact - aexact;
 
+		// prefer elements with less nesting
 		if (anameparts.length < bnameparts.length) return -1;
 		if (anameparts.length > bnameparts.length) return 1;
 
+		// prefer matches with a shorter name
+		if (asname.length < bsname.length) return -1;
+		if (asname.length > bsname.length) return 1;
+
+		// sort the rest alphabetically
 		if (aname < bname) return -1;
 		if (aname > bname) return 1;
 		return 0;
