@@ -15,28 +15,44 @@ import std.algorithm;
 
 void mergeEponymousTemplates(Package root)
 {
-	void processDecls(Declaration[] decls)
+	void processDecls(ref Declaration[] decls)
 	{
-		foreach( ref d; decls ){
-			if( auto templ = cast(TemplateDeclaration)d ){
-				//if( templ.members.length == 1 && templ.members[0].name == templ.name ){
-				auto idx = templ.members.countUntil!(m => m.name == templ.name)();
-				if( idx >= 0 ){
-					templ.members[idx].templateArgs = templ.templateArgs;
-					templ.members[idx].isTemplate = true;
-					templ.members[idx].parent = templ.parent;
-					templ.members[idx].docGroup = templ.docGroup;
-					templ.members[idx].inheritingDecl = templ.inheritingDecl;
-					foreach( ref m; templ.docGroup.members )
-						if( m is templ ) m = templ.members[idx];
-					d = templ.members[idx];
-				} else processDecls(templ.members);
-			}
+		Declaration[] new_decls;
+		foreach (d; decls) {
+			if (auto templ = cast(TemplateDeclaration)d) {
+				// search for eponymous template members
+				Declaration[] epmembers;
+				foreach (m; templ.members)
+					if (m.name == templ.name) {
+						m.templateArgs = templ.templateArgs;
+						m.isTemplate = true;
+						m.parent = templ.parent;
+						m.docGroup = templ.docGroup;
+						m.inheritingDecl = templ.inheritingDecl;
+						epmembers ~= m;
+					}
 
-			if( auto comp = cast(CompositeTypeDeclaration)d ){
+				if (epmembers.length > 0) {
+					// if we found some, replace all references of the original template with the new modified members
+					foreach (i, m; templ.docGroup.members) {
+						auto newm = templ.docGroup.members[0 .. i];
+						foreach (epm; epmembers) newm ~= epm;
+						newm ~= templ.docGroup.members[i+1 .. $];
+						templ.docGroup.members = newm;
+						break;
+					}
+					new_decls ~= epmembers;
+				} else {
+					// else keep the template and continue with its children
+					new_decls ~= templ;
+					processDecls(templ.members);
+				}
+			} else new_decls ~= d;
+
+			if (auto comp = cast(CompositeTypeDeclaration)d)
 				processDecls(comp.members);
-			}
 		}
+		decls = new_decls;
 	}
 
 	root.visit!Module((mod){
