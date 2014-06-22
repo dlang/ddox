@@ -27,7 +27,8 @@ void mergeEponymousTemplates(Package root)
 						m.templateArgs = templ.templateArgs;
 						m.isTemplate = true;
 						m.parent = templ.parent;
-						m.docGroup = templ.docGroup;
+						if (templ.docGroup.text.length)
+							m.docGroup = templ.docGroup;
 						m.inheritingDecl = templ.inheritingDecl;
 						epmembers ~= m;
 					}
