@@ -5,7 +5,7 @@
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
-module ddox.jsonparser_old;
+module ddox.parsers.jsonparser_old;
 
 import ddox.ddox;
 import ddox.entities;

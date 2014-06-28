@@ -5,8 +5,8 @@ import ddox.ddox;
 import ddox.entities;
 import ddox.htmlgenerator;
 import ddox.htmlserver;
-import ddox.jsonparser;
-import ddox.jsonparser_old;
+import ddox.parsers.jsonparser;
+import ddox.parsers.jsonparser_old;
 
 import vibe.core.core;
 import vibe.core.file;
