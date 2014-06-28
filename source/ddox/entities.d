@@ -240,6 +240,7 @@ enum Protection {
 class Declaration : Entity {
 	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
+	string[] attributes;
 	int line;
 	bool isTemplate;
 	TemplateParameterDeclaration[] templateArgs;
@@ -318,7 +319,6 @@ final class VariableDeclaration : TypedDeclaration {
 final class FunctionDeclaration : TypedDeclaration {
 	Type returnType;
 	VariableDeclaration[] parameters;
-	string[] attributes;
 
 	override @property string kindCaption() const { return "Function"; }
 	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.copyFrom(this); ret.returnType = returnType; ret.parameters = parameters.dup; ret.attributes = attributes; return ret; }
@@ -409,7 +409,6 @@ final class EnumMemberDeclaration : Declaration {
 }
 
 final class AliasDeclaration : Declaration {
-	string[] attributes;
 	Declaration targetDecl;
 	Type targetType;
 
@@ -486,6 +485,13 @@ final class Type {
 
 	this() {}
 	this(Declaration decl) { kind = TypeKind.Primitive; text = decl.nestedName; typeName = text; typeDecl = decl; }
+
+	static Type makePointer(Type base_type) { auto ret = new Type; ret.kind = TypeKind.Pointer; ret.elementType = base_type; return ret; }
+	static Type makeArray(Type base_type) { auto ret = new Type; ret.kind = TypeKind.Array; ret.elementType = base_type; return ret; }
+	static Type makeStaticArray(Type base_type, string length) { auto ret = new Type; ret.kind = TypeKind.StaticArray; ret.elementType = base_type; ret.arrayLength = length; return ret; }
+	static Type makeAssciativeArray(Type key_type, Type value_type) { auto ret = new Type; ret.kind = TypeKind.AssociativeArray; ret.keyType = key_type; ret.elementType = value_type; return ret; }
+	static Type makeFunction(Type return_type, Type[] parameter_types) { auto ret = new Type; ret.kind = TypeKind.Function; ret.returnType = return_type; ret.parameterTypes = parameter_types; return ret; }
+	static Type makeDelegate(Type return_type, Type[] parameter_types) { auto ret = new Type; ret.kind = TypeKind.Delegate; ret.returnType = return_type; ret.parameterTypes = parameter_types; return ret; }
 
 	override equals_t opEquals(Object other_)
 	{
