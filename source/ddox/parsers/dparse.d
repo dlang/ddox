@@ -32,6 +32,10 @@ import vibe.data.json;
 //   ambiguous representation of mutually exclusive values (maybe use subclassing? or enums for disambiguation?)
 //   InterfaceDecl.baseClassList <-> baseInterfaceList
 //   start/end line/column values for every AST node
+//   doc comments for alias this
+//   Declaration.attributeDeclaration vs. .attributes and .declarations?
+//   AliasDeclaration direct fields vs. initializers?
+//   Alias to non-type declarations is a type?
 
 
 Package parseD(string[] d_files, Package root = null)
@@ -170,25 +174,58 @@ private struct DParser
 		if (auto ad = decl.attributeDeclaration) {
 			additional_attribs ~= decl.attributes;
 			additional_attribs ~= ad.attribute;
-			return decl.declarations.map!(d => parseDecl(decl, parent, additional_attribs)).join();
+			return decl.declarations.map!(d => parseDecl(d, parent, additional_attribs)).join();
+		}
+
+		if (decl.declarations.length) {
+			additional_attribs ~= decl.attributes;
+			return decl.declarations.map!(d => parseDecl(d, parent, additional_attribs)).join();
 		}
 		
-		Declaration ret;
+		Declaration[] ret;
 		string comment;
 		int line;
 		if (auto fd = decl.functionDeclaration) {
 			comment = fd.comment.undecorateComment();
 			line = fd.name.line;
-			ret = parseFunctionDecl(fd, parent);
+
+			auto fdr = new FunctionDeclaration(parent, fd.name.text.idup);
+			fdr.returnType = parseType(fd.returnType, parent);
+			fdr.parameters = parseParameters(fd.parameters, fdr);
+			fdr.type = new Type;
+			fdr.type.kind = TypeKind.Function;
+			//fdr.type.attributes = ...; // TODO!
+			//fdr.type.modifiers = ...; // TODO!
+			fdr.type.returnType = fdr.returnType;
+			fdr.type.parameterTypes = fdr.parameters.map!(p => p.type).array;
+			addAttributes(fdr, fd.attributes);
+			addTemplateInfo(fdr, fd);
+
+			ret ~= fdr;
 		} else if (auto vd = decl.variableDeclaration) {
-			// TODO
-			return null;
+			comment = vd.comment.undecorateComment();
+			line = vd.declarators[0].name.line;
+			auto tp = parseType(vd.type, parent);
+			foreach (d; vd.declarators) {
+				auto v = new VariableDeclaration(parent, d.name.text.idup);
+				v.type = tp;
+				if (d.initializer) v.initializer = new Value(tp, formatNode(d.initializer));
+				ret ~= v;
+			}
 		} else if (auto at = decl.aliasThisDeclaration) {
-			// TODO
-			return null;
+			// TODO comment?
+			line = at.identifier.line;
+			auto adr = new AliasDeclaration(parent, "this");
+			adr.targetString = at.identifier.text.idup;
+			ret ~= adr;
 		} else if (auto sd = decl.structDeclaration) {
-			// TODO
-			return null;
+			comment = sd.comment.undecorateComment();
+			line = sd.name.line;
+			auto sdr = new StructDeclaration(parent, sd.name.text.idup);
+			sdr.members = parseDeclList(sd.structBody.declarations, sdr);
+			addTemplateInfo(sdr, sd);
+			ret ~= sdr;
+			insertIntoTypeMap(sdr);
 		} else if (auto cd = decl.classDeclaration) {
 			comment = cd.comment.undecorateComment();
 			line = cd.name.line;
@@ -201,8 +238,9 @@ private struct DParser
 				m_primTypes ~= tuple(t, parent);
 			}
 			cdr.members = parseDeclList(cd.structBody.declarations, cdr);
+			addTemplateInfo(cdr, cd);
+			ret ~= cdr;
 			insertIntoTypeMap(cdr);
-			ret = cdr;
 		} else if (auto id = decl.interfaceDeclaration) {
 			comment = id.comment.undecorateComment();
 			line = id.name.line;
@@ -215,55 +253,98 @@ private struct DParser
 				m_primTypes ~= tuple(t, parent);
 			}
 			idr.members = parseDeclList(id.structBody.declarations, idr);
+			addTemplateInfo(idr, id);
+			ret ~= idr;
 			insertIntoTypeMap(idr);
-			ret = idr;
 		} else if (auto ud = decl.unionDeclaration) {
-			// TODO
-			return null;
+			comment = ud.comment.undecorateComment();
+			line = ud.name.line;
+			auto udr = new UnionDeclaration(parent, ud.name.text.idup);
+			udr.members = parseDeclList(ud.structBody.declarations, udr);
+			addTemplateInfo(udr, ud);
+			ret ~= udr;
+			insertIntoTypeMap(udr);
 		} else if (auto ed = decl.enumDeclaration) {
+			logInfo("TODO: enum %s.%s", parent.qualifiedName, ed.name.text);
 			// TODO
 			return null;
 		} else if (auto ad = decl.aliasDeclaration) {
-			// TODO
-			return null;
+			comment = ad.comment.undecorateComment();
+			line = ad.name.line;
+			foreach (ai; ad.initializers) {
+				auto adr = new AliasDeclaration(parent, ai.name.text.idup);
+				adr.targetType = parseType(ai.type, parent);
+				adr.targetString = formatNode(ai.type);
+				ret ~= adr;
+			}
 		} else if (auto td = decl.templateDeclaration) {
+			logInfo("TODO: template %s.%s", parent.qualifiedName, td.name.text);
 			// TODO
 			return null;
 		} else if (auto cd = decl.constructor) {
-			// TODO
-			return null;
+			comment = cd.comment.undecorateComment();
+			line = cd.line;
+
+			auto cdr = new FunctionDeclaration(parent, "this");
+			cdr.parameters = parseParameters(cd.parameters, cdr);
+			cdr.type = new Type;
+			cdr.type.kind = TypeKind.Function;
+			cdr.type.parameterTypes = cdr.parameters.map!(p => p.type).array;
+			//addAttributes(cdr, cd.memberFunctionAttributes); // TODO!
+			addTemplateInfo(cdr, cd);
+			ret ~= cdr;
 		} else if (auto dd = decl.destructor) {
-			// TODO
-			return null;
+			comment = dd.comment.undecorateComment();
+			line = dd.line;
+			auto ddr = new FunctionDeclaration(parent, "~this");
+			ddr.type = new Type;
+			ddr.type.kind = TypeKind.Function;
+			//addAttributes(ddr, dd.memberFunctionAttributes); // TODO!
+			ret ~= ddr;
 		} else if (auto scd = decl.staticConstructor) {
+			logInfo("TODO: %s.static this()", parent.qualifiedName);
 			// TODO
 			return null;
 		} else if (auto sdd = decl.staticDestructor) {
+			logInfo("TODO: %s.static ~this()", parent.qualifiedName);
 			// TODO
 			return null;
 		} else if (auto pbd = decl.postblit) {
-			// TODO
+			// postblit doesn't get documented for now
 			return null;
 		} else if (auto id = decl.importDeclaration) {
 			// TODO: use for type resolution
 			return null;
-		} else return null;
+		} else if (auto id = decl.unittest_) {
+			// TODO: use for unit test examples!
+			logInfo("TODO: %s.unittest", parent.qualifiedName);
+			return null;
+		} else {
+			logInfo("Unknown declaration in %s: %s", parent.qualifiedName, formatNode(decl));
+			return null;
+		}
 
 		if (!ret) return null;
 
-		addAttributes(ret, additional_attribs);
-		addAttributes(ret, decl.attributes);
+		foreach (d; ret) {
+			addAttributes(d, additional_attribs);
+			addAttributes(d, decl.attributes);
 
-		ret.docGroup = new DocGroup(ret, comment);
-		ret.line = line;
+			d.docGroup = new DocGroup(d, comment);
+			d.line = line;
+		}
 
-		return [ret];
+		return ret;
 	}
 
 	void addAttributes(Declaration decl, dparse.Attribute[] attrs)
 	{
-		foreach (att; attrs) {
-			auto as = formatNode(att);
+		return addAttributes(decl, attrs.map!(att => formatNode(att)).array);
+	}
+
+	void addAttributes(Declaration decl, string[] attrs)
+	{
+		foreach (as; attrs) {
 			switch (as) {
 				default:
 					if (!decl.attributes.canFind(as))
@@ -275,31 +356,6 @@ private struct DParser
 				case "public": decl.protection = Protection.Public; break;
 			}
 		}
-	}
-
-	Declaration parseFunctionDecl(dparse.FunctionDeclaration ddecl, Entity parent)
-	{
-		auto ret = new FunctionDeclaration(parent, ddecl.name.text.idup);
-		ret.line = ddecl.name.line;
-		ret.returnType = parseType(ddecl.returnType, parent);
-
-		addAttributes(ret, ddecl.attributes);
-
-		ret.parameters = parseParameters(ddecl.parameters, ret);
-		ret.type = new Type;
-		ret.type.kind = TypeKind.Function;
-		//ret.type.attributes = ...; // TODO!
-		//ret.type.modifiers = ...; // TODO!
-		ret.type.returnType = ret.returnType;
-		ret.type.parameterTypes = ret.parameters.map!(p => p.type).array;
-
-		if (auto ta = ddecl.templateParameters) {
-			ret.isTemplate = true;
-			if (auto tpl = ta.templateParameterList)
-				ret.templateArgs = tpl.items.map!(tp => new TemplateParameterDeclaration(ret, formatNode(tp))).array;
-		}
-
-		return ret;
 	}
 
 	VariableDeclaration[] parseParameters(dparse.Parameters dparams, FunctionDeclaration parent)
@@ -323,7 +379,7 @@ private struct DParser
 			ret.initializer.type = ret.type;
 			ret.initializer.valueString = formatNode(dparam.default_);
 		}
-		
+		addAttributes(ret, dparam.parameterAttributes.map!(a => dlex.str(a)).array);
 		return ret;
 	}
 
@@ -340,9 +396,14 @@ private struct DParser
 				else ret = Type.makeDelegate(ret, parseParameters(sf.parameters, null).map!(p => p.type).array);
 			}
 			else if (sf.star) ret = Type.makePointer(ret);
-			else if (sf.array) ret = Type.makeArray(ret); // FIXME: SA? AA?
+			else if (sf.array) {
+				if (sf.type) ret = ret.makeAssociativeArray(ret, parseType(sf.type, scope_));
+				else if (sf.low) ret = ret.makeStaticArray(ret, formatNode(sf.low));
+				else ret = Type.makeArray(ret);
+			}
 		}
 
+		ret.text = formatNode(type);
 		return ret;
 	}
 
@@ -367,8 +428,8 @@ private struct DParser
 				.join(".");
 			m_primTypes ~= tuple(ret, scope_);
 		} else if (auto tc = type.typeConstructor) {
-			ret.kind = TypeKind.Primitive;
-			ret.typeName = dlex.str(tc);
+			ret = parseType(type.type, scope_);
+			ret.modifiers = dlex.str(tc) ~ ret.modifiers;
 		} else if (auto tp = type.type) {
 			return parseType(tp, scope_);
 		} else {
@@ -406,4 +467,15 @@ private string formatNode(T)(const T t)
 	auto formatter = new dformat.Formatter!(typeof(writer))(writer);
 	formatter.format(t);
 	return writer.data;
+}
+
+private void addTemplateInfo(T)(Declaration decl, T ddecl)
+{
+	if (ddecl.templateParameters) {
+		decl.isTemplate = true;
+		if (auto tpl = ddecl.templateParameters.templateParameterList)
+			decl.templateArgs = tpl.items.map!(tp => new TemplateParameterDeclaration(decl, formatNode(tp))).array;
+		if (ddecl.constraint)
+			decl.templateConstraint = formatNode(ddecl.constraint.expression);
+	}
 }
