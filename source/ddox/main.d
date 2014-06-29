@@ -5,6 +5,7 @@ import ddox.ddox;
 import ddox.entities;
 import ddox.htmlgenerator;
 import ddox.htmlserver;
+import ddox.parsers.dparse;
 import ddox.parsers.jsonparser;
 import ddox.parsers.jsonparser_old;
 
@@ -35,6 +36,7 @@ int ddoxMain(string[] args)
 		case "generate-html": return cmdGenerateHtml(args);
 		case "serve-html": return cmdServeHtml(args);
 		case "filter": return cmdFilterDocs(args);
+		case "serve-test": return cmdServeTest(args);
 	}
 }
 
@@ -60,6 +62,28 @@ int cmdServeHtml(string[] args)
 	Package pack;
 	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
 		return ret;
+
+	// register the api routes and start the server
+	auto router = new URLRouter;
+	registerApiDocs(router, pack, gensettings);
+
+	foreach (dir; webfiledirs)
+		router.get("*", serveStaticFiles(dir));
+
+	writefln("Listening on port 8080...");
+	auto settings = new HTTPServerSettings;
+	settings.port = 8080;
+	listenHTTP(settings, router);
+
+	return runEventLoop();
+}
+
+int cmdServeTest(string[] args)
+{
+	string[] webfiledirs;
+	GeneratorSettings gensettings = new GeneratorSettings;
+
+	auto pack = parseD(args[2 .. $]);
 
 	// register the api routes and start the server
 	auto router = new URLRouter;
