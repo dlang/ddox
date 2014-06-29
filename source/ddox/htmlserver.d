@@ -80,15 +80,19 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 
 	void showApiItem(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		import std.algorithm;
+
 		auto mod = pack.lookup!Module(req.params["modulename"]);
 		logDebug("mod: %s", mod !is null);
 		if( !mod ) return;
-		auto item = mod.lookup!Declaration(req.params["itemname"], false);
-		logDebug("item: %s", item !is null);
-		if( !item ) return;
+		auto items = mod.lookupAll!Declaration(req.params["itemname"]);
+		logDebug("items: %s", items.length);
+		if( !items.length ) return;
+
+		auto docgroups = items.map!(i => i.docGroup).uniq.array;
 
 		res.contentType = "text/html; charset=UTF-8";
-		generateDeclPage(res.bodyWriter, pack, mod, item.nestedName, [item.docGroup], settings, ent => linkTo(ent, 1), req);
+		generateDeclPage(res.bodyWriter, pack, mod, items[0].nestedName, docgroups, settings, ent => linkTo(ent, 1), req);
 	}
 
 	void showSitemap(HTTPServerRequest req, HTTPServerResponse res)
