@@ -81,9 +81,12 @@ int cmdServeHtml(string[] args)
 int cmdServeTest(string[] args)
 {
 	string[] webfiledirs;
-	GeneratorSettings gensettings = new GeneratorSettings;
+	auto docsettings = new DdoxSettings;
+	auto gensettings = new GeneratorSettings;
 
 	auto pack = parseD(args[2 .. $]);
+
+	processDocs(pack, docsettings);
 
 	// register the api routes and start the server
 	auto router = new URLRouter;

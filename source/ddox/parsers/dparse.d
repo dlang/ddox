@@ -294,13 +294,8 @@ private struct DParser
 			addTemplateInfo(cdr, cd);
 			ret ~= cdr;
 		} else if (auto dd = decl.destructor) {
-			comment = dd.comment.undecorateComment();
-			line = dd.line;
-			auto ddr = new FunctionDeclaration(parent, "~this");
-			ddr.type = new Type;
-			ddr.type.kind = TypeKind.Function;
-			//addAttributes(ddr, dd.memberFunctionAttributes); // TODO!
-			ret ~= ddr;
+			// destructors don't get documented for now
+			return null;
 		} else if (auto scd = decl.staticConstructor) {
 			logInfo("TODO: %s.static this()", parent.qualifiedName);
 			// TODO
