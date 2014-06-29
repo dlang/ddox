@@ -27,17 +27,19 @@
 				- else if( ad.targetDecl )
 					//- TODO!
 
+			- auto attributes = getAttributeString(item, AttributeStringKind.normal);
+
 			- auto itemname = item.name ~ item.templateArgsString;
 			- if( auto m = cast(Module)item.parent )
 				|module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
 				|
 				|// ...
 				- if( value.length )
-					|!{type} #{itemname} = !{value};
+					|#{attributes}!{type} #{itemname} = !{value};
 				- else if( type.length )
-					|!{type} #{itemname};
+					|#{attributes}!{type} #{itemname};
 				- else
-					|#{itemname};
+					|#{attributes}#{itemname};
 				|// ...
 			- else
 				- if( auto ctd = cast(Declaration)item.parent )
@@ -47,10 +49,10 @@
 				|{
 				|	// ...
 				- if( value.length && type.length )
-					|	!{type} #{itemname} = !{value}!{terminator}
+					|	#{attributes}!{type} #{itemname} = !{value}!{terminator}
 				- else if( type.length )
-					|	!{type} #{itemname}!{terminator}
+					|	#{attributes}!{type} #{itemname}!{terminator}
 				- else
-					|	#{itemname}!{terminator}
+					|	#{attributes}#{itemname}!{terminator}
 				|	// ...
 				|}

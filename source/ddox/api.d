@@ -137,25 +137,27 @@ T[] getDocGroups(T)(Declaration[] decls)
 }
 
 ///
-string getAttributeString(string[] attributes, bool suffix_attributes)
+string getAttributeString(string[] attributes, AttributeStringKind kind)
 {
 	enum backAttributes = ["const", "immutable", "shared", "nothrow", "@safe", "@trusted", "@system", "pure", "@property", "@nogc"];
 	auto ret = appender!string();
 	foreach (a; attributes) {
 		bool back = backAttributes.canFind(a);
-		if (suffix_attributes == back) {
-			if (suffix_attributes) ret.put(' ');
+		if (kind == AttributeStringKind.normal || back == (kind == AttributeStringKind.functionSuffix)) {
+			if (kind == AttributeStringKind.functionSuffix) ret.put(' ');
 			ret.put(a);
-			if (!suffix_attributes) ret.put(' ');
+			if (kind != AttributeStringKind.functionSuffix) ret.put(' ');
 		}
 	}
 	return ret.data;
 }
 /// ditto
-string getAttributeString(Declaration decl, bool suffix_attributes)
+string getAttributeString(Declaration decl, AttributeStringKind kind)
 {
-	return getAttributeString(decl.attributes, suffix_attributes);
+	return getAttributeString(decl.attributes, kind);
 }
+
+enum AttributeStringKind { normal, functionPrefix, functionSuffix }
 
 string[] declStyleClasses(Declaration decl)
 {
