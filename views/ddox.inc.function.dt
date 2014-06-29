@@ -24,15 +24,16 @@
 							- attribs[i] = attribs[$-1];
 							- attribs.length--;
 							- break;
-				- auto attribsstr = attribs.length ? " " ~ attribs.join(" ") : "";
+				- auto attribute_prefix = getAttributeString(attribs, false);
+				- auto attribute_suffix = getAttributeString(attribs, true);
 				- if (proto.parameters.length)
-					|!{rettype}#{proto.name}#{proto.templateArgsString}(
+					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}(
 					- foreach (size_t i, p; proto.parameters)
 						- auto suffix = i+1 < proto.parameters.length ? "," : "";
 						- if (p.initializer)
 							|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name} = #{p.initializer.valueString}#{suffix}
 						- else
 							|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name}#{suffix}
-					|)#{attribsstr};
+					|)#{attribute_suffix};
 				- else
-					|!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribsstr};
+					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix};

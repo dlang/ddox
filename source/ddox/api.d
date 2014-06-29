@@ -136,6 +136,27 @@ T[] getDocGroups(T)(Declaration[] decls)
 	return ret;
 }
 
+///
+string getAttributeString(string[] attributes, bool suffix_attributes)
+{
+	enum backAttributes = ["const", "immutable", "shared", "nothrow", "@safe", "@trusted", "@system", "pure", "@property", "@nogc"];
+	auto ret = appender!string();
+	foreach (a; attributes) {
+		bool back = backAttributes.canFind(a);
+		if (suffix_attributes == back) {
+			if (suffix_attributes) ret.put(' ');
+			ret.put(a);
+			if (!suffix_attributes) ret.put(' ');
+		}
+	}
+	return ret.data;
+}
+/// ditto
+string getAttributeString(Declaration decl, bool suffix_attributes)
+{
+	return getAttributeString(decl.attributes, suffix_attributes);
+}
+
 string[] declStyleClasses(Declaration decl)
 {
 	string[] ret;
