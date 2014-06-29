@@ -178,13 +178,17 @@ private struct DParser
 		int line;
 		if (auto fd = decl.functionDeclaration) {
 			comment = fd.comment.undecorateComment();
+			line = fd.name.line;
 			ret = parseFunctionDecl(fd, parent);
 		} else if (auto vd = decl.variableDeclaration) {
 			// TODO
+			return null;
 		} else if (auto at = decl.aliasThisDeclaration) {
 			// TODO
+			return null;
 		} else if (auto sd = decl.structDeclaration) {
 			// TODO
+			return null;
 		} else if (auto cd = decl.classDeclaration) {
 			comment = cd.comment.undecorateComment();
 			line = cd.name.line;
@@ -200,7 +204,7 @@ private struct DParser
 			insertIntoTypeMap(cdr);
 			ret = cdr;
 		} else if (auto id = decl.interfaceDeclaration) {
-			comment = cd.comment.undecorateComment();
+			comment = id.comment.undecorateComment();
 			line = id.name.line;
 			auto idr = new InterfaceDeclaration(parent, id.name.text.idup);
 			if (id.baseClassList) foreach (bc; id.baseClassList.items) {
@@ -215,36 +219,46 @@ private struct DParser
 			ret = idr;
 		} else if (auto ud = decl.unionDeclaration) {
 			// TODO
+			return null;
 		} else if (auto ed = decl.enumDeclaration) {
 			// TODO
+			return null;
 		} else if (auto ad = decl.aliasDeclaration) {
 			// TODO
+			return null;
 		} else if (auto td = decl.templateDeclaration) {
 			// TODO
+			return null;
 		} else if (auto cd = decl.constructor) {
 			// TODO
+			return null;
 		} else if (auto dd = decl.destructor) {
 			// TODO
+			return null;
 		} else if (auto scd = decl.staticConstructor) {
 			// TODO
+			return null;
 		} else if (auto sdd = decl.staticDestructor) {
 			// TODO
+			return null;
 		} else if (auto pbd = decl.postblit) {
 			// TODO
+			return null;
 		} else if (auto id = decl.importDeclaration) {
 			// TODO: use for type resolution
-		} else if (auto id = decl.staticImportDeclaration) {
-			// TODO: use for type resolution
-		}
+			return null;
+		} else return null;
 
 		if (!ret) return null;
 
 		assert(comment !is null);
 
-		ret.line = 
-		ret.docGroup = new DocGroup(cdr, comment);
 		addAttributes(ret, additional_attribs);
 		addAttributes(ret, decl.attributes);
+
+		ret.docGroup = new DocGroup(ret, comment);
+		ret.line = line;
+
 		return [ret];
 	}
 
@@ -378,7 +392,7 @@ private struct DParser
 
 private string undecorateComment(string str)
 {
-	if (!str.length) return str;
+	if (!str.length) return "";
 
 	auto app = appender!string();
 	dlex.unDecorateComment(str, app);
