@@ -216,15 +216,15 @@ private struct Parser
 			foreach (i, pt; ret.type.parameterTypes) {
 				auto pname = ret.type._parameterNames[i];
 				auto pdefval = ret.type._parameterDefaultValues[i];
-				if (i < params.length && params[i].name.type == Json.Type.String)
-					pname = params[i].name.get!string();
+				if (i < params.length) {
+					if (params[i].name.type == Json.Type.String) pname = params[i].name.get!string();
+					if (auto pd = "default" in params[i]) pdefval = new Value(pt, pd.get!string());
+				}
 				auto decl = new VariableDeclaration(ret, pname);
 				decl.type = pt;
 				decl.initializer = pdefval;
 				ret.parameters ~= decl;
 			}
-			foreach (size_t i, pn; json.opt!(Json[]))
-				ret.parameters[i].name = pn.get!string();
 		} else {
 			logError("Expected function type for '%s'/'%s', got %s %s", json["type"].opt!string, demangleType(json["deco"].opt!string), ret.type.kind, ret.type.typeName);
 		}

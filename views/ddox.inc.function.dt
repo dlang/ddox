@@ -28,7 +28,11 @@
 				- if (proto.parameters.length)
 					|!{rettype}#{proto.name}#{proto.templateArgsString}(
 					- foreach (size_t i, p; proto.parameters)
-						|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name}#{i+1 < proto.parameters.length ? "," : ""}
+						- auto suffix = i+1 < proto.parameters.length ? "," : "";
+						- if (p.initializer)
+							|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name} = #{p.initializer.valueString}#{suffix}
+						- else
+							|&nbsp;&nbsp;!{info.formatType(p.type, false)} #{p.name}#{suffix}
 					|)#{attribsstr};
 				- else
 					|!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribsstr};

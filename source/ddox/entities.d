@@ -450,6 +450,9 @@ final class TemplateParameterDeclaration : TypedDeclaration {
 final class Value {
 	Type type;
 	string valueString;
+
+	this() {}
+	this(Type type, string value_string) { this.type = type; this.valueString = value_string; }
 }
 
 enum TypeKind {
