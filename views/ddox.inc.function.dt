@@ -26,6 +26,8 @@
 							- break;
 				- auto attribute_prefix = getAttributeString(attribs, AttributeStringKind.functionPrefix);
 				- auto attribute_suffix = getAttributeString(attribs, AttributeStringKind.functionSuffix);
+				- if (!proto.templateConstraint.length) attribute_suffix ~= ";";
+
 				- if (proto.parameters.length)
 					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}(
 					- foreach (size_t i, p; proto.parameters)
@@ -35,6 +37,9 @@
 							|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name} = #{p.initializer.valueString}#{suffix}
 						- else
 							|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name}#{suffix}
-					|)#{attribute_suffix};
+					|)#{attribute_suffix}
 				- else
-					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix};
+					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix}
+
+				- if (proto.templateConstraint.length)
+					|  if (#{proto.templateConstraint});
