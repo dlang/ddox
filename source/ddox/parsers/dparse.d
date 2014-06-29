@@ -251,8 +251,6 @@ private struct DParser
 
 		if (!ret) return null;
 
-		assert(comment !is null);
-
 		addAttributes(ret, additional_attribs);
 		addAttributes(ret, decl.attributes);
 
@@ -268,7 +266,8 @@ private struct DParser
 			auto as = formatNode(att);
 			switch (as) {
 				default:
-					decl.attributes ~= as;
+					if (!decl.attributes.canFind(as))
+						decl.attributes ~= as;
 					break;
 				case "private": decl.protection = Protection.Private; break;
 				case "package": decl.protection = Protection.Package; break;
