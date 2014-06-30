@@ -36,7 +36,9 @@ int ddoxMain(string[] args)
 		case "generate-html": return cmdGenerateHtml(args);
 		case "serve-html": return cmdServeHtml(args);
 		case "filter": return cmdFilterDocs(args);
-		case "serve-test": return cmdServeTest(args);
+		version (Have_libdparse) {
+			case "serve-test": return cmdServeTest(args);
+		}
 	}
 }
 
@@ -78,29 +80,31 @@ int cmdServeHtml(string[] args)
 	return runEventLoop();
 }
 
-int cmdServeTest(string[] args)
-{
-	string[] webfiledirs;
-	auto docsettings = new DdoxSettings;
-	auto gensettings = new GeneratorSettings;
+version (Have_libdparse) {
+	int cmdServeTest(string[] args)
+	{
+		string[] webfiledirs;
+		auto docsettings = new DdoxSettings;
+		auto gensettings = new GeneratorSettings;
 
-	auto pack = parseD(args[2 .. $]);
+		auto pack = parseD(args[2 .. $]);
 
-	processDocs(pack, docsettings);
+		processDocs(pack, docsettings);
 
-	// register the api routes and start the server
-	auto router = new URLRouter;
-	registerApiDocs(router, pack, gensettings);
+		// register the api routes and start the server
+		auto router = new URLRouter;
+		registerApiDocs(router, pack, gensettings);
 
-	foreach (dir; webfiledirs)
-		router.get("*", serveStaticFiles(dir));
+		foreach (dir; webfiledirs)
+			router.get("*", serveStaticFiles(dir));
 
-	writefln("Listening on port 8080...");
-	auto settings = new HTTPServerSettings;
-	settings.port = 8080;
-	listenHTTP(settings, router);
+		writefln("Listening on port 8080...");
+		auto settings = new HTTPServerSettings;
+		settings.port = 8080;
+		listenHTTP(settings, router);
 
-	return runEventLoop();
+		return runEventLoop();
+	}
 }
 
 int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, out Package pack)
