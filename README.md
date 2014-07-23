@@ -1,6 +1,18 @@
 DDOX documentation engine
 ==========================
 
+This is an alternative documentation generator for programs written in the D programming language. It aims to be fully compatible with Ddoc (the documentation generator built into the D compiler). Additional features include:
+
+ - Advanced page-per-symbol layout based on Diet templates
+ - Full automatic cross-referencing
+ - Automatically generated index, search database and site map
+ - Filtering of symbols and modules based on their name and protection level
+ - Integrated web server for fast local documentation serving
+ - Directly embeddable into vibe.d applications
+
+For real world examples see the [vibe.d API documentation](http://vibed.org/api/) and the [D standard library documentation](http://dlang.org/library/index.html).
+
+
 First steps
 -----------
 
