@@ -36,6 +36,7 @@ void mergeEponymousTemplates(Package root)
 				if (epmembers.length > 0) {
 					// if we found some, replace all references of the original template with the new modified members
 					foreach (i, m; templ.docGroup.members) {
+						if (m !is templ) continue;
 						auto newm = templ.docGroup.members[0 .. i];
 						foreach (epm; epmembers) newm ~= epm;
 						newm ~= templ.docGroup.members[i+1 .. $];
