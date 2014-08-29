@@ -243,10 +243,7 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.rootPackage = root_package;
 	info.node = root_package;
 
-	dst.parseDietFileCompat!("ddox.overview.dt",
-		HTTPServerRequest, "req",
-		DocPageInfo, "info")
-		(Variant(req), Variant(info));
+	dst.parseDietFile!("ddox.overview.dt", req, info);
 }
 
 void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
