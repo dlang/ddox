@@ -275,7 +275,11 @@ int cmdFilterDocs(string[] args)
 				include = true;
 				break;
 			}
-		if (include) dst ~= filterProt(m, Json.undefined, Json.undefined, m);
+		if (include) {
+			auto doc = filterProt(m, Json.undefined, Json.undefined, m);
+			if (doc.type != Json.Type.undefined)
+				dst ~= doc;
+                }
 	}
 
 	writefln("Writing filtered docs...");
