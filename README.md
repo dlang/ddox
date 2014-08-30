@@ -34,13 +34,19 @@ The following command will filter out all modules starting with "core.sync.", ex
 Serving the docs on localhost
 -----------------------------
 
-Simply run the following command and go to <http://127.0.0.1:8080/>
+Ensure your current working directory contains ddox's directory "public", or a modified version of it (otherwise the CSS stylings and JavaScript extras won't work).
+
+	cd path/to/ddox
+
+Then, simply run the following command and go to <http://127.0.0.1:8080/>
 
 	./ddox serve-html path/to/docs.json
 
 Generating offline documentation
 --------------------------------
 
-The following command will generate HTML docs in the folder "docs":
+The following commands will generate HTML docs (along with the default CSS stylings and JavaScript extras) in the folder "destination/path/public":
 
-	./ddox generate-html path/to/docs.json destination/path
+	cp -r path/to/ddox/public destination/path
+	./ddox generate-html path/to/docs.json destination/path/public
+
