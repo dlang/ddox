@@ -97,7 +97,7 @@ private struct DParser
 		root.visit!ClassDeclaration((decl){
 			if (decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl)
 				decl.baseClass.typeDecl = null;
-			
+
 			foreach (ref i; decl.derivedInterfaces) {
 				if (i.typeDecl && !decl.baseClass && cast(ClassDeclaration)i.typeDecl) {
 					decl.baseClass = i;
@@ -183,10 +183,10 @@ private struct DParser
 			additional_attribs ~= decl.attributes;
 			return decl.declarations.map!(d => parseDecl(d, parent, additional_attribs)).join();
 		}
-		
+
 		Declaration[] ret;
 		string comment;
-		int line;
+		size_t line;
 		if (auto fd = decl.functionDeclaration) {
 			comment = fd.comment.undecorateComment();
 			line = fd.name.line;
@@ -272,7 +272,7 @@ private struct DParser
 			return null;
 		} else if (auto ad = decl.aliasDeclaration) {
 			comment = ad.comment.undecorateComment();
-			line = ad.name.line;
+			line = ad.identifierList.identifiers[0].line;
 			foreach (ai; ad.initializers) {
 				auto adr = new AliasDeclaration(parent, ai.name.text.idup);
 				adr.targetType = parseType(ai.type, parent);

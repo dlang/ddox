@@ -133,7 +133,7 @@ class Entity {
 						ret = res;
 						return false;
 					}
-					return true; 
+					return true;
 				});
 				return ret;
 			}
@@ -241,7 +241,7 @@ class Declaration : Entity {
 	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
 	string[] attributes;
-	int line;
+	size_t line;
 	bool isTemplate;
 	TemplateParameterDeclaration[] templateArgs;
 	string templateConstraint;
@@ -340,7 +340,7 @@ class CompositeTypeDeclaration : Declaration {
 
 	override @property string kindCaption() const { return "Composite type"; }
 	override abstract @property DeclarationKind kind() const;
- 
+
 	this(Entity parent, string name){ super(parent, name); }
 
 	override void iterateChildren(bool delegate(Entity) del)
@@ -508,7 +508,7 @@ final class Type {
 
 		final switch( kind ){
 			case TypeKind.Primitive: return typeName == other.typeName && typeDecl == other.typeDecl;
-			case TypeKind.Pointer: 
+			case TypeKind.Pointer:
 			case TypeKind.Array: return elementType == other.elementType;
 			case TypeKind.StaticArray: return elementType == other.elementType && arrayLength == other.arrayLength;
 			case TypeKind.AssociativeArray: return elementType == other.elementType && keyType == other.keyType;
