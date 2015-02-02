@@ -19,23 +19,91 @@ import std.uni : isAlpha;
 
 static this()
 {
-	s_standardMacros = [
-		"P" : "<p>$0</p>",
-		"DL" : "<dl>$0</dl>",
-		"DT" : "<dt>$0</dt>",
-		"DD" : "<dd>$0</dd>",
-		"TABLE" : "<table>$0</table>",
-		"TR" : "<tr>$0</tr>",
-		"TH" : "<th>$0</th>",
-		"TD" : "<td>$0</td>",
-		"OL" : "<ol>$0</ol>",
-		"UL" : "<ul>$0</ul>",
-		"LI" : "<li>$0</li>",
-		"LINK" : "<a href=\"$0\">$0</a>",
-		"LINK2" : "<a href=\"$1\">$+</a>",
-		"LPAREN" : "(",
-		"RPAREN" : ")"
-	];
+	s_standardMacros =
+		[
+		 `B`: `<b>$0</b>`,
+		 `I`: `<i>$0</i>`,
+		 `U`: `<u>$0</u>`,
+		 `P` : `<p>$0</p>`,
+		 `DL` : `<dl>$0</dl>`,
+		 `DT` : `<dt>$0</dt>`,
+		 `DD` : `<dd>$0</dd>`,
+		 `TABLE` : `<table>$0</table>`,
+		 `TR` : `<tr>$0</tr>`,
+		 `TH` : `<th>$0</th>`,
+		 `TD` : `<td>$0</td>`,
+		 `OL` : `<ol>$0</ol>`,
+		 `UL` : `<ul>$0</ul>`,
+		 `LI` : `<li>$0</li>`,
+		 `LINK` : `<a href="$0">$0</a>`,
+		 `LINK2` : `<a href="$1">$+</a>`,
+		 `LPAREN` : `(`,
+		 `RPAREN` : `)`,
+
+		 `RED` :   `<font color=red>$0</font>`,
+		 `BLUE` :  `<font color=blue>$0</font>`,
+		 `GREEN` : `<font color=green>$0</font>`,
+		 `YELLOW` : `<font color=yellow>$0</font>`,
+		 `BLACK` : `<font color=black>$0</font>`,
+		 `WHITE` : `<font color=white>$0</font>`,
+
+		 `D_CODE` : `<pre class="d_code">$0</pre>`,
+		 `D_COMMENT` : `$(GREEN $0)`,
+		 `D_STRING`  : `$(RED $0)`,
+		 `D_KEYWORD` : `$(BLUE $0)`,
+		 `D_PSYMBOL` : `$(U $0)`,
+		 `D_PARAM` : `$(I $0)`,
+
+		 `DDOC` : `<html>
+  <head>
+    <META http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>$(TITLE)</title>
+  </head>
+  <body>
+  <h1>$(TITLE)</h1>
+  $(BODY)
+  </body>
+</html>`,
+
+		 `DDOC_COMMENT` : `<!-- $0 -->`,
+		 `DDOC_DECL` : `$(DT $(BIG $0))`,
+		 `DDOC_DECL_DD` : `$(DD $0)`,
+		 `DDOC_DITTO` : `$(BR)$0`,
+		 `DDOC_SECTIONS` : `$0`,
+		 `DDOC_SUMMARY` : `$0$(BR)$(BR)`,
+		 `DDOC_DESCRIPTION` : `$0$(BR)$(BR)`,
+		 `DDOC_AUTHORS` : "$(B Authors:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_BUGS` : "$(RED BUGS:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_COPYRIGHT` : "$(B Copyright:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_DATE` : "$(B Date:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_DEPRECATED` : "$(RED Deprecated:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_EXAMPLES` : "$(B Examples:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_HISTORY` : "$(B History:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_LICENSE` : "$(B License:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_RETURNS` : "$(B Returns:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_SEE_ALSO` : "$(B See Also:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_STANDARDS` : "$(B Standards:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_THROWS` : "$(B Throws:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_VERSION` : "$(B Version:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_SECTION_H` : `$(B $0)$(BR)$(BR)`,
+		 `DDOC_SECTION` : `$0$(BR)$(BR)`,
+		 `DDOC_MEMBERS` : `$(DL $0)`,
+		 `DDOC_MODULE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_CLASS_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_STRUCT_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_ENUM_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_TEMPLATE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_PARAMS` : "$(B Params:)$(BR)\n$(TABLE $0)$(BR)",
+		 `DDOC_PARAM_ROW` : `$(TR $0)`,
+		 `DDOC_PARAM_ID` : `$(TD $0)`,
+		 `DDOC_PARAM_DESC` : `$(TD $0)`,
+		 `DDOC_BLANKLINE` : `$(BR)$(BR)`,
+
+		 `DDOC_ANCHOR` : `<a name="$1"></a>`,
+		 `DDOC_PSYMBOL` : `$(U $0)`,
+		 `DDOC_KEYWORD` : `$(B $0)`,
+		 `DDOC_PARAM` : `$(I $0)`,
+		 ];
 }
 
 
