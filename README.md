@@ -12,6 +12,8 @@ This is an alternative documentation generator for programs written in the D pro
 
 For real world examples see the [vibe.d API documentation](http://vibed.org/api/) and the [D standard library documentation](http://dlang.org/library/index.html).
 
+[![Build Status](https://travis-ci.org/rejectedsoftware/ddox.svg)](https://travis-ci.org/rejectedsoftware/ddox)
+
 
 First steps
 -----------
