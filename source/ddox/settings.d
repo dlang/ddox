@@ -47,8 +47,6 @@ class GeneratorSettings {
 	URL siteUrl = URL("http://localhost:8080/");
 	/// focus search field on load
 	bool focusSearchField = false;
-	/// enable JS keyboard navigation
-	bool enableKeyNavigation = true;
 	/// Defines how symbol names are mapped to file names when generating file based documentation (useful for case insensitive file systems)
 	MethodStyle fileNameStyle = MethodStyle.unaltered;
 
