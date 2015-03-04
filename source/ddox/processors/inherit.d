@@ -73,12 +73,15 @@ void inheritDocs(Package root)
 	void scanClass(ClassDeclaration decl)
 	{
 		if (decl in visited) return;
+
+		visited[decl] = true;
+
 		if (decl.baseClass && decl.baseClass.typeDecl) scanClass(cast(ClassDeclaration)decl.baseClass.typeDecl);
+
 		foreach (i; decl.derivedInterfaces)
 			if (i.typeDecl)
 				scanInterface(cast(InterfaceDeclaration)i.typeDecl);
 
-		visited[decl] = true;
 		if (decl.baseClass && decl.baseClass.typeDecl)
 			inheritMembers(decl, (cast(ClassDeclaration)decl.baseClass.typeDecl).members, decl.baseClass.typeDecl);
 		foreach (i; decl.derivedInterfaces)
