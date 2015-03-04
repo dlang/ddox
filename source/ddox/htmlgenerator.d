@@ -219,7 +219,7 @@ void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings
 		else if (auto adecl = cast(AliasDeclaration)ent) attributes = adecl.attributes;
 		else if (auto tdecl = cast(TypedDeclaration)ent) attributes = tdecl.type.attributes;
 		attributes = attributes.map!(a => a.startsWith("@") ? a[1 .. $] : a).array;
-		(&rng).formattedWrite(`{name: "%s", kind: "%s", path: "%s", attributes: %s},`, ent.qualifiedName, kind, link_to(ent), attributes);
+		(&rng).formattedWrite(`{name: '%s', kind: "%s", path: '%s', attributes: %s},`, ent.qualifiedName, kind, link_to(ent), attributes);
 		rng.put('\n');
 	}
 
