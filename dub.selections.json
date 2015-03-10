@@ -3,8 +3,9 @@
 	"versions": {
 		"libdparse": "0.1.1",
 		"libevent": "2.0.1+2.0.16",
-		"vibe-d": "0.7.21",
-		"openssl": "1.0.0+1.0.0e",
-		"libev": "4.0.0+4.04"
+		"vibe-d": "0.7.22",
+		"openssl": "1.1.4+1.0.1g",
+		"libev": "4.0.0+4.04",
+		"libasync": "0.6.5"
 	}
 }
