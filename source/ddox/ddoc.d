@@ -560,7 +560,7 @@ private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 }
 
 /// private
-private void renderMacros(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null)
+private void renderMacros(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null)
 {
 	while( !line.empty ){
 		auto idx = line.indexOf('$');
@@ -570,12 +570,12 @@ private void renderMacros(R)(ref R dst, string line, DdocContext context, string
 		}
 		dst.put(line[0 .. idx]);
 		line = line[idx .. $];
-		renderMacro(dst, line, context, macros, params);
+		renderMacro(dst, line, context, macros, params, callstack);
 	}
 }
 
 /// private
-private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params = null)
+private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params, MacroInvocation[] callstack)
 {
 	assert(line[0] == '$');
 	line = line[1 .. $];
@@ -615,21 +615,36 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			logDebug("Macro call in DDOC comment is missing macro name.");
 			return;
 		}
+
 		auto mname = line[0 .. mnameidx];
+		string rawargtext;
+		if (mnameidx+1 < cidx) rawargtext = line[mnameidx+1 .. cidx-1];
 
 		string[] args;
-		if( mnameidx+1 < cidx ){
-			auto rawargs = splitParams(line[mnameidx+1 .. cidx-1]);
+		if (rawargtext.length) {
+			auto rawargs = splitParams(rawargtext);
 			foreach( arg; rawargs ){
 				auto argtext = appender!string();
-				renderMacros(argtext, arg, context, macros, params);
-				args ~= argtext.data();
+				renderMacros(argtext, arg, context, macros, params, callstack);
+				args ~= splitParams(argtext.data);
 			}
 		}
 		args = join(args, ",").stripLeftDD() ~ args.map!(s => s.stripLeftDD()).array;
 
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
+
+		// check for recursion termination conditions
+		foreach_reverse (ref c; callstack) {
+			if (c.name == mname && (args.length <= 1 || args == c.params)) {
+				logTrace("Terminating recursive macro call of %s: %s", mname, params.length <= 1 ? "no argument text" : "same arguments as previous invocation");
+				//line = line[cidx .. $];
+				return;
+			}
+		}
+		callstack.assumeSafeAppend();
+		callstack ~= MacroInvocation(mname, args);
+
 
 		auto pm = mname in s_overrideMacros;
 		if( !pm ) pm = mname in macros;
@@ -638,12 +653,17 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 
 		if( pm ){
 			logTrace("MACRO %s: %s", mname, *pm);
-			renderMacros(dst, *pm, context, macros, args);
+			renderMacros(dst, *pm, context, macros, args, callstack);
 		} else {
 			logTrace("Macro '%s' not found.", mname);
 			if( args.length ) dst.put(args[0]);
 		}
 	}
+}
+
+private struct MacroInvocation {
+	string name;
+	string[] params;
 }
 
 private string[] splitParams(string ln)
@@ -857,4 +877,10 @@ unittest {
 	auto dst = "<a href=\"abc\">test &lt;peter@parker.com&gt;</a>\n";
 //writeln(formatDdocComment(src).splitLines().map!(s => "|"~s~"|").join("\n"));
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "$(LIX a, b, c, d)\nMacros:\nLI = [$0]\nLIX = $(LI $1)$(LIX $+)";
+	auto dst = "[a][b][c][d]\n";
+	assert(formatDdocComment(src) == dst, formatDdocComment(src));
 }
