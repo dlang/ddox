@@ -2,10 +2,11 @@
 	"fileVersion": 1,
 	"versions": {
 		"libdparse": "0.1.1",
+		"memutils": "~master",
 		"libevent": "2.0.1+2.0.16",
-		"vibe-d": "0.7.22",
+		"vibe-d": "0.7.23-beta.1+commit.2.gb9b89bf",
 		"openssl": "1.1.4+1.0.1g",
-		"libev": "4.0.0+4.04",
-		"libasync": "0.6.5"
+		"libev": "5.0.0+4.04",
+		"libasync": "0.7.0"
 	}
 }
