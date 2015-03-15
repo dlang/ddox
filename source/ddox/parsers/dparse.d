@@ -393,7 +393,7 @@ private struct DParser
 					ret = Type.makeFunction(ret, parseParameters(sf.parameters, null).map!(p => p.type).array);
 				else ret = Type.makeDelegate(ret, parseParameters(sf.parameters, null).map!(p => p.type).array);
 			}
-			else if (sf.star) ret = Type.makePointer(ret);
+			else if (sf.star.type != dlex.tok!"") ret = Type.makePointer(ret);
 			else if (sf.array) {
 				if (sf.type) ret = ret.makeAssociativeArray(ret, parseType(sf.type, scope_));
 				else if (sf.low) ret = ret.makeStaticArray(ret, formatNode(sf.low));
