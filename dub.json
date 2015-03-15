@@ -8,7 +8,7 @@
 	],
 	"dependencies": {
   		"vibe-d": "~>0.7.22",
-		"libdparse": {"optional": true, "version": "~>0.1.1"}
+		"libdparse": {"optional": true, "version": "~>0.2.0"}
  	},
  	"versions": ["JsonLineNumbers"],
  	"configurations": [

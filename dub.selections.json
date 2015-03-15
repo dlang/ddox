@@ -1,7 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"libdparse": "0.1.1",
+		"libdparse": "0.2.0",
 		"memutils": "~master",
 		"libevent": "2.0.1+2.0.16",
 		"vibe-d": "0.7.23-beta.1+commit.2.gb9b89bf",
