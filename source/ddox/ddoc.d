@@ -16,6 +16,8 @@ import std.conv;
 import std.string;
 import std.uni : isAlpha;
 
+// TODO: support escapes section
+
 
 static this()
 {
@@ -53,6 +55,10 @@ static this()
 		 `D_KEYWORD` : `$(BLUE $0)`,
 		 `D_PSYMBOL` : `$(U $0)`,
 		 `D_PARAM` : `$(I $0)`,
+		 `BACKTICK`: "`",
+		 `DDOC_BACKQUOTED`: `$(D_INLINECODE $0)`,
+		 //`D_INLINECODE`: `<pre style="display:inline;" class="d_inline_code">$0</pre>`,
+		 `D_INLINECODE`: `<code class="prettyprint lang-d">$0</code>`,
 
 		 `DDOC` : `<html>
   <head>
@@ -377,7 +383,10 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		return start;
 	}
 
-	// run all macros first
+	// handle backtick inline-code
+	foreach (ref l; lines) l = replaceBacktickCode(l);
+
+	// run all macros
 	{
 		//logTrace("MACROS for section %s: %s", sect, macros.keys);
 		auto tmpdst = appender!string();
@@ -579,7 +588,10 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 {
 	assert(line[0] == '$');
 	line = line[1 .. $];
-	if( line.length < 1) return;
+	if( line.length < 1) {
+		dst.put("$");
+		return;
+	}
 
 	if( line[0] >= '0' && line[0] <= '9' ){
 		int pidx = line[0]-'0';
@@ -658,7 +670,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			logTrace("Macro '%s' not found.", mname);
 			if( args.length ) dst.put(args[0]);
 		}
-	}
+	} else dst.put("$");
 }
 
 private struct MacroInvocation {
@@ -685,6 +697,38 @@ private string[] splitParams(string ln)
 	}
 	if( i > start ) ret ~= ln[start .. i];
 	return ret;
+}
+
+private string replaceBacktickCode(string line)
+{
+	auto ret = appender!string;
+
+	while (line.length > 0) {
+		auto idx = line.indexOf('`');
+		if (idx < 0) break;
+		
+		auto eidx = line[idx+1 .. $].indexOf('`');
+		if (eidx < 0) break;
+		eidx += idx+1;
+
+		ret.put(line[0 .. idx]);
+		ret.put("$(DDOC_BACKQUOTED ");
+		foreach (i; idx+1 .. eidx) {
+			switch (line[i]) {
+				default: ret.put(line[i]); break;
+				case '<': ret.put("&lt;"); break;
+				case '>': ret.put("&gt;"); break;
+				case '(': ret.put("$(LPAREN)"); break;
+				case ')': ret.put("$(RPAREN)"); break;
+			}
+		}
+		ret.put(")");
+		line = line[eidx+1 .. $];
+	}
+
+	if (ret.data.length == 0) return line;
+	ret.put(line);
+	return ret.data;
 }
 
 private string skipHtmlTag(ref string ln)
@@ -882,5 +926,17 @@ unittest {
 unittest {
 	auto src = "$(LIX a, b, c, d)\nMacros:\nLI = [$0]\nLIX = $(LI $1)$(LIX $+)";
 	auto dst = "[a][b][c][d]\n";
+	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+}
+
+unittest {
+	auto src = "Testing `inline <code>`.";
+	auto dst = "Testing <code class=\"prettyprint lang-d\">inline &lt;code&gt;</code>.\n";
+	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+}
+
+unittest {
+	auto src = "Testing `inline $(CODE)`.";
+	auto dst = "Testing <code class=\"prettyprint lang-d\">inline $(CODE)</code>.\n";
 	assert(formatDdocComment(src) == dst, formatDdocComment(src));
 }
