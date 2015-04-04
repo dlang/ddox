@@ -187,13 +187,14 @@ int cmdFilterDocs(string[] args)
 			if( idx >= 0 ) return n[0 .. idx];
 			return n;
 		}
-	
+
 		if( json.type == Json.Type.Object ){
-			auto comment = json.comment.opt!string().strip();
+			auto comment = json.comment.opt!string;
 			if( justdoc && comment.empty ){
 				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
 					return Json.undefined;
 			}
+			comment = comment.strip;
 			
 			Protection prot = Protection.Public;
 			if( auto p = "protection" in json ){
@@ -241,7 +242,7 @@ int cmdFilterDocs(string[] args)
 			foreach (m; json) {
 				auto mf = filterProt(m, parent, last_child_decl, mod);
 				if (mf.type == Json.Type.undefined) continue;
-				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittest") && mf.comment.opt!string.strip != "ditto")
+				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittest") && icmp(mf.comment.opt!string.strip, "ditto") != 0)
 					last_child_decl = mf;
 				newmem ~= mf;
 			}
