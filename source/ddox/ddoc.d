@@ -1,7 +1,7 @@
 ﻿/**
 	DietDoc/DDOC support routines
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2015 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -205,14 +205,15 @@ class DdocComment {
 			do {
 				start++;
 			} while(start < lines.length && getLineType(start) != CODE);
+			if (start >= lines.length) return start; // unterminated code section
 			return start+1;
 		}
 
 		int skipSection(int start)
 		{
-			while(start < lines.length ){
-				if( getLineType(start) == SECTION ) break;
-				if( getLineType(start) == CODE )
+			while (start < lines.length) {
+				if (getLineType(start) == SECTION) break;
+				if (getLineType(start) == CODE)
 					start = skipCodeBlock(start);
 				else start++;
 			}
@@ -251,11 +252,12 @@ class DdocComment {
 		while( i < lines.length ){
 			assert(getLineType(i) == SECTION);
 			auto j = skipSection(i+1);
+			assert(j <= lines.length);
 			auto pidx = lines[i].indexOf(':');
 			auto sect = strip(lines[i][0 .. pidx]);
 			lines[i] = stripLeftDD(lines[i][pidx+1 .. $]);
-			if( lines[i].empty ) i++;
-			if( sect == "Macros" ) parseMacros(m_macros, lines[i .. j]);
+			if (lines[i].empty && i < lines.length) i++;
+			if (sect == "Macros") parseMacros(m_macros, lines[i .. j]);
 			else {
 				m_sections ~= Section(sect, lines[i .. j]);
 			}
