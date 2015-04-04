@@ -42,4 +42,4 @@
 					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix}
 
 				- if (proto.templateConstraint.length)
-					|  if (#{proto.templateConstraint});
+					|if (#{proto.templateConstraint});

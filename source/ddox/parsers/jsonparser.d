@@ -319,6 +319,7 @@ private struct Parser
 					argstr ~= arg.name.get!string;
 			}
 			ret.templateArgs ~= new TemplateParameterDeclaration(ret, argstr);
+			ret.templateConstraint = json.constraint.opt!string;
 		}
 		ret.members = parseDeclList(json.members, ret);
 		return ret;

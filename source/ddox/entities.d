@@ -1,7 +1,7 @@
 /**
 	Contains definitions of the syntax tree elements.
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2015 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -283,6 +283,7 @@ class Declaration : Entity {
 		this.protection = src.protection;
 		this.line = src.line;
 		this.templateArgs = src.templateArgs;
+		this.templateConstraint = src.templateConstraint;
 	}
 }
 

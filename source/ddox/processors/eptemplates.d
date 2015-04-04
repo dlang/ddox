@@ -1,7 +1,7 @@
 /**
 	Merges eponymous templates to a single definition with template arguments.
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2015 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -25,6 +25,7 @@ void mergeEponymousTemplates(Package root)
 				foreach (m; templ.members)
 					if (m.name == templ.name) {
 						m.templateArgs = templ.templateArgs;
+						m.templateConstraint = templ.templateConstraint;
 						m.isTemplate = true;
 						m.parent = templ.parent;
 						if (templ.docGroup.text.length)
