@@ -212,17 +212,26 @@ private struct Parser
 				foreach (sc; *psc)
 					if (!ret.attributes.canFind(sc.get!string))
 						ret.attributes ~= sc.get!string;
+
 			auto params = json.parameters.opt!(Json[]);
-			foreach (i, pt; ret.type.parameterTypes) {
-				auto pname = ret.type._parameterNames[i];
-				auto pdefval = ret.type._parameterDefaultValues[i];
-				if (i < params.length) {
-					if (params[i].name.type == Json.Type.String) pname = params[i].name.get!string();
-					if (auto pd = "default" in params[i]) pdefval = new Value(pt, pd.get!string());
+			if (!params) {
+				params.length = ret.type.parameterTypes.length;
+				foreach (i, pt; ret.type.parameterTypes) {
+					auto jp = Json.emptyObject;
+					jp.name = ret.type._parameterNames[i];
+					jp["type"] = pt.text;
+					if (ret.type._parameterDefaultValues[i])
+						jp["default"] = ret.type._parameterDefaultValues[i].valueString;
+					params ~= jp;
 				}
+			}
+
+			foreach (i, p; params) {
+				auto pname = p.name.opt!string;
 				auto decl = new VariableDeclaration(ret, pname);
-				decl.type = pt;
-				decl.initializer = pdefval;
+				decl.type = parseType(p, ret);
+				if (auto pdv = "default" in p)
+					decl.initializer = parseValue(pdv.opt!string);
 				ret.parameters ~= decl;
 			}
 		} else {
@@ -740,6 +749,7 @@ private struct Parser
 
 string demanglePrettyType(string mangled_type)
 {
+	if (mangled_type == "n") return "typeof(null)"; // Workaround D issue 14410
 	auto str = assumeUnique(demangleType(mangled_type));
 	str = str.replace("immutable(char)[]", "string");
 	str = str.replace("immutable(wchar)[]", "wstring");
