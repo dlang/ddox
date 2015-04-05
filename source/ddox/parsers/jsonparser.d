@@ -292,11 +292,20 @@ private struct Parser
 		return ret;
 	}
 
-	auto parseVariableDecl(Json json, Entity parent)
+	Declaration parseVariableDecl(Json json, Entity parent)
 	{
-		auto ret = new VariableDeclaration(parent, json.name.get!string);
-		ret.type = parseType(json, ret);
-		return ret;
+		if (json.storageClass.opt!(Json[]).canFind!(j => j.opt!string == "enum")) {
+			auto ret = new EnumMemberDeclaration(parent, json.name.get!string);
+			if (json["init"].opt!string.length)
+				ret.value = parseValue(json["init"].opt!string);
+			return ret;
+		} else {
+			auto ret = new VariableDeclaration(parent, json.name.get!string);
+			ret.type = parseType(json, ret);
+			if (json["init"].opt!string.length)
+				ret.initializer = parseValue(json["init"].opt!string);
+			return ret;
+		}
 	}
 
 	auto parseTemplateDecl(Json json, Entity parent)

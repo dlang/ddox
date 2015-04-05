@@ -6,41 +6,38 @@
 	section
 		h3 Declaration
 		pre.code.prettyprint.lang-d.prototype
-			- string type;
 			- string value;
 			- string terminator = ";";
-			- if( auto var = cast(VariableDeclaration)item )
-				- if( var.type )
-					- type = info.formatType(var.type);
-				- if( var.initializer )
-					- value = var.initializer.valueString;
-			- else if( auto ev = cast(EnumMemberDeclaration)item )
-				- if( ev.type )
-					- type = info.formatType(ev.type);
-				- if( ev.value )
-					- value = ev.value.valueString;
-				- terminator = ",";
-			- else if( auto ad = cast(AliasDeclaration)item )
-				- type = "alias";
-				- if( ad.targetType )
+			- string attributes;
+			- if (auto a = getAttributeString(item, AttributeStringKind.normal))
+				- attributes ~= a;
+			- if (auto var = cast(VariableDeclaration)item)
+				- if (var.type) attributes ~= info.formatType(var.type) ~ " ";
+				- if (var.initializer) value = var.initializer.valueString;
+			- else if (auto ev = cast(EnumMemberDeclaration)item)
+				- if (ev.type) attributes ~= info.formatType(ev.type) ~ " ";
+				- if (ev.value) value = ev.value.valueString;
+				- if (ev.parent && cast(EnumDeclaration)ev.parent)
+					- terminator = ",";
+				- else
+					- attributes = "enum " ~ attributes;
+			- else if (auto ad = cast(AliasDeclaration)item)
+				- attributes = "alias " ~ attributes;
+				- if (ad.targetType)
 					- value = info.formatType(ad.targetType);
-				- else if( ad.targetDecl )
+				- else if (ad.targetDecl)
 					//- TODO!
 
-			- auto attributes = getAttributeString(item, AttributeStringKind.normal);
-
 			- auto itemname = item.name ~ item.templateArgsString;
-			- if( auto m = cast(Module)item.parent )
-				|module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
-				|
-				|// ...
-				- if( value.length )
-					|#{attributes}!{type} #{itemname} = !{value};
-				- else if( type.length )
-					|#{attributes}!{type} #{itemname};
+			- if (auto m = cast(Module)item.parent)
+				//- |module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
+				//- |
+				//- |// ...
+				- if (value.length)
+					|!{attributes}#{itemname} = !{value};
 				- else
-					|#{attributes}#{itemname};
-				|// ...
+					|!{attributes}#{itemname};
+				//- |// ...
 			- else
 				- if( auto ctd = cast(Declaration)item.parent )
 					|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
@@ -48,11 +45,9 @@
 					|<a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>
 				|{
 				|	// ...
-				- if( value.length && type.length )
-					|	#{attributes}!{type} #{itemname} = !{value}!{terminator}
-				- else if( type.length )
-					|	#{attributes}!{type} #{itemname}!{terminator}
+				- if (value.length)
+					|	!{attributes}#{itemname} = !{value}!{terminator}
 				- else
-					|	#{attributes}#{itemname}!{terminator}
+					|	!{attributes}#{itemname}!{terminator}
 				|	// ...
 				|}
