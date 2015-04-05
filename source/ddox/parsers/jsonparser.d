@@ -222,7 +222,7 @@ private struct Parser
 					jp["type"] = pt.text;
 					if (ret.type._parameterDefaultValues[i])
 						jp["default"] = ret.type._parameterDefaultValues[i].valueString;
-					params ~= jp;
+					params[i] = jp;
 				}
 			}
 
