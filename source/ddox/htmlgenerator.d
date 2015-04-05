@@ -176,6 +176,14 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 
 	visitPackage(root, dst_path);
 
+	// delete obsolete files
+	foreach (f; file_hashes.byKey)
+		if (f !in new_file_hashes) {
+			try removeFile(dst_path ~ Path(f));
+			catch (Exception e) logWarn("Failed to remove obsolete file '%s': %s", f, e.msg);
+		}
+
+	// write new file hash list
 	writeFileUTF8(hash_file_name, new_file_hashes.serializeToJsonString());
 }
 
