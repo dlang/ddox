@@ -38,18 +38,29 @@ class DocGroupContext : DdocContext {
 	string lookupScopeSymbolLink(string name)
 	{
 		if (name == "this") return null;
+
+		bool is_global = false;
+		if (name.startsWith(".")) {
+			is_global = true;
+			name = name[1 .. $];
+		}
 		
 		foreach( def; m_group.members ){
-			// if this is a function, first search the parameters
-			// TODO: maybe do the same for function/delegate variables/type aliases
-			if( auto fn = cast(FunctionDeclaration)def ){
-				foreach( p; fn.parameters )
-					if( p.name == name )
-						return m_linkTo(p);
-			}
+			Entity n;
+			if (is_global) {
+				n = def.module_.lookup(name);
+			} else {
+				// if this is a function, first search the parameters
+				// TODO: maybe do the same for function/delegate variables/type aliases
+				if( auto fn = cast(FunctionDeclaration)def ){
+					foreach( p; fn.parameters )
+						if( p.name == name )
+							return m_linkTo(p);
+				}
 
-			// then look up the name in the outer scope
-			auto n = def.lookup(name);
+				// then look up the name in the outer scope
+				n = def.lookup(name);
+			}
 
 			// packages are not linked
 			if( cast(Package)n ) continue;

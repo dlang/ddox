@@ -512,9 +512,11 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 				if( ident.length ) dst.put(ident);
 				else dst.put('_');
 				break;
+			case '.':
+				if (line.length > 1 && (line[1].isAlpha || line[1] == '_')) goto case;
+				else goto default;
 			case 'a': .. case 'z':
 			case 'A': .. case 'Z':
-				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
 
 				auto url = skipUrl(line);
 				if( url.length ){
@@ -553,9 +555,13 @@ private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 				dst.put(line[0]);
 				line = line[1 .. $];
 				break;
+			case '.':
+				if (line.length > 1 && (line[1].isAlpha() || line[1] == '_'))
+					goto case;
+				else goto default;
 			case 'a': .. case 'z':
 			case 'A': .. case 'Z':
-				assert(line[0] >= 'a' && line[0] <= 'z' || line[0] >= 'A' && line[0] <= 'Z');
+			case '_':
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
 				if( link.length && link != "#" ){
@@ -803,6 +809,9 @@ private string skipUrl(ref string ln)
 private string skipIdent(ref string str)
 {
 	string strcopy = str;
+
+	if (str.length >= 2 && str[0] == '.' && (str[1].isAlpha || str[1] == '_'))
+		str.popFront();
 
 	bool last_was_ident = false;
 	while( !str.empty ){

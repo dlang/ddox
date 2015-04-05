@@ -38,10 +38,21 @@ class Entity {
 
 	@property string moduleName()
 	const {
+		auto m = this.module_();
+		return m ? m.qualifiedName : null;
+	}
+
+	@property const(Module) module_()
+	const {
 		Rebindable!(const(Entity)) e = this;
-		while( e && !cast(Module)e ) e = e.parent;
-		if( e ) return e.qualifiedName;
-		return null;
+		while (e && !cast(const(Module))e) e = e.parent;
+		return cast(const(Module))e;
+	}
+	@property Module module_()
+	{
+		Entity e = this;
+		while (e && !cast(Module)e) e = e.parent;
+		return cast(Module)e;
 	}
 
 	@property string nestedName()
@@ -250,7 +261,7 @@ class Declaration : Entity {
 	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind();
 	@property inout(Declaration) parentDeclaration() inout { return cast(inout(Declaration))parent; }
-	@property Module module_() {
+	override @property Module module_() {
 		Entity e = parent;
 		while(e){
 			if( auto m = cast(Module)e ) return m;
@@ -258,7 +269,7 @@ class Declaration : Entity {
 		}
 		assert(false, "Declaration without module?");
 	}
-	@property const(Module) module_() const {
+	override @property const(Module) module_() const {
 		Rebindable!(const(Entity)) e = parent;
 		while(e){
 			if( auto m = cast(const(Module))e ) return m;
