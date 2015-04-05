@@ -12,12 +12,14 @@ import ddox.entities;
 import ddox.settings;
 
 import std.array;
+import std.digest.md;
 import std.format : formattedWrite;
 import std.string : startsWith, toLower;
 import std.variant;
 import vibe.core.log;
 import vibe.core.file;
 import vibe.core.stream;
+import vibe.data.json;
 import vibe.inet.path;
 import vibe.http.server;
 import vibe.templ.diet;
@@ -37,6 +39,16 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	import vibe.web.common : adjustMethodStyle;
 
 	if( !settings ) settings = new GeneratorSettings;
+
+	string[string] file_hashes;
+	string[string] new_file_hashes;
+
+	const hash_file_name = dst_path ~ "file_hashes.json";
+	if (existsFile(hash_file_name)) {
+		auto hfi = getFileInfo(hash_file_name);
+		auto hf = readFileUTF8(hash_file_name);
+		file_hashes = deserializeJson!(string[string])(hf);
+	}
 
 	string linkTo(Entity ent, size_t level)
 	{
@@ -104,22 +116,38 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		}
 	}
 
+	void writeHashedFile(Path filename, scope void delegate(OutputStream) del)
+	{
+		import vibe.stream.memory;
+		assert(filename.startsWith(dst_path));
+
+		auto str = new MemoryOutputStream;
+		del(str);
+		auto h = md5Of(str.data).toHexString.idup;
+		auto relfilename = filename[dst_path.length .. $].toString();
+		auto ph = relfilename in file_hashes;
+		if (!ph || *ph != h) {
+			//logInfo("do write %s", filename);
+			writeFile(filename, str.data);
+		}
+		new_file_hashes[relfilename] = h;
+	}
+
 	void visitModule(Module mod, Path pack_path)
 	{
 		auto modpath = pack_path ~ PathEntry(mod.name);
 		if (!existsFile(modpath)) createDirectory(modpath);
 		logInfo("Generating module: %s", mod.qualifiedName);
-		auto file = openFile(pack_path ~ PathEntry(mod.name~".html"), FileMode.createTrunc);
-		scope(exit) file.close();
-		generateModulePage(file, root, mod, settings, ent => linkTo(ent, pack_path.length-dst_path.length));
+		writeHashedFile(pack_path ~ PathEntry(mod.name~".html"), (stream) {
+			generateModulePage(stream, root, mod, settings, ent => linkTo(ent, pack_path.length-dst_path.length));
+		});
 
 		DocGroup[][string] pages;
 		collectChildren(mod, pages);
-		foreach (name, decls; pages) {
-			auto file = openFile(modpath ~ PathEntry(name~".html"), FileMode.createTrunc);
-			scope(exit) file.close();
-			generateDeclPage(file, root, mod, name, decls, settings, ent => linkTo(ent, modpath.length-dst_path.length));
-		}
+		foreach (name, decls; pages)
+			writeHashedFile(pack_path ~ PathEntry(name~".html"), (stream) {
+				generateDeclPage(stream, root, mod, name, decls, settings, ent => linkTo(ent, modpath.length-dst_path.length));
+			});
 	}
 
 	void visitPackage(Package p, Path path)
@@ -134,25 +162,21 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 
 	if( !dst_path.empty && !existsFile(dst_path) ) createDirectory(dst_path);
 
-	{
-		auto idxfile = openFile(dst_path ~ PathEntry("index.html"), FileMode.createTrunc);
-		scope(exit) idxfile.close();
-		generateApiIndex(idxfile, root, settings, ent => linkTo(ent, 0));
-	}
+	writeHashedFile(dst_path ~ PathEntry("index.html"), (stream) {
+		generateApiIndex(stream, root, settings, ent => linkTo(ent, 0));
+	});
 
-	{
-		auto symfile = openFile(dst_path ~ "symbols.js", FileMode.createTrunc);
-		scope(exit) symfile.close();
-		generateSymbolsJS(symfile, root, settings, ent => linkTo(ent, 0));
-	}
+	writeHashedFile(dst_path ~ "symbols.js", (stream) {
+		generateSymbolsJS(stream, root, settings, ent => linkTo(ent, 0));
+	});
 
-	{
-		auto smfile = openFile(dst_path ~ PathEntry("sitemap.xml"), FileMode.createTrunc);
-		scope(exit) smfile.close();
-		generateSitemap(smfile, root, settings, ent => linkTo(ent, 0));
-	}
+	writeHashedFile(dst_path ~ PathEntry("sitemap.xml"), (stream) {
+		generateSitemap(stream, root, settings, ent => linkTo(ent, 0));
+	});
 
 	visitPackage(root, dst_path);
+
+	writeFileUTF8(hash_file_name, new_file_hashes.serializeToJsonString());
 }
 
 class DocPageInfo {
