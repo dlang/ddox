@@ -445,16 +445,22 @@ private struct Parser
 			case DeclScope.Class: attribute_keywords = member_function_attribute_keywords; break;
 		}*/
 
-		while( tokens.length > 0 ){
-			if( tokens.front == "@" ){
-				tokens.popFront();
-				attributes ~= "@"~tokens.front;
-				tokens.popFront();
-			} else if( attribute_keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
-				attributes ~= tokens.front;
-				tokens.popFront();
-			} else break;
+		void parseAttributes(ref string[] dst, const(string)[] keywords)
+		{
+			while( tokens.length > 0 ){
+				if( tokens.front == "@" ){
+					tokens.popFront();
+					dst ~= "@"~tokens.front;
+					tokens.popFront();
+				} else if( keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
+					dst ~= tokens.front;
+					tokens.popFront();
+				} else break;
+			}
 		}
+
+		parseAttributes(attributes, attribute_keywords);
+
 
 		Type type;
 		static immutable const_modifiers = ["const", "immutable", "shared", "inout"];
@@ -618,6 +624,9 @@ private struct Parser
 				tokens.popFront();
 			}
 			tokens.popFront();
+
+			parseAttributes(ftype.attributes, member_function_attribute_keywords);
+
 			type = ftype;
 		}
 
