@@ -145,7 +145,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		DocGroup[][string] pages;
 		collectChildren(mod, pages);
 		foreach (name, decls; pages)
-			writeHashedFile(pack_path ~ PathEntry(name~".html"), (stream) {
+			writeHashedFile(modpath ~ PathEntry(name~".html"), (stream) {
 				generateDeclPage(stream, root, mod, name, decls, settings, ent => linkTo(ent, modpath.length-dst_path.length));
 			});
 	}
