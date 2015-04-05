@@ -252,7 +252,8 @@ private struct Parser
 	auto parseEnumMemberDecl(Json json, Entity parent)
 	{
 		auto ret = new EnumMemberDeclaration(parent, json.name.get!string);
-		//ret.value = parseValue(json.value);
+		if (json.value.opt!string.length)
+			ret.value = parseValue(json.value.opt!string);
 		return ret;
 	}
 
