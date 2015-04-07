@@ -385,18 +385,6 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		return start;
 	}
 
-	// handle backtick inline-code
-	foreach (ref l; lines) l = replaceBacktickCode(l);
-
-	// run all macros
-	{
-		//logTrace("MACROS for section %s: %s", sect, macros.keys);
-		auto tmpdst = appender!string();
-		auto text = lines.join("\n");
-		renderMacros(tmpdst, text, context, macros);
-		lines = splitLines(tmpdst.data);
-	}
-
 	int skipCodeBlock(int start)
 	{
 		do {
@@ -423,7 +411,14 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						if( hlevel >= 0 ) dst.put("<p>");
 						auto j = skipBlock(i);
 						bool first = true;
-						renderTextLine(dst, lines[i .. j].join("\n"), context);
+						// handle backtick inline-code
+						foreach (ref l; lines[i .. j]) l = replaceBacktickCode(l);
+
+						// handle macros
+						auto text = renderMacros(lines[i .. j].join("\n"), context, macros);
+						if (text.endsWith("\n")) text = text[0 .. $-1];
+
+						renderTextLine(dst, text, context);
 						dst.put('\n');
 						if( hlevel >= 0 ) dst.put("</p>\n");
 						i = j;
@@ -432,7 +427,8 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						dst.put("<pre class=\"code prettyprint lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
-						foreach( ln; lines[i+1 .. j] ){
+						auto text = renderMacros(lines[i+1 .. j].join("\n"), context, macros);
+						foreach (ln; splitLines(text)) {
 							renderCodeLine(dst, ln.unindent(base_indent), context);
 							dst.put('\n');
 						}
@@ -589,6 +585,14 @@ private void renderMacros(R)(ref R dst, string line, DdocContext context, string
 		line = line[idx .. $];
 		renderMacro(dst, line, context, macros, params, callstack);
 	}
+}
+
+/// private
+private string renderMacros(string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null)
+{
+	auto app = appender!string;
+	renderMacros(app, line, context, macros, params, callstack);
+	return app.data;
 }
 
 /// private
@@ -900,7 +904,7 @@ unittest {
 unittest {
 	auto src = "\n  $(M a b)\n$(M a  \nb)\nMacros:\n	M =     -$0-  \n\nN=$0";
 	auto dst = "  -a b-  \n\n-a  \nb-  \n";
-	assert(formatDdocComment(src) == dst);
+	assert(formatDdocComment(src) == dst, to!string(cast(ubyte[])formatDdocComment(src)));
 }
 
 unittest {
@@ -937,17 +941,23 @@ unittest {
 unittest {
 	auto src = "$(LIX a, b, c, d)\nMacros:\nLI = [$0]\nLIX = $(LI $1)$(LIX $+)";
 	auto dst = "[a][b][c][d]\n";
-	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
 	auto src = "Testing `inline <code>`.";
 	auto dst = "Testing <code class=\"prettyprint lang-d\">inline &lt;code&gt;</code>.\n";
-	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
 	auto src = "Testing `inline $(CODE)`.";
 	auto dst = "Testing <code class=\"prettyprint lang-d\">inline $(CODE)</code>.\n";
-	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "---\nthis is a `string`.\n---";
+	auto dst = "<section><pre class=\"code prettyprint lang-d\">this is a `string`.\n</pre>\n</section>\n";
+	assert(formatDdocComment(src) == dst);
 }
