@@ -194,7 +194,6 @@ int cmdFilterDocs(string[] args)
 				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
 					return Json.undefined;
 			}
-			comment = comment.strip;
 			
 			Protection prot = Protection.Public;
 			if( auto p = "protection" in json ){
@@ -205,7 +204,7 @@ int cmdFilterDocs(string[] args)
 					case "protected": prot = Protection.Protected; break;
 				}
 			}
-			if( comment == "private" ) prot = Protection.Private;
+			if( comment.strip == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.undefined;
 
 			auto name = json.name.opt!string();
@@ -214,14 +213,14 @@ int cmdFilterDocs(string[] args)
 			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
 			else if (name.startsWith("_sharedStaticCtor") || name.startsWith("_sharedStaticDtor")) is_internal = true;
 
-			if (unittestexamples && is_unittest && "comment" in json) {
+			if (unittestexamples && is_unittest && !comment.empty) {
 				assert(last_decl.type == Json.Type.object, "Don't have a last_decl context.");
 				try {
 					string source = extractUnittestSourceCode(json, mod);
 					if (last_decl.comment.opt!string.empty) {
 						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl.name.opt!string);
 					} else {
-						last_decl.comment ~= format("Example:\n%s\n---\n%s\n---\n", comment, source);
+						last_decl.comment ~= format("Example:\n%s\n---\n%s\n---\n", comment.strip, source);
 					}
 				} catch (Exception e) {
 					writefln("Failed to add documented unit test %s:%s as example: %s",
