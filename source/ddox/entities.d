@@ -292,6 +292,7 @@ class Declaration : Entity {
 		this.docGroup = src.docGroup;
 		this.inheritingDecl = src.inheritingDecl;
 		this.protection = src.protection;
+		this.attributes = src.attributes;
 		this.line = src.line;
 		this.templateArgs = src.templateArgs;
 		this.templateConstraint = src.templateConstraint;

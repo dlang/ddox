@@ -1,7 +1,7 @@
 /**
 	Parses DMD JSON output and builds up a documentation syntax tree (JSON format from DMD 2.063.2).
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2015 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -229,6 +229,9 @@ private struct Parser
 			foreach (i, p; params) {
 				auto pname = p.name.opt!string;
 				auto decl = new VariableDeclaration(ret, pname);
+				foreach (sc; p["storageClass"].opt!(Json[]))
+					if (!decl.attributes.canFind(sc.get!string))
+						decl.attributes ~= sc.get!string;
 				decl.type = parseType(p, ret);
 				if (auto pdv = "default" in p)
 					decl.initializer = parseValue(pdv.opt!string);
