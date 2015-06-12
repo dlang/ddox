@@ -20,6 +20,11 @@ void mergeEponymousTemplates(Package root)
 		Declaration[] new_decls;
 		foreach (d; decls) {
 			if (auto templ = cast(TemplateDeclaration)d) {
+				// process members recursively
+				// FIXME: Drops template parameters of outer eponymous templates.
+				//        However, this is the same behavior as that of Ddoc.
+				processDecls(templ.members);
+
 				// search for eponymous template members
 				Declaration[] epmembers;
 				foreach (m; templ.members)
@@ -46,9 +51,8 @@ void mergeEponymousTemplates(Package root)
 					}
 					new_decls ~= epmembers;
 				} else {
-					// else keep the template and continue with its children
+					// keep the template if there are no eponymous members
 					new_decls ~= templ;
-					processDecls(templ.members);
 				}
 			} else new_decls ~= d;
 
