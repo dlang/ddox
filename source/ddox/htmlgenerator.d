@@ -33,12 +33,28 @@ import vibe.templ.diet;
 	/pack1/pack2/module1/member.submember.html
 */
 
+version (Windows) version = CaseInsensitiveFS;
+else version (OSX) version = CaseInsensitiveFS;
+
 void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = null)
 {
 	import std.algorithm : splitter;
 	import vibe.web.common : adjustMethodStyle;
 
 	if( !settings ) settings = new GeneratorSettings;
+
+	version (CaseInsensitiveFS) {
+		final switch (settings.fileNameStyle) with (MethodStyle) {
+			case unaltered, camelCase, pascalCase:
+				logWarn("On Windows and OS X, file names that differ only in their case "
+					~ "are treated as equal by default. Use one of the "
+					~ "lower/upper case styles with the --file-name-style "
+					~ "option to avoid missing files in the generated output.");
+				break;
+			case lowerCase, upperCase, lowerUnderscored, upperUnderscored:
+				break;
+		}
+	}
 
 	string[string] file_hashes;
 	string[string] new_file_hashes;
