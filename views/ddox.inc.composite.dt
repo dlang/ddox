@@ -13,12 +13,12 @@
 			ul
 				- if( cls_item.baseClass )
 					li
-						code.prettyprint.lang-d!= info.formatType(cls_item.baseClass)
+						code.prettyprint.lang-d!= info.formatType(cls_item.baseClass, false)
 						| (base class)
 				- foreach( intf; cls_item.derivedInterfaces )
 					li
-						code.prettyprint.lang-d!= info.formatType(intf)
-	
+						code.prettyprint.lang-d!= info.formatType(intf, false)
+
 	- if( intf_item && intf_item.derivedInterfaces.length )
 		section
 			h3 Inherits from
@@ -26,7 +26,7 @@
 			ul
 				- foreach( intf; intf_item.derivedInterfaces )
 					li
-						code.prettyprint.lang-d!= info.formatType(intf)
+						code.prettyprint.lang-d!= info.formatType(intf, false)
 
 
 - void outputCompositeMembers(CompositeTypeDeclaration item)
