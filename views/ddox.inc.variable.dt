@@ -12,10 +12,10 @@
 			- if (auto a = getAttributeString(item, AttributeStringKind.normal))
 				- attributes ~= a;
 			- if (auto var = cast(VariableDeclaration)item)
-				- if (var.type) attributes ~= info.formatType(var.type) ~ " ";
+				- if (var.type) attributes ~= info.formatType(var.type, false) ~ " ";
 				- if (var.initializer) value = var.initializer.valueString;
 			- else if (auto ev = cast(EnumMemberDeclaration)item)
-				- if (ev.type) attributes ~= info.formatType(ev.type) ~ " ";
+				- if (ev.type) attributes ~= info.formatType(ev.type, false) ~ " ";
 				- if (ev.value) value = ev.value.valueString;
 				- if (ev.parent && cast(EnumDeclaration)ev.parent)
 					- terminator = ",";
@@ -24,7 +24,7 @@
 			- else if (auto ad = cast(AliasDeclaration)item)
 				- attributes = "alias " ~ attributes;
 				- if (ad.targetType)
-					- value = info.formatType(ad.targetType);
+					- value = info.formatType(ad.targetType, false);
 				- else if (ad.targetDecl)
 					//- TODO!
 
