@@ -19,7 +19,7 @@ import std.uni : isAlpha;
 // TODO: support escapes section
 
 
-static this()
+shared static this()
 {
 	s_standardMacros =
 		[
@@ -110,6 +110,12 @@ static this()
 		 `DDOC_KEYWORD` : `$(B $0)`,
 		 `DDOC_PARAM` : `$(I $0)`,
 		 ];
+	import std.datetime : Clock;
+	auto now = Clock.currTime();
+	s_standardMacros["DATETIME"] = "%s %s %s %s:%s:%s %s".format(
+		now.dayOfWeek.to!string.capitalize, now.month.to!string.capitalize,
+		now.day, now.hour, now.minute, now.second, now.year);
+	s_standardMacros["YEAR"] = now.year.to!string;
 }
 
 
@@ -343,7 +349,7 @@ private struct Section {
 }
 
 private {
-	string[string] s_standardMacros;
+	immutable string[string] s_standardMacros;
 	string[string] s_defaultMacros;
 	string[string] s_overrideMacros;
 }
@@ -670,7 +676,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		callstack ~= MacroInvocation(mname, args);
 
 
-		auto pm = mname in s_overrideMacros;
+		const(string)* pm = mname in s_overrideMacros;
 		if( !pm ) pm = mname in macros;
 		if( !pm ) pm = mname in s_defaultMacros;
 		if( !pm ) pm = mname in s_standardMacros;
