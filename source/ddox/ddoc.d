@@ -490,6 +490,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 /// private
 private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 {
+	size_t inCode;
 	while( line.length > 0 ){
 		switch( line[0] ){
 			default:
@@ -497,7 +498,12 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 				line = line[1 .. $];
 				break;
 			case '<':
-				dst.put(skipHtmlTag(line));
+				auto res = skipHtmlTag(line);
+				if (res.startsWith("<code"))
+					++inCode;
+				else if (res == "</code>")
+					--inCode;
+				dst.put(res);
 				break;
 			case '>':
 				dst.put("&gt;");
@@ -538,9 +544,9 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 						dst.put(link);
 						dst.put("\">");
 					}
-					dst.put("<code class=\"prettyprint lang-d\">");
+					if (!inCode) dst.put("<code class=\"prettyprint lang-d\">");
 					dst.put(ident);
-					dst.put("</code>");
+					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
 				} else dst.put(ident.replace("._", "."));
 				break;

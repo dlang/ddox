@@ -3,7 +3,7 @@
 
 - void outputEnumDescription(EnumDeclaration enum_item)
 	p The enum base type is
-		code.prettyprint.lang-d!= info.formatType(enum_item.baseType)
+		code.prettyprint.lang-d!= info.formatType(enum_item.baseType, false)
 		|.
 
 - void outputEnumMembers(EnumDeclaration enum_item)
