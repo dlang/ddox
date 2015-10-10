@@ -26,9 +26,12 @@ import std.string;
 
 int ddoxMain(string[] args)
 {
-	if( args.length < 2 ){
+	bool help;
+	getopt(args, config.passThrough, "h|help", &help);
+
+	if( args.length < 2 || help ){
 		showUsage(args);
-		return 1;
+		return help ? 0 : 1;
 	}
 
 	switch( args[1] ){
@@ -322,8 +325,9 @@ void showUsage(string[] args)
         serve-html
         filter
 
-Specifying only the command with no further arguments will print detailed usage
-information.
+ -h --help                 Show this help
+
+Use <COMMAND> -h|--help to get detailed usage information for a command.
 `, args[0]);
 			break;
 		case "serve-html":
@@ -338,6 +342,7 @@ information.
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
     --web-file-dir=DIR     Make files from dir available on the served site
+ -h --help                 Show this help
 `, args[0]);
 			break;
 		case "generate-html":
@@ -359,6 +364,7 @@ information.
     --lowercase-names      DEPRECATED: Outputs all file names in lower case.
                            This option is useful on case insensitive file
                            systems.
+ -h --help                 Show this help
 `, args[0]);
 			break;
 		case "filter":
@@ -377,6 +383,7 @@ information.
                            preceeding declaration (deprecated, enabled by
                            default)
     --no-unittest-examples Don't convert documented unit tests to examples
+ -h --help                 Show this help
 `, args[0]);
 	}
 	if( args.length < 2 ){
