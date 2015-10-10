@@ -6,40 +6,41 @@
 	section
 		- auto heading = docgroup.members.length > 1 ? "Prototypes" : "Prototype";
 		h3= heading
-		pre.code.prettyprint.lang-d.prototype
-			- auto mems = docgroup.members;
-			- foreach( size_t pi, pd; mems )
-				- auto proto = cast(FunctionDeclaration)pd;
-				- if( !proto ) continue;
-				- string[] attribs = proto.attributes;
-				- if( pi > 0 )
-					|
-				- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
-				- if (rettype.length == 1)
-					- rettype ~= "fghfgh";
-					- static immutable scs = ["auto", "const", "immutable"];
-					- foreach (i, attr; attribs)
-						- if (scs.canFind(attr))
-							- rettype = attr ~ " ";
-							- attribs[i] = attribs[$-1];
-							- attribs.length--;
-							- break;
-				- auto attribute_prefix = getAttributeString(attribs, AttributeStringKind.functionPrefix);
-				- auto attribute_suffix = getAttributeString(attribs, AttributeStringKind.functionSuffix);
-				- if (!proto.templateConstraint.length) attribute_suffix ~= ";";
+		pre
+			code.prettyprint.lang-d.prototype
+				- auto mems = docgroup.members;
+				- foreach( size_t pi, pd; mems )
+					- auto proto = cast(FunctionDeclaration)pd;
+					- if( !proto ) continue;
+					- string[] attribs = proto.attributes;
+					- if( pi > 0 )
+						|
+					- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
+					- if (rettype.length == 1)
+						- rettype ~= "fghfgh";
+						- static immutable scs = ["auto", "const", "immutable"];
+						- foreach (i, attr; attribs)
+							- if (scs.canFind(attr))
+								- rettype = attr ~ " ";
+								- attribs[i] = attribs[$-1];
+								- attribs.length--;
+								- break;
+					- auto attribute_prefix = getAttributeString(attribs, AttributeStringKind.functionPrefix);
+					- auto attribute_suffix = getAttributeString(attribs, AttributeStringKind.functionSuffix);
+					- if (!proto.templateConstraint.length) attribute_suffix ~= ";";
 
-				- if (proto.parameters.length)
-					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}(
-					- foreach (size_t i, p; proto.parameters)
-						- auto pattribs = getAttributeString(p.attributes, AttributeStringKind.normal);
-						- auto suffix = i+1 < proto.parameters.length ? "," : "";
-						- if (p.initializer)
-							|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name} = #{p.initializer.valueString}#{suffix}
-						- else
-							|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name}#{suffix}
-					|)#{attribute_suffix}
-				- else
-					|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix}
+					- if (proto.parameters.length)
+						|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}(
+						- foreach (size_t i, p; proto.parameters)
+							- auto pattribs = getAttributeString(p.attributes, AttributeStringKind.normal);
+							- auto suffix = i+1 < proto.parameters.length ? "," : "";
+							- if (p.initializer)
+								|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name} = #{p.initializer.valueString}#{suffix}
+							- else
+								|&nbsp;&nbsp;#{pattribs}!{info.formatType(p.type, false)} #{p.name}#{suffix}
+						|)#{attribute_suffix}
+					- else
+						|#{attribute_prefix}!{rettype}#{proto.name}#{proto.templateArgsString}()#{attribute_suffix}
 
-				- if (proto.templateConstraint.length)
-					|if (#{proto.templateConstraint});
+					- if (proto.templateConstraint.length)
+						|if (#{proto.templateConstraint});
