@@ -476,7 +476,8 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			}
 
 			if( in_parameter ){
-				renderTextLine(dst, desc, context);
+				auto text = renderMacros(desc, context, macros);
+				renderTextLine(dst, text, context);
 				dst.put("</td></tr>\n");
 			}
 
@@ -972,4 +973,11 @@ unittest {
 	auto src = "---\nthis is a `string`.\n---";
 	auto dst = "<section><pre><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // inssue #99 - parse macros in parameter sections
+	import std.algorithm : find;
+	auto src = "Params:\n\tfoo = $(B bar)";
+	auto dst = "<td> <b>bar</b></td></tr>\n</table>\n</section>\n";
+	assert(formatDdocComment(src).find("<td> ") == dst, formatDdocComment(src).find("<td> "));
 }
