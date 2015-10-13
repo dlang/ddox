@@ -118,6 +118,8 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
 	MethodStyle file_name_style = MethodStyle.unaltered;
+	SortMode modsort = SortMode.protectionName;
+	SortMode declsort = SortMode.protectionInheritanceName;
 	bool lowercasenames = false;
 	getopt(args,
 		//config.passThrough,
@@ -127,7 +129,10 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 		"package-order", &pack_order,
 		"sitemap-url", &sitemapurl,
 		"file-name-style", &file_name_style,
-		"lowercase-names", &lowercasenames);
+		"lowercase-names", &lowercasenames,
+		"module-sort", &modsort,
+		"decl-sort", &declsort
+		);
 
 	if (lowercasenames) file_name_style = MethodStyle.lowerCase;
 
@@ -142,6 +147,8 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
 	docsettings.packageOrder = pack_order;
+	docsettings.moduleSort = modsort;
+	docsettings.declSort = declsort;
 	pack = parseDocFile(args[2], docsettings);
 
 	gensettings = new GeneratorSettings;
@@ -341,8 +348,13 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
+    --module-sort=MODE     The sort order used for lists of modules
+    --decl-sort=MODE       The sort order used for declaration lists
     --web-file-dir=DIR     Make files from dir available on the served site
  -h --help                 Show this help
+
+The following values can be used as sorting modes: none, name, protectionName,
+protectionInheritanceName
 `, args[0]);
 			break;
 		case "generate-html":
@@ -356,6 +368,8 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
+    --module-sort=MODE     The sort order used for lists of modules
+    --decl-sort=MODE       The sort order used for declaration lists
     --file-name-style=STY  Sets a translation style for symbol names to file
                            names. Use this instead of --lowercase-name.
                            Possible values for STY:
@@ -365,6 +379,9 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
                            This option is useful on case insensitive file
                            systems.
  -h --help                 Show this help
+
+The following values can be used as sorting modes: none, name, protectionName,
+protectionInheritanceName
 `, args[0]);
 			break;
 		case "filter":
