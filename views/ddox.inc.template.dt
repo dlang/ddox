@@ -1,4 +1,5 @@
 - import ddox.api;
+- import ddox.highlight;
 - import std.algorithm;
 - import std.typetuple;
 
@@ -7,8 +8,8 @@
 		h2 Arguments
 
 		.prototype
-			code.prettyprint.lang-d
-				|template #{item.name}#{item.templateArgsString};
+			code.lang-d
+				|<span class="kwd">template</span> <span class="pln">#{item.name}</span>!{highlightDCode(item.templateArgsString)};
 
 - void outputTemplateMembers(TemplateDeclaration item)
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;

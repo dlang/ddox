@@ -199,27 +199,29 @@ string formatType()(Type type, string delegate(Entity) link_to, bool include_cod
 
 void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool include_code_tags = true)
 {
+	import ddox.highlight;
+
 	if (include_code_tags) dst.put("<code class=\"prettyprint lang-d\">");
 	foreach( att; type.attributes){
-		dst.put(att); 
+		dst.highlightDCode(att);
 		dst.put(' ');
 	}
 	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
 		foreach( att; type.modifiers ){
-			dst.put(att);
-			dst.put('(');
+			dst.highlightDCode(att);
+			dst.highlightDCode("(");
 		}
 	}
-	switch( type.kind ){
+	switch (type.kind) {
 		default:
 		case TypeKind.Primitive:
 			if (type.typeDecl && !cast(TemplateParameterDeclaration)type.typeDecl) {
 				auto mn = type.typeDecl.module_.qualifiedName;
 				auto qn = type.typeDecl.nestedName;
 				if( qn.startsWith(mn~".") ) qn = qn[mn.length+1 .. $];
-				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), qn.replace(".", ".<wbr/>")); // TODO: avoid allocating replace
+				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), highlightDCode(qn).replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			} else {
-				dst.put(type.typeName.replace(".", ".<wbr/>")); // TODO: avoid allocating replace
+				dst.highlightDCode(type.typeName);
 			}
 			if( type.templateArgs.length ){
 				dst.put('!');
@@ -230,21 +232,21 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 		case TypeKind.Delegate:
 			formatType(dst, type.returnType, link_to, false);
 			dst.put(' ');
-			dst.put(type.kind == TypeKind.Function ? "function" : "delegate");
-			dst.put('(');
+			dst.highlightDCode(type.kind == TypeKind.Function ? "function" : "delegate");
+			dst.highlightDCode("(");
 			foreach( size_t i, pt; type.parameterTypes ){
-				if( i > 0 ) dst.put(", ");
+				if( i > 0 ) dst.highlightDCode(", ");
 				formatType(dst, pt, link_to, false);
 				if( type._parameterNames[i].length ){
 					dst.put(' ');
 					dst.put(type._parameterNames[i]);
 				}
 				if( type._parameterDefaultValues[i] ){
-					dst.put(" = ");
+					dst.highlightDCode(" = ");
 					dst.put(type._parameterDefaultValues[i].valueString);
 				}
 			}
-			dst.put(')');
+			dst.highlightDCode(")");
 			foreach( att; type.modifiers ){
 				dst.put(' ');
 				dst.put(att);
@@ -252,25 +254,27 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 			break;
 		case TypeKind.Pointer:
 			formatType(dst, type.elementType, link_to, false);
-			dst.put('*');
+			dst.highlightDCode("*");
 			break;
 		case TypeKind.Array:
 			formatType(dst, type.elementType, link_to, false);
-			dst.put("[]");
+			dst.highlightDCode("[]");
 			break;
 		case TypeKind.StaticArray:
 			formatType(dst, type.elementType, link_to, false);
-			formattedWrite(dst, "[%s]", type.arrayLength);
+			dst.highlightDCode("[");
+			dst.highlightDCode(type.arrayLength.to!string);
+			dst.highlightDCode("]");
 			break;
 		case TypeKind.AssociativeArray:
 			formatType(dst, type.elementType, link_to, false);
-			dst.put('[');
+			dst.highlightDCode("[");
 			formatType(dst, type.keyType, link_to, false);
-			dst.put(']');
+			dst.highlightDCode("]");
 			break;
 	}
 	if( type.kind != TypeKind.Function && type.kind != TypeKind.Delegate ){
-		foreach( att; type.modifiers ) dst.put(')');
+		foreach( att; type.modifiers ) dst.highlightDCode(")");
 	}
 	if (include_code_tags) dst.put("</code>");
 }
