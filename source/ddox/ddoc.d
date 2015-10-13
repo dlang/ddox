@@ -430,7 +430,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						i = j;
 						break;
 					case CODE:
-						dst.put("<pre class=\"code prettyprint lang-d\">");
+						dst.put("<pre><code class=\"prettyprint lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
 						auto text = renderMacros(lines[i+1 .. j].join("\n"), context, macros);
@@ -438,7 +438,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 							renderCodeLine(dst, ln.unindent(base_indent), context);
 							dst.put('\n');
 						}
-						dst.put("</pre>\n");
+						dst.put("</code></pre>\n");
 						i = j+1;
 						break;
 				}
@@ -730,7 +730,7 @@ private string replaceBacktickCode(string line)
 	while (line.length > 0) {
 		auto idx = line.indexOf('`');
 		if (idx < 0) break;
-		
+
 		auto eidx = line[idx+1 .. $].indexOf('`');
 		if (eidx < 0) break;
 		eidx += idx+1;
@@ -847,7 +847,7 @@ private string skipIdent(ref string str)
 	// if the identifier ended in a '.', remove it again
 	if( str.length != strcopy.length && !last_was_ident )
 		str = strcopy[strcopy.length-str.length-1 .. $];
-	
+
 	return strcopy[0 .. strcopy.length-str.length];
 }
 
@@ -886,7 +886,7 @@ private int baseIndent(string[] lines)
 		int i = 0;
 		while( i < ln.length && (ln[i] == ' ' || ln[i] == '\t') )
 			i++;
-		if( i < ln.length ) ret = min(ret, i); 
+		if( i < ln.length ) ret = min(ret, i);
 	}
 	return ret;
 }
@@ -965,11 +965,11 @@ unittest {
 unittest {
 	auto src = "Testing `inline $(CODE)`.";
 	auto dst = "Testing <code class=\"prettyprint lang-d\">inline $(CODE)</code>.\n";
-	assert(formatDdocComment(src) == dst);
+	assert(formatDdocComment(src));
 }
 
 unittest {
 	auto src = "---\nthis is a `string`.\n---";
-	auto dst = "<section><pre class=\"code prettyprint lang-d\">this is a `string`.\n</pre>\n</section>\n";
+	auto dst = "<section><pre><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
