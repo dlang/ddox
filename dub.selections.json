@@ -6,7 +6,7 @@
 		"openssl": "1.1.4+1.0.1g",
 		"libdparse": "0.2.1",
 		"memutils": "0.4.1",
-		"vibe-d": "0.7.25",
+		"vibe-d": "0.7.26-alpha.3",
 		"libasync": "0.7.5"
 	}
 }
