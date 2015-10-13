@@ -433,12 +433,9 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						dst.put("<pre><code class=\"prettyprint lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
-						auto text = renderMacros(lines[i+1 .. j].join("\n"), context, macros);
-						foreach (ln; splitLines(text)) {
-							renderCodeLine(dst, ln.unindent(base_indent), context);
-							dst.put('\n');
-						}
-						dst.put("</code></pre>\n");
+						auto text = renderMacros(lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context, macros);
+						renderCodeLine(dst, text, context);
+						dst.put("\n</code></pre>\n");
 						i = j+1;
 						break;
 				}
@@ -971,6 +968,12 @@ unittest {
 
 unittest {
 	auto src = "---\nthis is a `string`.\n---";
+	auto dst = "<section><pre><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // test for properly removed indentation in code blocks
+	auto src = "  ---\n  this is a `string`.\n  ---";
 	auto dst = "<section><pre><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
