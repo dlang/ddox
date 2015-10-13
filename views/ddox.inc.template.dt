@@ -6,8 +6,8 @@
 	section
 		h2 Arguments
 
-		pre
-			code.prettyprint.lang-d.prototype
+		.prototype
+			code.prettyprint.lang-d
 				|template #{item.name}#{item.templateArgsString};
 
 - void outputTemplateMembers(TemplateDeclaration item)

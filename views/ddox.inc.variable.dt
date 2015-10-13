@@ -5,8 +5,8 @@
 	- auto docgroup = item.docGroup;
 	section
 		h3 Declaration
-		pre
-			code.prettyprint.lang-d.prototype
+		.prototype
+			code.prettyprint.lang-d
 				- string value;
 				- string terminator = ";";
 				- string attributes;
@@ -44,11 +44,16 @@
 						|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
 					- else
 						|<a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>
+					br
 					|{
-					|	// ...
+					br
+					|&nbsp;&nbsp;// ...
+					br
 					- if (value.length)
-						|	!{attributes}#{itemname} = !{value}!{terminator}
+						|&nbsp;&nbsp;!{attributes}#{itemname} = !{value}!{terminator}
 					- else
-						|	!{attributes}#{itemname}!{terminator}
-					|	// ...
+						|&nbsp;&nbsp;!{attributes}#{itemname}!{terminator}
+					br
+					|&nbsp;&nbsp;// ...
+					br
 					|}
