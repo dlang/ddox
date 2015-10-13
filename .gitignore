@@ -1,2 +1,3 @@
 .dub
-ddox
+/ddox
+/__*
