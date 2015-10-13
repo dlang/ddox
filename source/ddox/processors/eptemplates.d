@@ -32,6 +32,7 @@ void mergeEponymousTemplates(Package root)
 						m.templateArgs = templ.templateArgs;
 						m.templateConstraint = templ.templateConstraint;
 						m.isTemplate = true;
+						m.protection = templ.protection;
 						m.parent = templ.parent;
 						if (templ.docGroup.text.length)
 							m.docGroup = templ.docGroup;
