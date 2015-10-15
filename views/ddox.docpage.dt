@@ -10,7 +10,8 @@ block ddox.title
 		- auto itm = info.docGroups[0].members[0];
 		- title = itm.kindCaption ~ " " ~ itm.nestedName;
 	- else
-		- title = info.nestedName ~ " - multiple declarations";
+		- auto names = info.docGroups.map!(g => g.members[0].nestedName).array.sort().uniq;
+		- title = names.join("/") ~ " - multiple declarations";
 	
 block ddox.members
 
