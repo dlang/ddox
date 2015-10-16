@@ -424,7 +424,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						auto text = renderMacros(lines[i .. j].join("\n"), context, macros);
 						if (text.endsWith("\n")) text = text[0 .. $-1];
 
-						renderTextLine(dst, text, context);
+						renderTextLine(dst, text.stripDD, context);
 						dst.put('\n');
 						if( hlevel >= 0 ) dst.put("</p>\n");
 						i = j;
@@ -660,10 +660,14 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			foreach( arg; rawargs ){
 				auto argtext = appender!string();
 				renderMacros(argtext, arg, context, macros, params, callstack);
-				args ~= splitParams(argtext.data);
+				auto newargs = splitParams(argtext.data);
+				if (newargs.length == 0) args ~= ""; // always add at least one argument per raw argument
+				else args ~= newargs;
 			}
 		}
-		args = join(args, ",").stripLeftDD() ~ args.map!(s => s.stripLeftDD()).array;
+		if (args.length == 1 && args[0].length == 0) args = null; // remove a single empty argument
+
+		args = join(args, ",").stripLeftDD() ~ args.map!(s => s.stripOneLeftDD()).array;
 
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
@@ -861,10 +865,15 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 	foreach (string ln; lines) {
 		// macro definitions are of the form IDENT = ...
 		auto pidx = ln.indexOf('=');
-		if( pidx > 0 ){
+		if (pidx > 0) {
 			auto tmpnam = ln[0 .. pidx].strip();
-			if( isIdent(tmpnam) ){
-				// got new macro definition
+			// got new macro definition?
+			if (isIdent(tmpnam)) {
+
+				// strip the previous macro
+				if (name.length) macros[name] = macros[name].stripDD();
+
+				// start parsing the new macro
 				name = tmpnam;
 				macros[name] = stripLeftDD(ln[pidx+1 .. $]);
 				continue;
@@ -872,7 +881,7 @@ private void parseMacros(ref string[string] macros, in string[] lines)
 		}
 
 		// append to previous macro definition, if any
-		if (name.length) macros[name] ~= "\n" ~ ln;
+		macros[name] ~= "\n" ~ ln;
 	}
 }
 
@@ -898,11 +907,29 @@ private string unindent(string ln, int amount)
 
 private string stripLeftDD(string s)
 {
-	while (!s.empty && (s.front == ' ' || s.front == '\t'))
+	while (!s.empty && (s.front == ' ' || s.front == '\t' || s.front == '\r' || s.front == '\n'))
 		s.popFront();
 	return s;
 }
 
+private string stripOneLeftDD(string s)
+{
+	if (!s.empty && (s.front == ' ' || s.front == '\t' || s.front == '\r' || s.front == '\n'))
+		s.popFront();
+	return s;
+}
+
+private string stripRightDD(string s)
+{
+	while (!s.empty && (s.back == ' ' || s.back == '\t' || s.back == '\r' || s.back == '\n'))
+		s.popBack();
+	return s;
+}
+
+private string stripDD(string s)
+{
+	return s.stripLeftDD.stripRightDD;
+}
 
 import std.stdio;
 unittest {
@@ -913,13 +940,13 @@ unittest {
 
 unittest {
 	auto src = "\n  $(M a b)\n$(M a  \nb)\nMacros:\n	M =     -$0-  \n\nN=$0";
-	auto dst = "  -a b-  \n\n-a  \nb-  \n";
-	assert(formatDdocComment(src) == dst, to!string(cast(ubyte[])formatDdocComment(src)));
+	auto dst = "-a b-\n-a  \nb-\n"; // NOTE: the two spaces after -a don't exist in Ddoc's output
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
 	auto src = "$(M a, b)\n$(M a,\n    b)\nMacros:\n	M = -$1-\n\n	+$2+\n\n	N=$0";
-	auto dst = "-a-\n\n	+b+\n\n-a-\n\n	+\n    b+\n";
+	auto dst = "-a-\n\n	+b+\n-a-\n\n	+    b+\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -978,9 +1005,42 @@ unittest { // test for properly removed indentation in code blocks
 	assert(formatDdocComment(src) == dst);
 }
 
-unittest { // inssue #99 - parse macros in parameter sections
+unittest { // issue #99 - parse macros in parameter sections
 	import std.algorithm : find;
 	auto src = "Params:\n\tfoo = $(B bar)";
 	auto dst = "<td> <b>bar</b></td></tr>\n</table>\n</section>\n";
-	assert(formatDdocComment(src).find("<td> ") == dst, formatDdocComment(src).find("<td> "));
+	assert(formatDdocComment(src).find("<td> ") == dst);
+}
+
+unittest { // issue #89 (minimal test) - empty first parameter
+	auto src = "$(DIV , foo)\nMacros:\nDIV=<div $1>$+</div>";
+	auto dst = "<div >foo</div>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // issue #89 (complex test)
+	auto src =
+`$(LIST
+$(DIV oops,
+foo
+),
+$(DIV ,
+bar
+))
+Macros:
+LIST=$(UL $(LIX $1, $+))
+LIX=$(LI $1)$(LIX $+)
+UL=$(T ul, $0)
+LI = $(T li, $0)
+DIV=<div $1>$+</div>
+T=<$1>$+</$1>
+`;
+	auto dst = "<ul><li><div oops>foo\n</div></li><li><div >bar\n</div></li></ul>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // issue #95 - trailing newlines must be stripped in macro definitions
+	auto src = "$(FOO)\nMacros:\nFOO=foo\n\nBAR=bar";
+	auto dst = "foo\n";
+	assert(formatDdocComment(src) == dst);
 }
