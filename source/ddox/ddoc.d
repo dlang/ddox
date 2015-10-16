@@ -623,7 +623,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	} else if( line[0] == '+' ){
 		if( params.length ){
 			auto idx = params[0].indexOf(',');
-			if( idx >= 0 ) dst.put(params[0][idx+1 .. $].stripLeftDD());
+			if( idx >= 0 ) dst.put(params[0][idx+1 .. $].specialStrip());
 		}
 		line = line[1 .. $];
 	} else if( line[0] == '(' ){
@@ -636,6 +636,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		}
 		if( l > 0 ){
 			logDebug("Unmatched parenthesis in DDOC comment: %s", line[0 .. cidx]);
+			dst.put("(");
 			return;
 		}
 		if( cidx < 1 ){
@@ -651,8 +652,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		}
 
 		auto mname = line[0 .. mnameidx];
-		string rawargtext;
-		if (mnameidx+1 < cidx) rawargtext = line[mnameidx+1 .. cidx-1];
+		string rawargtext = line[mnameidx .. cidx-1];
 
 		string[] args;
 		if (rawargtext.length) {
@@ -665,9 +665,9 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 				else args ~= newargs;
 			}
 		}
-		if (args.length == 1 && args[0].length == 0) args = null; // remove a single empty argument
+		if (args.length == 1 && args[0].specialStrip.length == 0) args = null; // remove a single empty argument
 
-		args = join(args, ",").stripLeftDD() ~ args.map!(s => s.stripOneLeftDD()).array;
+		args = join(args, ",").specialStrip() ~ args.map!(a => a.specialStrip).array;
 
 		logTrace("PARAMS for %s: %s", mname, args);
 		line = line[cidx .. $];
@@ -912,10 +912,24 @@ private string stripLeftDD(string s)
 	return s;
 }
 
-private string stripOneLeftDD(string s)
+private string specialStrip(string s)
 {
-	if (!s.empty && (s.front == ' ' || s.front == '\t' || s.front == '\r' || s.front == '\n'))
-		s.popFront();
+	import std.algorithm : among;
+
+	// strip trailing whitespace for all lines but the last
+	size_t idx = 0;
+	while (true) {
+		auto nidx = s[idx .. $].indexOf('\n');
+		if (nidx < 0) break;
+		nidx += idx;
+		auto strippedfront = s[0 .. nidx].stripRightDD();
+		s = strippedfront ~ "\n" ~ s[nidx+1 .. $];
+		idx = strippedfront.length + 1;
+	}
+
+	// strip the first character, if whitespace
+	if (!s.empty && s.front.among!(' ', '\t', '\n', '\r')) s.popFront();
+
 	return s;
 }
 
@@ -940,7 +954,7 @@ unittest {
 
 unittest {
 	auto src = "\n  $(M a b)\n$(M a  \nb)\nMacros:\n	M =     -$0-  \n\nN=$0";
-	auto dst = "-a b-\n-a  \nb-\n"; // NOTE: the two spaces after -a don't exist in Ddoc's output
+	auto dst = "-a b-\n-a\nb-\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -1043,4 +1057,22 @@ unittest { // issue #95 - trailing newlines must be stripped in macro definition
 	auto src = "$(FOO)\nMacros:\nFOO=foo\n\nBAR=bar";
 	auto dst = "foo\n";
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // missing macro closing clamp (because it's in a different paragraph)
+	auto src = "$(B\n\n)";
+	auto dst = "(B\n<section>\n<p>)\n</p>\n</section>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // more whitespace testing
+	auto src = "$(M    a   ,   b   ,   c   )\nMacros:\nM =    A$0B$1C$2D$+E";
+    auto dst = "A   a   ,   b   ,   c   B   a   C  b   D  b   ,   c   E\n";
+    assert(formatDdocComment(src) == dst);
+}
+
+unittest { // more whitespace testing
+	auto src = "  $(M  \n  a  \n  ,  \n  b \n  ,  \n  c  \n  )  \nMacros:\nM =    A$0B$1C$2D$+E";
+    auto dst = "A  a\n  ,\n  b\n  ,\n  c\n  B  a\n  C  b\n  D  b\n  ,\n  c\n  E\n";
+    assert(formatDdocComment(src) == dst);
 }
