@@ -399,6 +399,14 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 		return start;
 	}
 
+	// handle backtick inline-code
+	for (size_t i = 0; i < lines.length; i++) {
+		int lntype = getLineType(i);
+		if (lntype == CODE) i = skipCodeBlock(i);
+		else lines[i] = replaceBacktickCode(lines[i]);
+	}
+	lines = renderMacros(lines.join("\n").stripDD, context, macros).splitLines();
+
 	switch( sect ){
 		default:
 			putHeader(sect);
@@ -417,14 +425,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						if( hlevel >= 0 ) dst.put("<p>");
 						auto j = skipBlock(i);
 						bool first = true;
-						// handle backtick inline-code
-						foreach (ref l; lines[i .. j]) l = replaceBacktickCode(l);
-
-						// handle macros
-						auto text = renderMacros(lines[i .. j].join("\n"), context, macros);
-						if (text.endsWith("\n")) text = text[0 .. $-1];
-
-						renderTextLine(dst, text.stripDD, context);
+						renderTextLine(dst, lines[i .. j].join("\n")/*.stripDD*/, context);
 						dst.put('\n');
 						if( hlevel >= 0 ) dst.put("</p>\n");
 						i = j;
@@ -433,8 +434,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						dst.put("<pre class=\"code\"><code class=\"prettyprint lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
-						auto text = renderMacros(lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context, macros);
-						renderCodeLine(dst, text, context);
+						renderCodeLine(dst, lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context);
 						dst.put("\n</code></pre>\n");
 						i = j+1;
 						break;
@@ -473,8 +473,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			}
 
 			if( in_parameter ){
-				auto text = renderMacros(desc, context, macros);
-				renderTextLine(dst, text, context);
+				renderTextLine(dst, desc, context);
 				dst.put("</td></tr>\n");
 			}
 
@@ -1059,9 +1058,15 @@ unittest { // issue #95 - trailing newlines must be stripped in macro definition
 	assert(formatDdocComment(src) == dst);
 }
 
-unittest { // missing macro closing clamp (because it's in a different paragraph)
+unittest { // missing macro closing clamp (because it's in a different section)
 	auto src = "$(B\n\n)";
-	auto dst = "(B\n<section>\n<p>)\n</p>\n</section>\n";
+	auto dst = "(B\n<section><p>)\n</p>\n</section>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // closing clamp should be found in a different *paragraph* of the same section, though
+	auto src = "foo\n\n$(B\n\n)";
+	auto dst = "foo\n<section><p><b></b>\n</p>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
