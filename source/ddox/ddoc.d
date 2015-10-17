@@ -400,7 +400,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	}
 
 	// handle backtick inline-code
-	for (size_t i = 0; i < lines.length; i++) {
+	for (int i = 0; i < lines.length; i++) {
 		int lntype = getLineType(i);
 		if (lntype == CODE) i = skipCodeBlock(i);
 		else lines[i] = replaceBacktickCode(lines[i]);
