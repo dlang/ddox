@@ -560,6 +560,9 @@ private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 				dst.put(line[0]);
 				line = line[1 .. $];
 				break;
+			case '&': dst.put("&amp;"); line = line[1 .. $]; break;
+			case '<': dst.put("&lt;"); line = line[1 .. $]; break;
+			case '>': dst.put("&gt;"); line = line[1 .. $]; break;
 			case '.':
 				if (line.length > 1 && (line[1].isAlpha() || line[1] == '_'))
 					goto case;
@@ -741,6 +744,7 @@ private string replaceBacktickCode(string line)
 		foreach (i; idx+1 .. eidx) {
 			switch (line[i]) {
 				default: ret.put(line[i]); break;
+				case '&': ret.put("&amp;"); break;
 				case '<': ret.put("&lt;"); break;
 				case '>': ret.put("&gt;"); break;
 				case '(': ret.put("$(LPAREN)"); break;
@@ -1080,4 +1084,16 @@ unittest { // more whitespace testing
 	auto src = "  $(M  \n  a  \n  ,  \n  b \n  ,  \n  c  \n  )  \nMacros:\nM =    A$0B$1C$2D$+E";
     auto dst = "A  a\n  ,\n  b\n  ,\n  c\n  B  a\n  C  b\n  D  b\n  ,\n  c\n  E\n";
     assert(formatDdocComment(src) == dst);
+}
+
+unittest { // escape in backtick code
+	auto src = "`<b>&amp;`";
+	auto dst = "<code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;</code>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // escape in code blocks
+	auto src = "---\n<b>&amp;\n---";
+	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;\n</code></pre>\n</section>\n";
+	assert(formatDdocComment(src) == dst);
 }
