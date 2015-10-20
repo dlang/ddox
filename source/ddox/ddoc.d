@@ -646,7 +646,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			return;
 		}
 
-		auto mnameidx = line[0 .. cidx-1].countUntilAny(" \t\r\n");
+		auto mnameidx = line[0 .. cidx-1].countUntilAny(", \t\r\n");
 		if( mnameidx < 0 ) mnameidx = cidx-1;
 		if( mnameidx == 0 ){
 			logDebug("Macro call in DDOC comment is missing macro name.");
@@ -1096,4 +1096,10 @@ unittest { // escape in code blocks
 	auto src = "---\n<b>&amp;\n---";
 	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #81 empty first macro arguments
+	auto src = "$(BOOKTABLE,\ntest)\nMacros:\nBOOKTABLE=<table $1>$+</table>";
+	auto dst = "<table >test</table>\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
 }
