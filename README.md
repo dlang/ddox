@@ -52,3 +52,16 @@ The following commands will generate HTML docs (along with the default CSS styli
 	cp -r path/to/ddox/public destination/path
 	./ddox generate-html path/to/docs.json destination/path/public
 
+
+Built-in support in DUB
+-----------------------
+
+Documentation for DUB projects can be built as simple as by running the following command within the project's directory:
+
+	dub build -b ddox
+
+The `"-ddoxFilterArgs"` field in `dub.json` (resp. `x:ddoxFilterArgs` in `dub.sdl`) can be used to customize the included contents.
+
+Quickly serving the documentation on a local HTTP server, which is usually faster than writing out all HTML files to disk, is also possible:
+
+	dub run -b ddox
