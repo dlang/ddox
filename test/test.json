@@ -1,0 +1,581 @@
+[
+	{
+		"file": "source/vibe/web/rest.d",
+		"name": "vibe.web.rest",
+		"members": [
+			{
+				"name": "vibe.web.common",
+				"line": 11,
+				"char": 15,
+				"kind": "import"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "registerRestInterface",
+						"line": 66,
+						"type": "URLRouter(URLRouter router, TImpl instance, RestInterfaceSettings settings = null)",
+						"parameters": [
+							{
+								"name": "router",
+								"type": "URLRouter"
+							},
+							{
+								"name": "instance",
+								"type": "TImpl"
+							},
+							{
+								"name": "settings",
+								"type": "RestInterfaceSettings",
+								"default": "null"
+							}
+						],
+						"endline": 90,
+						"char": 11,
+						"kind": "function"
+					}
+				],
+				"name": "registerRestInterface",
+				"line": 66,
+				"comment": "\tRegisters a REST interface and connects it the the given instance.\n\n\tEach method of the given class instance is mapped to the corresponing HTTP\n\tverb. Property methods are mapped to GET/PUT and all other methods are\n\tmapped according to their prefix verb. If the method has no known prefix,\n\tPOST is used.\n\n\tThe following table lists the mappings from prefix verb to HTTP verb:\n\n\t$(TABLE\n\t\t$(TR $(TH HTTP method) $(TH Recognized prefixes))\n\t\t$(TR $(TD GET)\t  $(TD get, query))\n\t\t$(TR $(TD PUT)    $(TD set, put))\n\t\t$(TR $(TD POST)   $(TD add, create, post))\n\t\t$(TR $(TD DELETE) $(TD remove, erase, delete))\n\t\t$(TR $(TD PATCH)  $(TD update, patch))\n\t)\n\n\tIf a method has its first parameter named 'id', it will be mapped to ':id/method' and\n\t'id' is expected to be part of the URL instead of a JSON request. Parameters with default\n\tvalues will be optional in the corresponding JSON request.\n\n\tAny interface that you return from a getter will be made available with the\n\tbase url and its name appended.\n\n\tParams:\n\t\trouter = The HTTP router on which the interface will be registered\n\t\tinstance = Class instance to use for the REST mapping - Note that TImpl\n\t\t\tmust either be an interface type, or a class which derives from a\n\t\t\tsingle interface\n\t\tsettings = Additional settings, such as the $(D MethodStyle), or the prefix.\n\t\t\tSee $(D RestInterfaceSettings) for more details.\n\n\tSee_Also:\n\t\t$(D RestInterfaceClient) class for a seamless way to access such a generated API\n\nExample:\nThis is a very limited example of REST interface features. Please refer to\n\tthe \"rest\" project in the \"examples\" folder for a full overview.\n\n\tAll details related to HTTP are inferred from the interface declaration.\n---\n@path(\"/\")\ninterface IMyAPI\n{\n\t// GET /api/greeting\n\t@property string greeting();\n\n\t// PUT /api/greeting\n\t@property void greeting(string text);\n\n\t// POST /api/users\n\t@path(\"/users\")\n\tvoid addNewUser(string name);\n\n\t// GET /api/users\n\t@property string[] users();\n\n\t// GET /api/:id/name\n\tstring getName(int id);\n\n\t// GET /some_custom_json\n\tJson getSomeCustomJson();\n}\n\n// vibe.d takes care of all JSON encoding/decoding\n// and actual API implementation can work directly\n// with native types\n\nclass API : IMyAPI\n{\n\tprivate {\n\t\tstring m_greeting;\n\t\tstring[] m_users;\n\t}\n\n\t@property string greeting() { return m_greeting; }\n\t@property void greeting(string text) { m_greeting = text; }\n\n\tvoid addNewUser(string name) { m_users ~= name; }\n\n\t@property string[] users() { return m_users; }\n\n\tstring getName(int id) { return m_users[id]; }\n\n\tJson getSomeCustomJson()\n\t{\n\t\tJson ret = Json.emptyObject;\n\t\tret[\"somefield\"] = \"Hello, World!\";\n\t\treturn ret;\n\t}\n}\n\n// actual usage, this is usually done in app.d module\n// constructor\n\nvoid static_this()\n{\n\timport vibe.http.server, vibe.http.router;\n\n\tauto router = new URLRouter;\n\trouter.registerRestInterface(new API());\n\tlistenHTTP(new HTTPServerSettings(), router);\n}\n\n---\n",
+				"parameters": [
+					{
+						"name": "TImpl",
+						"kind": "type"
+					}
+				],
+				"char": 11,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "registerRestInterface",
+						"line": 93,
+						"type": "URLRouter(URLRouter router, TImpl instance, MethodStyle style)",
+						"parameters": [
+							{
+								"name": "router",
+								"type": "URLRouter"
+							},
+							{
+								"name": "instance",
+								"type": "TImpl"
+							},
+							{
+								"name": "style",
+								"type": "MethodStyle"
+							}
+						],
+						"endline": 96,
+						"char": 11,
+						"kind": "function"
+					}
+				],
+				"name": "registerRestInterface",
+				"line": 93,
+				"comment": "ditto\n",
+				"parameters": [
+					{
+						"name": "TImpl",
+						"kind": "type"
+					}
+				],
+				"char": 11,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "registerRestInterface",
+						"line": 99,
+						"type": "URLRouter(URLRouter router, TImpl instance, string url_prefix, MethodStyle style = MethodStyle.lowerUnderscored)",
+						"parameters": [
+							{
+								"name": "router",
+								"type": "URLRouter"
+							},
+							{
+								"name": "instance",
+								"type": "TImpl"
+							},
+							{
+								"name": "url_prefix",
+								"type": "string"
+							},
+							{
+								"name": "style",
+								"type": "MethodStyle",
+								"default": "MethodStyle.lowerUnderscored"
+							}
+						],
+						"endline": 107,
+						"char": 11,
+						"kind": "function"
+					}
+				],
+				"name": "registerRestInterface",
+				"line": 99,
+				"comment": "ditto\n",
+				"parameters": [
+					{
+						"name": "TImpl",
+						"kind": "type"
+					}
+				],
+				"char": 11,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "serveRestJSClient",
+						"line": 186,
+						"type": "HTTPServerRequestDelegate(RestInterfaceSettings settings)",
+						"parameters": [
+							{
+								"name": "settings",
+								"type": "RestInterfaceSettings"
+							}
+						],
+						"endline": 212,
+						"char": 27,
+						"kind": "function"
+					}
+				],
+				"name": "serveRestJSClient",
+				"line": 186,
+				"comment": "\tReturns a HTTP handler delegate that serves a JavaScript REST client.\nExample:\n\n---\nimport vibe.http.server;\n\ninterface MyAPI {\n\tstring getFoo();\n\tvoid postBar(string param);\n}\n\nvoid test()\n{\n\tauto restsettings = new RestInterfaceSettings;\n\trestsettings.baseURL = URL(\"http://api.example.org/\");\n\n\tauto router = new URLRouter;\n\trouter.get(\"/myapi.js\", serveRestJSClient!MyAPI(restsettings));\n\t//router.get(\"/\", staticTemplate!\"index.dt\");\n\n\tlistenHTTP(new HTTPServerSettings, router);\n}\n\n/*\n\tindex.dt:\n\thtml\n\t\thead\n\t\t\ttitle JS REST client test\n\t\t\tscript(src=\"test.js\")\n\t\tbody\n\t\t\tbutton(onclick=\"MyAPI.postBar('hello');\")\n*/\n\n---\n",
+				"parameters": [
+					{
+						"name": "I",
+						"kind": "type"
+					}
+				],
+				"constraint": "is(I == interface)",
+				"char": 27,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "serveRestJSClient",
+						"line": 214,
+						"type": "HTTPServerRequestDelegate(URL base_url)",
+						"parameters": [
+							{
+								"name": "base_url",
+								"type": "URL"
+							}
+						],
+						"endline": 219,
+						"char": 27,
+						"kind": "function"
+					}
+				],
+				"name": "serveRestJSClient",
+				"line": 214,
+				"comment": "ditto\n",
+				"parameters": [
+					{
+						"name": "I",
+						"kind": "type"
+					}
+				],
+				"char": 27,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "serveRestJSClient",
+						"line": 221,
+						"type": "HTTPServerRequestDelegate(string base_url)",
+						"parameters": [
+							{
+								"name": "base_url",
+								"type": "string"
+							}
+						],
+						"endline": 226,
+						"char": 27,
+						"kind": "function"
+					}
+				],
+				"name": "serveRestJSClient",
+				"line": 221,
+				"comment": "ditto\n",
+				"parameters": [
+					{
+						"name": "I",
+						"kind": "type"
+					}
+				],
+				"char": 27,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"endchar": 1,
+						"name": "generateRestJSClient",
+						"line": 264,
+						"type": "void(ref R output, RestInterfaceSettings settings = null)",
+						"parameters": [
+							{
+								"name": "output",
+								"type": "R",
+								"storageClass": [
+									"ref"
+								]
+							},
+							{
+								"name": "settings",
+								"type": "RestInterfaceSettings",
+								"default": "null"
+							}
+						],
+						"endline": 269,
+						"char": 6,
+						"kind": "function"
+					}
+				],
+				"name": "generateRestJSClient",
+				"line": 264,
+				"comment": "\tGenerates JavaScript code to access a REST interface from the browser.\nExample:\nWrites a JavaScript REST client to a local .js file.\n---\nimport vibe.core.file;\n\ninterface MyAPI {\n\tvoid getFoo();\n\tvoid postBar(string param);\n}\n\nvoid generateJSClientImpl()\n{\n\tauto app = appender!string;\n\tgenerateRestJSClient!MyAPI(app);\n\twriteFileUTF8(Path(\"myapi.js\"), app.data);\n}\n\n---\n",
+				"parameters": [
+					{
+						"name": "I",
+						"kind": "type"
+					},
+					{
+						"name": "R",
+						"kind": "type"
+					}
+				],
+				"constraint": "is(I == interface) && isOutputRange!(R, char)",
+				"char": 6,
+				"kind": "template"
+			},
+			{
+				"members": [
+					{
+						"name": "RestInterfaceClient",
+						"line": 297,
+						"members": [
+							{
+								"name": "RequestFilter",
+								"line": 308,
+								"type": "void delegate(HTTPClientRequest req)",
+								"char": 2,
+								"kind": "alias"
+							},
+							{
+								"name": "m_baseURL",
+								"line": 311,
+								"type": "URL",
+								"char": 7,
+								"kind": "variable"
+							},
+							{
+								"name": "m_methodStyle",
+								"line": 312,
+								"type": "MethodStyle",
+								"char": 15,
+								"kind": "variable"
+							},
+							{
+								"name": "m_requestFilter",
+								"line": 313,
+								"type": "RequestFilter",
+								"char": 17,
+								"kind": "variable"
+							},
+							{
+								"name": "m_settings",
+								"line": 314,
+								"type": "RestInterfaceSettings",
+								"char": 25,
+								"kind": "variable"
+							},
+							{
+								"endchar": 2,
+								"name": "this",
+								"line": 320,
+								"comment": "\t\tCreates a new REST client implementation of $(D I).\n",
+								"type": "(RestInterfaceSettings settings)",
+								"parameters": [
+									{
+										"name": "settings",
+										"type": "RestInterfaceSettings"
+									}
+								],
+								"endline": 345,
+								"char": 2,
+								"kind": "constructor"
+							},
+							{
+								"endchar": 2,
+								"name": "this",
+								"line": 348,
+								"comment": "ditto\n",
+								"type": "(string base_url, MethodStyle style = MethodStyle.lowerUnderscored)",
+								"parameters": [
+									{
+										"name": "base_url",
+										"type": "string"
+									},
+									{
+										"name": "style",
+										"type": "MethodStyle",
+										"default": "MethodStyle.lowerUnderscored"
+									}
+								],
+								"endline": 351,
+								"char": 2,
+								"kind": "constructor"
+							},
+							{
+								"endchar": 2,
+								"name": "this",
+								"line": 354,
+								"comment": "ditto\n",
+								"type": "(URL base_url, MethodStyle style = MethodStyle.lowerUnderscored)",
+								"parameters": [
+									{
+										"name": "base_url",
+										"type": "URL"
+									},
+									{
+										"name": "style",
+										"type": "MethodStyle",
+										"default": "MethodStyle.lowerUnderscored"
+									}
+								],
+								"endline": 360,
+								"char": 2,
+								"kind": "constructor"
+							},
+							{
+								"endchar": 2,
+								"name": "requestFilter",
+								"line": 365,
+								"comment": "\t\tAn optional request filter that allows to modify each request before it is made.\n",
+								"type": "@property RequestFilter()",
+								"endline": 368,
+								"char": 32,
+								"kind": "function",
+								"storageClass": [
+									"final"
+								]
+							},
+							{
+								"endchar": 2,
+								"name": "requestFilter",
+								"line": 371,
+								"comment": "ditto\n",
+								"type": "@property void(RequestFilter v)",
+								"parameters": [
+									{
+										"name": "v",
+										"type": "RequestFilter"
+									}
+								],
+								"endline": 374,
+								"char": 23,
+								"kind": "function",
+								"storageClass": [
+									"final"
+								]
+							},
+							{
+								"name": "RestClientMethods!I",
+								"line": 381,
+								"char": 2,
+								"kind": "mixin"
+							},
+							{
+								"endchar": 3,
+								"name": "request",
+								"line": 414,
+								"comment": " Perform a request to the interface using the given parameters.\n\n Params:\n verb = Kind of request (See $(D HTTPMethod) enum).\n name = Location to request. For a request on https://github.com/rejectedsoftware/vibe.d/issues?q=author%3ASantaClaus,\n\t\tit will be '/rejectedsoftware/vibe.d/issues'.\n hdrs = The headers to send. Some field might be overriden (such as Content-Length). However, Content-Type will NOT be overriden.\n query = The $(B encoded) query string. For a request on https://github.com/rejectedsoftware/vibe.d/issues?q=author%3ASantaClaus,\n\t\tit will be 'author%3ASantaClaus'.\n body_ = The body to send, as a string. If a Content-Type is present in $(D hdrs), it will be used, otherwise it will default to\n\t\tthe generic type \"application/json\".\n reqReturnHdrs = A map of required return headers.\n\t\t\t\t   To avoid returning unused headers, nothing is written\n\t\t\t\t   to this structure unless there's an (usually empty)\n\t\t\t\t   entry (= the key exists) with the same key.\n\t\t\t\t   If any key present in `reqReturnHdrs` is not present\n\t\t\t\t   in the response, an Exception is thrown.\n optReturnHdrs = A map of optional return headers.\n\t\t\t\t   This behaves almost as exactly as reqReturnHdrs,\n\t\t\t\t   except that non-existent key in the response will\n\t\t\t\t   not cause it to throw, but rather to set this entry\n\t\t\t\t   to 'null'.\n\n Returns:\n     The Json object returned by the request\n",
+								"type": "const Json(HTTPMethod verb, string name, ref InetHeaderMap hdrs, string query, string body_, ref InetHeaderMap reqReturnHdrs, ref InetHeaderMap optReturnHdrs)",
+								"parameters": [
+									{
+										"name": "verb",
+										"type": "HTTPMethod"
+									},
+									{
+										"name": "name",
+										"type": "string"
+									},
+									{
+										"name": "hdrs",
+										"type": "InetHeaderMap",
+										"storageClass": [
+											"in",
+											"ref"
+										]
+									},
+									{
+										"name": "query",
+										"type": "string"
+									},
+									{
+										"name": "body_",
+										"type": "string"
+									},
+									{
+										"name": "reqReturnHdrs",
+										"type": "InetHeaderMap",
+										"storageClass": [
+											"ref"
+										]
+									},
+									{
+										"name": "optReturnHdrs",
+										"type": "InetHeaderMap",
+										"storageClass": [
+											"ref"
+										]
+									}
+								],
+								"endline": 493,
+								"char": 8,
+								"kind": "function"
+							},
+							{
+								"members": [
+									{
+										"endchar": 2,
+										"name": "genQuery",
+										"line": 497,
+										"type": "string(Ts params)",
+										"parameters": [
+											{
+												"name": "params",
+												"type": "Ts"
+											}
+										],
+										"endline": 523,
+										"char": 17,
+										"kind": "function"
+									}
+								],
+								"name": "genQuery",
+								"line": 497,
+								"comment": "Params are passed in a deterministic order: [Name, value]*\n",
+								"parameters": [
+									{
+										"name": "Ts",
+										"kind": "tuple"
+									}
+								],
+								"char": 17,
+								"kind": "template"
+							},
+							{
+								"members": [
+									{
+										"endchar": 2,
+										"name": "genBody",
+										"line": 526,
+										"type": "string(Ts params)",
+										"parameters": [
+											{
+												"name": "params",
+												"type": "Ts"
+											}
+										],
+										"endline": 549,
+										"char": 17,
+										"kind": "function"
+									}
+								],
+								"name": "genBody",
+								"line": 526,
+								"comment": "Params are passed in a deterministic order: [Name, value]*\n",
+								"parameters": [
+									{
+										"name": "Ts",
+										"kind": "tuple"
+									}
+								],
+								"char": 17,
+								"kind": "template"
+							}
+						],
+						"char": 1,
+						"kind": "class"
+					}
+				],
+				"name": "RestInterfaceClient",
+				"line": 297,
+				"comment": "\tImplements the given interface by forwarding all public methods to a REST server.\n\n\tThe server must talk the same protocol as registerRestInterface() generates. Be sure to set\n\tthe matching method style for this. The RestInterfaceClient class will derive from the\n\tinterface that is passed as a template argument. It can be used as a drop-in replacement\n\tof the real implementation of the API this way.\nExample:\n\n---\ninterface IMyApi\n{\n\t// GET /status\n\tstring getStatus();\n\n\t// GET /greeting\n\t@property string greeting();\n\t// PUT /greeting\n\t@property void greeting(string text);\n\n\t// POST /new_user\n\tvoid addNewUser(string name);\n\t// GET /users\n\t@property string[] users();\n\t// GET /:id/name\n\tstring getName(int id);\n\n\tJson getSomeCustomJson();\n}\n\nvoid test()\n{\n\tauto api = new RestInterfaceClient!IMyApi(\"http://127.0.0.1/api/\");\n\n\tlogInfo(\"Status: %s\", api.getStatus());\n\tapi.greeting = \"Hello, World!\";\n\tlogInfo(\"Greeting message: %s\", api.greeting);\n\tapi.addNewUser(\"Peter\");\n\tapi.addNewUser(\"Igor\");\n\tlogInfo(\"Users: %s\", api.users);\n\tlogInfo(\"First user name: %s\", api.getName(0));\n}\n\n---\n",
+				"parameters": [
+					{
+						"name": "I",
+						"kind": "type"
+					}
+				],
+				"char": 1,
+				"kind": "template"
+			},
+			{
+				"name": "RestInterfaceSettings",
+				"line": 593,
+				"comment": "\tEncapsulates settings used to customize the generated REST interface.\n",
+				"members": [
+					{
+						"offset": 16,
+						"name": "baseURL",
+						"line": 596,
+						"comment": " The public URL below which the REST interface is registered.\n",
+						"deco": "S4vibe4inet3url3URL",
+						"char": 6,
+						"kind": "variable"
+					},
+					{
+						"offset": 136,
+						"name": "methodStyle",
+						"line": 600,
+						"comment": " Naming convention used for the generated URLs.\n",
+						"deco": "E4vibe3web6common11MethodStyle",
+						"init": "cast(MethodStyle)5",
+						"char": 14,
+						"kind": "variable"
+					},
+					{
+						"offset": 140,
+						"name": "stripTrailingUnderscore",
+						"line": 607,
+						"comment": " Ignores a trailing underscore in method and function names.\n\n\t\tWith this setting set to $(D true), it's possible to use names in the\n\t\tREST interface that are reserved words in D.\n",
+						"deco": "b",
+						"init": "true",
+						"char": 7,
+						"kind": "variable"
+					},
+					{
+						"endchar": 2,
+						"name": "dup",
+						"line": 609,
+						"deco": "xFNdZC4vibe3web4rest21RestInterfaceSettings",
+						"endline": 616,
+						"char": 34,
+						"kind": "function"
+					}
+				],
+				"char": 1,
+				"kind": "class"
+			}
+		],
+		"comment": "\tAutomatic REST interface and client code generation facilities.\n\n\tCopyright: © 2012-2013 RejectedSoftware e.K.\n\tLicense: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.\n\tAuthors: Sönke Ludwig, Михаил Страшун\n",
+		"kind": "module"
+	},
+]
