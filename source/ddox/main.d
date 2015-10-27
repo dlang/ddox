@@ -395,9 +395,9 @@ protectionInheritanceName
     --only-documented      Remove undocumented entities.
     --keep-unittests       Do not remove unit tests from documentation.
                            Implies --keep-internals.
-    --keep-internals       Do not remove symbols starting with two unterscores.
+    --keep-internals       Do not remove symbols starting with two underscores.
     --unittest-examples    Add documented unit tests as examples to the
-                           preceeding declaration (deprecated, enabled by
+                           preceding declaration (deprecated, enabled by
                            default)
     --no-unittest-examples Don't convert documented unit tests to examples
  -h --help                 Show this help
