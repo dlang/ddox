@@ -4,9 +4,9 @@
 		"libevent": "2.0.1+2.0.16",
 		"libev": "5.0.0+4.04",
 		"openssl": "1.1.4+1.0.1g",
-		"libdparse": "0.2.1",
-		"memutils": "0.4.1",
-		"vibe-d": "0.7.26-alpha.3",
-		"libasync": "0.7.5"
+		"memutils": "0.4.3",
+		"vibe-d": "0.7.26",
+		"libasync": "0.7.5",
+		"libdparse": "0.2.1"
 	}
 }

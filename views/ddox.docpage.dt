@@ -5,7 +5,6 @@ block ddox.defs
 	- import std.algorithm;
 
 block ddox.title
-	- string title;
 	- if (info.docGroups.length == 1)
 		- auto itm = info.docGroups[0].members[0];
 		- title = itm.kindCaption ~ " " ~ itm.nestedName;
