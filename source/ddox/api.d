@@ -46,9 +46,10 @@ class DocGroupContext : DdocContext {
 		}
 		
 		foreach( def; m_group.members ){
-			Entity n;
+			Entity n, nmod;
 			if (is_global) {
 				n = def.module_.lookup(name);
+				nmod = def.module_.lookup!Module(name);
 			} else {
 				// if this is a function, first search the parameters
 				// TODO: maybe do the same for function/delegate variables/type aliases
@@ -60,10 +61,14 @@ class DocGroupContext : DdocContext {
 
 				// then look up the name in the outer scope
 				n = def.lookup(name);
+				nmod = def.lookup!Module(name);
 			}
 
 			// packages are not linked
-			if( cast(Package)n ) continue;
+			if (cast(Package)n) {
+				if (nmod) n = nmod;
+				else continue;
+			}
 
 			// module names must be fully qualified
 			if( auto mod = cast(Module)n )
