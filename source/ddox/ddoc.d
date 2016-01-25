@@ -1102,15 +1102,13 @@ unittest { // more whitespace testing
 
 unittest { // escape in backtick code
 	auto src = "`<b>&amp;`";
-	version (Have_libdparse) auto dst = "<code class=\"lang-d\">&lt;b&gt;&amp;amp;</code>\n";
-	else auto dst = "<code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;</code>\n";
+	auto dst = "<code class=\"lang-d\">&lt;b&gt;&amp;amp;</code>\n";
 	assert(formatDdocComment(src) == dst,formatDdocComment(src) );
 }
 
 unittest { // escape in code blocks
 	auto src = "---\n<b>&amp;\n---";
-	version (Have_libdparse) auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span>\n</code></pre>\n</section>\n";
-	else auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span>\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 

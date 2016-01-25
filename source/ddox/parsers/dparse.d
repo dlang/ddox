@@ -7,8 +7,6 @@
 */
 module ddox.parsers.dparse;
 
-version (Have_libdparse):
-
 import ddox.ddox;
 import ddox.entities;
 import dparse = dparse.parser;
