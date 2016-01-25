@@ -120,18 +120,20 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	MethodStyle file_name_style = MethodStyle.unaltered;
 	SortMode modsort = SortMode.protectionName;
 	SortMode declsort = SortMode.protectionInheritanceName;
-	bool lowercasenames = false;
+	bool lowercasenames;
+	bool hyphenate;
 	getopt(args,
 		//config.passThrough,
-		"std-macros", &macrofiles,
-		"override-macros", &overridemacrofiles,
-		"navigation-type", &navtype,
-		"package-order", &pack_order,
-		"sitemap-url", &sitemapurl,
+		"decl-sort", &declsort,
 		"file-name-style", &file_name_style,
+		"hyphenate", &hyphenate,
 		"lowercase-names", &lowercasenames,
 		"module-sort", &modsort,
-		"decl-sort", &declsort
+		"navigation-type", &navtype,
+		"override-macros", &overridemacrofiles,
+		"package-order", &pack_order,
+		"sitemap-url", &sitemapurl,
+		"std-macros", &macrofiles,
 		);
 
 	if (lowercasenames) file_name_style = MethodStyle.lowerCase;
@@ -143,6 +145,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 
 	setDefaultDdocMacroFiles(macrofiles);
 	setOverrideDdocMacroFiles(overridemacrofiles);
+	if (hyphenate) enableHyphenation();
 
 	// parse the json output file
 	auto docsettings = new DdoxSettings;
@@ -204,7 +207,7 @@ int cmdFilterDocs(string[] args)
 				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
 					return Json.undefined;
 			}
-			
+
 			Protection prot = Protection.Public;
 			if( auto p = "protection" in json ){
 				switch(p.get!string){
@@ -238,7 +241,7 @@ int cmdFilterDocs(string[] args)
 					return Json.undefined;
 				}
 			}
-			
+
 			if (!keepinternals && is_internal) return Json.undefined;
 
 			if (!keeputests && is_unittest) return Json.undefined;
@@ -351,6 +354,7 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --module-sort=MODE     The sort order used for lists of modules
     --decl-sort=MODE       The sort order used for declaration lists
     --web-file-dir=DIR     Make files from dir available on the served site
+    --hyphenate            hyphenate text
  -h --help                 Show this help
 
 The following values can be used as sorting modes: none, name, protectionName,
@@ -378,6 +382,7 @@ protectionInheritanceName
     --lowercase-names      DEPRECATED: Outputs all file names in lower case.
                            This option is useful on case insensitive file
                            systems.
+    --hyphenate            hyphenate text
  -h --help                 Show this help
 
 The following values can be used as sorting modes: none, name, protectionName,

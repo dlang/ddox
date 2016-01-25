@@ -10,6 +10,8 @@ module ddox.ddoc;
 import vibe.core.log;
 import vibe.utils.string;
 
+import hyphenate : Hyphenator;
+
 import std.algorithm : canFind, countUntil, map, min, remove;
 import std.array;
 import std.conv;
@@ -173,6 +175,21 @@ void setOverrideDdocMacroFiles(string[] filenames)
 	}
 }
 
+
+/**
+   Enable hyphenation of doc text.
+*/
+void enableHyphenation()
+{
+	s_hyphenator = Hyphenator(import("hyphen.tex")); // en-US
+	s_enableHyphenation = true;
+}
+
+
+void hyphenate(R)(in char[] word, R orng)
+{
+	s_hyphenator.hyphenate(word, "\&shy;", s => orng.put(s));
+}
 
 /**
 	Holds a DDOC comment and formats it sectionwise as HTML.
@@ -352,6 +369,8 @@ private {
 	immutable string[string] s_standardMacros;
 	string[string] s_defaultMacros;
 	string[string] s_overrideMacros;
+	bool s_enableHyphenation;
+	Hyphenator s_hyphenator;
 }
 
 /// private
@@ -514,7 +533,13 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 			case '_':
 				line = line[1 .. $];
 				auto ident = skipIdent(line);
-				if( ident.length ) dst.put(ident);
+				if( ident.length )
+				{
+					if (s_enableHyphenation && !inCode)
+						hyphenate(ident, dst);
+					else
+						dst.put(ident);
+				}
 				else dst.put('_');
 				break;
 			case '.':
@@ -545,7 +570,13 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 					dst.put(ident);
 					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
-				} else dst.put(ident.replace("._", "."));
+				} else {
+					ident = ident.replace("._", ".");
+					if (s_enableHyphenation && !inCode)
+						hyphenate(ident, dst);
+					else
+						dst.put(ident);
+				}
 				break;
 		}
 	}
