@@ -6,54 +6,54 @@
 	section
 		h3 Declaration
 		.prototype
-			code.prettyprint.lang-d
+			code.lang-d
 				- string value;
-				- string terminator = ";";
+				- string terminator = "<span class=\"pun\">;</span>";
 				- string attributes;
 				- if (auto a = getAttributeString(item, AttributeStringKind.normal))
-					- attributes ~= a;
+					- attributes ~= highlightDCode(a);
 				- if (auto var = cast(VariableDeclaration)item)
 					- if (var.type) attributes ~= info.formatType(var.type, false) ~ " ";
-					- if (var.initializer) value = var.initializer.valueString;
+					- if (var.initializer) value = highlightDCode(var.initializer.valueString);
 				- else if (auto ev = cast(EnumMemberDeclaration)item)
 					- if (ev.type) attributes ~= info.formatType(ev.type, false) ~ " ";
-					- if (ev.value) value = ev.value.valueString;
+					- if (ev.value) value = highlightDCode(ev.value.valueString);
 					- if (ev.parent && cast(EnumDeclaration)ev.parent)
-						- terminator = ",";
+						- terminator = "<span class=\"pun\">,</span>";
 					- else
-						- attributes = "enum " ~ attributes;
+						- attributes = "<span class=\"kwd\">enum</span> " ~ attributes;
 				- else if (auto ad = cast(AliasDeclaration)item)
-					- attributes = "alias " ~ attributes;
+					- attributes = "<span class=\"kwd\">alias</span> " ~ attributes;
 					- if (ad.targetType)
 						- value = info.formatType(ad.targetType, false);
 					- else if (ad.targetDecl)
 						//- TODO!
 
-				- auto itemname = item.name ~ item.templateArgsString;
+				- auto itemname = "<span class=\"pln\">" ~ item.name ~ "</span>" ~ highlightDCode(item.templateArgsString);
 				- if (auto m = cast(Module)item.parent)
 					//- |module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
 					//- |
 					//- |// ...
 					- if (value.length)
-						|!{attributes}#{itemname} = !{value};
+						|!{attributes}!{itemname} <span class="pun">=</span> !{value}<span class="pun">;</span>
 					- else
-						|!{attributes}#{itemname};
+						|!{attributes}!{itemname}<span class="pun">;</span>
 					//- |// ...
 				- else
 					- if( auto ctd = cast(Declaration)item.parent )
-						|#{toLower(to!string(ctd.kind))} <a href="#{info.linkTo(ctd)}">#{ctd.nestedName}</a>
+						|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
 					- else
-						|<a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>
+						|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName)}</a>
 					br
-					|{
+					span.pun {
 					br
-					|&nbsp;&nbsp;// ...
+					|&nbsp;&nbsp;<span class="com">// ...</span>
 					br
 					- if (value.length)
-						|&nbsp;&nbsp;!{attributes}#{itemname} = !{value}!{terminator}
+						|&nbsp;&nbsp;!{attributes}!{itemname} <span class="pun">=</span> !{value}!{terminator}
 					- else
-						|&nbsp;&nbsp;!{attributes}#{itemname}!{terminator}
+						|&nbsp;&nbsp;!{attributes}!{itemname}!{terminator}
 					br
-					|&nbsp;&nbsp;// ...
+					|&nbsp;&nbsp;<span class="com">// ...</span>
 					br
-					|}
+					span.pun }

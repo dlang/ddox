@@ -60,7 +60,7 @@ shared static this()
 		 `BACKTICK`: "`",
 		 `DDOC_BACKQUOTED`: `$(D_INLINECODE $0)`,
 		 //`D_INLINECODE`: `<pre style="display:inline;" class="d_inline_code">$0</pre>`,
-		 `D_INLINECODE`: `<code class="prettyprint lang-d">$0</code>`,
+		 `D_INLINECODE`: `<code class="lang-d">$0</code>`,
 
 		 `DDOC` : `<html>
   <head>
@@ -450,11 +450,11 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						i = j;
 						break;
 					case CODE:
-						dst.put("<pre class=\"code\"><code class=\"prettyprint lang-d\">");
+						dst.put("<pre class=\"code\"><code class=\"lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
 						renderCodeLine(dst, lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context);
-						dst.put("\n</code></pre>\n");
+						dst.put("</code></pre>\n");
 						i = j+1;
 						break;
 				}
@@ -560,14 +560,15 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if( link.length ){
+				if (link.length) {
+					import ddox.highlight : highlightDCode;
 					if( link != "#" ){
 						dst.put("<a href=\"");
 						dst.put(link);
 						dst.put("\">");
 					}
-					if (!inCode) dst.put("<code class=\"prettyprint lang-d\">");
-					dst.put(ident);
+					if (!inCode) dst.put("<code class=\"lang-d\">");
+					dst.highlightDCode(ident, null);
 					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
 				} else {
@@ -585,34 +586,17 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 /// private
 private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 {
-	while( line.length > 0 ){
-		switch( line[0] ){
-			default:
-				dst.put(line[0]);
-				line = line[1 .. $];
-				break;
-			case '&': dst.put("&amp;"); line = line[1 .. $]; break;
-			case '<': dst.put("&lt;"); line = line[1 .. $]; break;
-			case '>': dst.put("&gt;"); line = line[1 .. $]; break;
-			case '.':
-				if (line.length > 1 && (line[1].isAlpha() || line[1] == '_'))
-					goto case;
-				else goto default;
-			case 'a': .. case 'z':
-			case 'A': .. case 'Z':
-			case '_':
-				auto ident = skipIdent(line);
-				auto link = context.lookupScopeSymbolLink(ident);
-				if( link.length && link != "#" ){
-					dst.put("<a href=\"");
-					dst.put(link);
-					dst.put("\">");
-					dst.put(ident);
-					dst.put("</a>");
-				} else dst.put(ident);
-				break;
-		}
-	}
+	import ddox.highlight : highlightDCode;
+	dst.highlightDCode(line, (string ident, scope void delegate() insert_ident) {
+		auto link = context.lookupScopeSymbolLink(ident);
+		if (link.length && link != "#") {
+			dst.put("<a href=\"");
+			dst.put(link);
+			dst.put("\">");
+			insert_ident();
+			dst.put("</a>");
+		} else insert_ident();
+	});
 }
 
 /// private
@@ -1031,25 +1015,25 @@ unittest {
 
 unittest {
 	auto src = "Testing `inline <code>`.";
-	auto dst = "Testing <code class=\"prettyprint lang-d\">inline &lt;code&gt;</code>.\n";
+	auto dst = "Testing <code class=\"lang-d\">inline &lt;code&gt;</code>.\n";
 	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
 	auto src = "Testing `inline $(CODE)`.";
-	auto dst = "Testing <code class=\"prettyprint lang-d\">inline $(CODE)</code>.\n";
+	auto dst = "Testing <code class=\"lang-d\">inline $(CODE)</code>.\n";
 	assert(formatDdocComment(src));
 }
 
 unittest {
 	auto src = "---\nthis is a `string`.\n---";
-	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"kwd\">this is </span><span class=\"pln\">a </span><span class=\"str\">`string`<wbr/></span><span class=\"pun\">.</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // test for properly removed indentation in code blocks
-	auto src = "  ---\n  this is a `string`.\n  ---";
-	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
+	auto src = "  ---\n  testing\n  ---";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pln\">testing</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -1119,13 +1103,13 @@ unittest { // more whitespace testing
 
 unittest { // escape in backtick code
 	auto src = "`<b>&amp;`";
-	auto dst = "<code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;</code>\n";
-	assert(formatDdocComment(src) == dst);
+	auto dst = "<code class=\"lang-d\">&lt;b&gt;&amp;amp;</code>\n";
+	assert(formatDdocComment(src) == dst,formatDdocComment(src) );
 }
 
 unittest { // escape in code blocks
 	auto src = "---\n<b>&amp;\n---";
-	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">&lt;b&gt;&amp;amp;\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 

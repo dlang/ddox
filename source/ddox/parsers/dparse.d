@@ -7,13 +7,11 @@
 */
 module ddox.parsers.dparse;
 
-version (Have_libdparse):
-
 import ddox.ddox;
 import ddox.entities;
-import dparse = std.d.parser;
-import dlex = std.d.lexer;
-import dformat = std.d.formatter;
+import dparse = dparse.parser;
+import dlex = dparse.lexer;
+import dformat = dparse.formatter;
 
 import std.algorithm;
 import std.conv;
@@ -151,7 +149,7 @@ private struct DParser
 		mod.members = parseDeclList(dmod.declarations, mod);
 	}
 
-	Declaration[] parseDeclList(dparse.Declaration[] decls, Entity parent)
+	Declaration[] parseDeclList(const(dparse.Declaration)[] decls, Entity parent)
 	{
 		DocGroup lastdoc;
 		Declaration[] ret;
@@ -171,7 +169,7 @@ private struct DParser
 		return ret;
 	}
 
-	Declaration[] parseDecl(dparse.Declaration decl, Entity parent, dparse.Attribute[] additional_attribs = null)
+	Declaration[] parseDecl(in dparse.Declaration decl, Entity parent, const(dparse.Attribute)[] additional_attribs = null)
 	{
 		if (auto ad = decl.attributeDeclaration) {
 			additional_attribs ~= decl.attributes;
@@ -335,7 +333,7 @@ private struct DParser
 		return ret;
 	}
 
-	void addAttributes(Declaration decl, dparse.Attribute[] attrs)
+	void addAttributes(Declaration decl, const(dparse.Attribute)[] attrs)
 	{
 		return addAttributes(decl, attrs.map!(att => formatNode(att)).array);
 	}
@@ -356,7 +354,7 @@ private struct DParser
 		}
 	}
 
-	VariableDeclaration[] parseParameters(dparse.Parameters dparams, FunctionDeclaration parent)
+	VariableDeclaration[] parseParameters(in dparse.Parameters dparams, FunctionDeclaration parent)
 	{
 		VariableDeclaration[] ret;
 		foreach (p; dparams.parameters) {
@@ -368,7 +366,7 @@ private struct DParser
 		return ret;
 	}
 
-	VariableDeclaration parseParameter(dparse.Parameter dparam, FunctionDeclaration parent)
+	VariableDeclaration parseParameter(in dparse.Parameter dparam, FunctionDeclaration parent)
 	{
 		auto ret = new VariableDeclaration(parent, dparam.name.text.idup);
 		ret.type = parseType(dparam.type, parent);
@@ -381,7 +379,7 @@ private struct DParser
 		return ret;
 	}
 
-	Type parseType(dparse.Type type, Entity scope_)
+	Type parseType(in dparse.Type type, Entity scope_)
 	{
 		auto ret = parseType(type.type2, scope_);
 		foreach (tc; type.typeConstructors)
@@ -405,7 +403,7 @@ private struct DParser
 		return ret;
 	}
 
-	Type parseType(dparse.Type2 type, Entity scope_)
+	Type parseType(in dparse.Type2 type, Entity scope_)
 	{
 		auto ret = new Type;
 		if (type.builtinType) {

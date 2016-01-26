@@ -8,9 +8,8 @@ html
 		link(rel="stylesheet", type="text/css", href="#{info.linkTo(null)}styles/ddox.css")
 		link(rel="stylesheet", href="#{info.linkTo(null)}prettify/prettify.css", type="text/css")
 		script(type="text/javascript", src="#{info.linkTo(null)}scripts/jquery.js")/**/
-		script(type="text/javascript", src="#{info.linkTo(null)}prettify/prettify.js")/**/
 		script(type="text/javascript", src="#{info.linkTo(null)}scripts/ddox.js")/**/
-	body(onload="prettyPrint(); setupDdox();")
+	body(onload="setupDdox();")
 		nav#main-nav
 			block navigation
 
