@@ -560,14 +560,15 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if( link.length ){
+				if (link.length) {
+					import ddox.highlight : highlightDCode;
 					if( link != "#" ){
 						dst.put("<a href=\"");
 						dst.put(link);
 						dst.put("\">");
 					}
 					if (!inCode) dst.put("<code class=\"lang-d\">");
-					dst.put(ident);
+					dst.highlightDCode(ident, null);
 					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
 				} else {
@@ -585,7 +586,7 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 /// private
 private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 {
-	import ddox.highlight;
+	import ddox.highlight : highlightDCode;
 	dst.highlightDCode(line, (string ident, scope void delegate() insert_ident) {
 		auto link = context.lookupScopeSymbolLink(ident);
 		if (link.length && link != "#") {
