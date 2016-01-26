@@ -1,2 +1,3 @@
 language: d
 sudo: false
+script: ./travis-ci.sh

@@ -1,3 +1,6 @@
 .dub
 /ddox
 /__*
+node_modules
+test/screenshots/*.diff.png
+test/screenshots/*.fail.png
