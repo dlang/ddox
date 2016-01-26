@@ -454,7 +454,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
 						renderCodeLine(dst, lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context);
-						dst.put("\n</code></pre>\n");
+						dst.put("</code></pre>\n");
 						i = j+1;
 						break;
 				}
@@ -1027,13 +1027,13 @@ unittest {
 
 unittest {
 	auto src = "---\nthis is a `string`.\n---";
-	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"kwd\">this is </span><span class=\"pln\">a </span><span class=\"str\">`string`<wbr/></span><span class=\"pun\">.</span>\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"kwd\">this is </span><span class=\"pln\">a </span><span class=\"str\">`string`<wbr/></span><span class=\"pun\">.</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // test for properly removed indentation in code blocks
 	auto src = "  ---\n  testing\n  ---";
-	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pln\">testing</span>\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pln\">testing</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -1109,7 +1109,7 @@ unittest { // escape in backtick code
 
 unittest { // escape in code blocks
 	auto src = "---\n<b>&amp;\n---";
-	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span>\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
