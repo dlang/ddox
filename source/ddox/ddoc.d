@@ -208,9 +208,6 @@ class DdocComment {
 		if (text.strip.icmp("ditto") == 0) { m_isDitto = true; return; }
 		if (text.strip.icmp("private") == 0) { m_isPrivate = true; return; }
 
-
-//		parseMacros(m_macros, context.defaultMacroDefinitions);
-
 		auto lines = splitLines(text);
 		if( !lines.length ) return;
 
@@ -286,27 +283,31 @@ class DdocComment {
 			}
 			i = j;
 		}
-
-//		parseMacros(m_macros, context.overrideMacroDefinitions);
 	}
 
 	@property bool isDitto() const { return m_isDitto; }
 	@property bool isPrivate() const { return m_isPrivate; }
 
+	/// The macros contained in the "Macros" section (if any)
+	@property const(string[string]) macros() const { return m_macros; }
+
 	bool hasSection(string name) const { return m_sections.canFind!(s => s.name == name); }
 
 	void renderSectionR(R)(ref R dst, DdocContext context, string name, int hlevel = 2)
 	{
-		foreach (s; m_sections)
-			if (s.name == name)
-				parseSection(dst, name, s.lines, context, hlevel, m_macros);
+		renderSectionsR(dst, context, s => s == name, hlevel);
 	}
 
-	void renderSectionsR(R)(ref R dst, DdocContext context, bool delegate(string) display_section, int hlevel)
+	void renderSectionsR(R)(ref R dst, DdocContext context, scope bool delegate(string) display_section, int hlevel)
 	{
+		string[string] allmacros;
+		foreach (k, v; context.defaultMacroDefinitions) allmacros[k] = v;
+		foreach (k, v; m_macros) allmacros[k] = v;
+		foreach (k, v; context.overrideMacroDefinitions) allmacros[k] = v;
+
 		foreach (s; m_sections) {
 			if (display_section && !display_section(s.name)) continue;
-			parseSection(dst, s.name, s.lines, context, hlevel, m_macros);
+			parseSection(dst, s.name, s.lines, context, hlevel, allmacros);
 		}
 	}
 
@@ -331,10 +332,10 @@ class DdocComment {
 */
 interface DdocContext {
 	/// A line array with macro definitions
-	@property string[] defaultMacroDefinitions();
+	@property string[string] defaultMacroDefinitions();
 
 	/// Line array with macro definitions that take precedence over local macros
-	@property string[] overrideMacroDefinitions();
+	@property string[string] overrideMacroDefinitions();
 
 	/// Looks up a symbol in the scope of the documented element and returns a link to it.
 	string lookupScopeSymbolLink(string name);
@@ -342,8 +343,8 @@ interface DdocContext {
 
 
 private class BareContext : DdocContext {
-	@property string[] defaultMacroDefinitions() { return null; }
-	@property string[] overrideMacroDefinitions() { return null; }
+	@property string[string] defaultMacroDefinitions() { return null; }
+	@property string[string] overrideMacroDefinitions() { return null; }
 	string lookupScopeSymbolLink(string name) { return null; }
 }
 
