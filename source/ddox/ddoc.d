@@ -565,7 +565,7 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 				line = line[idx .. $];
 				break;
 			case '.':
-				if (line.length > 1 && (line[1].isAlpha || line[1] == '_')) goto case;
+				if (line.length > 1 && (line[1 .. $].front.isAlpha || line[1] == '_')) goto case;
 				else goto default;
 			case 'a': .. case 'z':
 			case 'A': .. case 'Z':
@@ -1137,4 +1137,10 @@ unittest { // #117 underscore identifiers as macro param
 	auto src = "$(M __foo) __foo `__foo` $(D_CODE __foo)\nMacros:\nM=http://$1.com";
 	auto dst = "http://_foo.com _foo <code class=\"lang-d\">__foo</code> <pre class=\"d_code\">_foo</pre>\n";
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #109 dot followed by unicode character causes infinite loop
+	auto src = ".”";
+	auto dst = ".”\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
 }
