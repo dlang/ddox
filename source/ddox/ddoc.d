@@ -422,7 +422,14 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	for (int i = 0; i < lines.length; i++) {
 		int lntype = getLineType(i);
 		if (lntype == CODE) i = skipCodeBlock(i);
-		else lines[i] = lines[i].highlightAndCrossLink(context);
+		else if (sect == "Params") {
+			auto idx = lines[i].indexOf('=');
+			if (idx > 0 && isIdent(lines[i][0 .. idx].strip)) {
+				lines[i] = lines[i][0 .. idx+1] ~ lines[i][idx+1 .. $].highlightAndCrossLink(context);
+			} else {
+				lines[i] = lines[i].highlightAndCrossLink(context);
+			}
+		} else lines[i] = lines[i].highlightAndCrossLink(context);
 	}
 	lines = renderMacros(lines.join("\n").stripDD, context, macros).splitLines();
 
