@@ -1,0 +1,39 @@
+[
+ {
+  "name" : "test",
+  "kind" : "module",
+  "file" : "test.d",
+  "comment" : "Macros:\nMODULE_MACRO=module macro\n",
+  "members" : [
+   {
+    "name" : "f",
+    "kind" : "function",
+    "comment" : "$(MODULE_MACRO)\n",
+    "line" : 8,
+    "char" : 6,
+    "deco" : "FZv",
+    "endline" : 8,
+    "endchar" : 11
+   },
+   {
+    "name" : "S",
+    "kind" : "struct",
+    "comment" : "Macros:\nSTRUCT_MACRO=struct macro\n",
+    "line" : 14,
+    "char" : 1,
+    "members" : [
+     {
+      "name" : "g",
+      "kind" : "function",
+      "comment" : "$(MODULE_MACRO) $(STRUCT_MACRO)\n",
+      "line" : 17,
+      "char" : 10,
+      "deco" : "FZv",
+      "endline" : 17,
+      "endchar" : 15
+     }
+    ]
+   }
+  ]
+ }
+]
