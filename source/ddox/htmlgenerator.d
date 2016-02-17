@@ -216,6 +216,7 @@ class DocPageInfo {
 	string formatType(Type tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
+		// TODO: memoize the DocGroupContext
 		return group.comment.renderSections(new DocGroupContext(group, linkTo), display_section, hlevel);
 	}
 }

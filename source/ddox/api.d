@@ -24,17 +24,35 @@ class DocGroupContext : DdocContext {
 	private {
 		DocGroup m_group;
 		string delegate(Entity ent) m_linkTo;
+		string[string] m_inheritedMacros;
 	}
 
 	this(DocGroup grp, string delegate(Entity ent) link_to)
 	{
 		m_group = grp;
 		m_linkTo = link_to;
+
+		// inherit macros of parent scopes
+		if (grp.members.length > 0) {
+			auto e = grp.members[0];
+			while (true) {
+				if (cast(Module)e) break;
+				e = e.parent;
+				if (!e) break;
+
+				//auto comment = e.docGroup.comment; // TODO: make this work!
+				auto comment = new DdocComment(e.docGroup.text);
+				foreach (k, v; comment.macros)
+					if (k !in m_inheritedMacros)
+						m_inheritedMacros[k] = v;
+			}
+		}
 	}
 
 	@property string docText() { return m_group.text; }
-	@property string[] overrideMacroDefinitions() { return null; }
-	@property string[] defaultMacroDefinitions() { return null; }
+	@property string[string] overrideMacroDefinitions() { return null; }
+	@property string[string] defaultMacroDefinitions() { return m_inheritedMacros; }
+
 	string lookupScopeSymbolLink(string name)
 	{
 		if (name == "this") return null;
@@ -87,6 +105,7 @@ class DocGroupContext : DdocContext {
 }
 
 
+///
 string getFunctionName(Json proto)
 {
 	auto n = proto.name.get!string;
@@ -97,6 +116,11 @@ string getFunctionName(Json proto)
 		return tn ~ "." ~ n;
 	}
 	return n;
+}
+
+///
+unittest {
+	assert(getFunctionName(Json(["name": Json("test")])) == "test");
 }
 
 DocGroup[] docGroups(Declaration[] items)
