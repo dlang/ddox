@@ -139,7 +139,7 @@ private struct Parser
 		Declaration ret;
 
 		// DMD outputs templates with the wrong kind sometimes
-		if( json.name.get!string().canFind('(') ){
+		if (json.name.get!string().canFind('(') && json.kind != "mixin") {
 			ret = parseTemplateDecl(json, parent);
 		} else {
 			switch( json.kind.get!string ){
@@ -151,7 +151,7 @@ private struct Parser
 					// TODO: use for symbol resolving
 					return null;
 				case "destructor": return null;
-				case "mixin": return null; // TODO: support documented mixins
+				case "mixin": return null;
 				case "alias":
 					ret = parseAliasDecl(json, parent);
 					break;
