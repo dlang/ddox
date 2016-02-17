@@ -34,13 +34,16 @@ int ddoxMain(string[] args)
 		return help ? 0 : 1;
 	}
 
-	switch( args[1] ){
-		default: showUsage(args); return 1;
-		case "generate-html": return cmdGenerateHtml(args);
-		case "serve-html": return cmdServeHtml(args);
-		case "filter": return cmdFilterDocs(args);
-		case "serve-test": return cmdServeTest(args);
-	}
+	if( args[1] == "generate-html" && args.length >= 4 )
+		return cmdGenerateHtml(args);
+	if( args[1] == "serve-html" && args.length >= 3 )
+		return cmdServeHtml(args);
+	if( args[1] == "filter" && args.length >= 3 )
+		return cmdFilterDocs(args);
+	if( args[1] == "serve-test" && args.length >= 3 )
+		return cmdServeTest(args);
+	showUsage(args);
+	return 1;
 }
 
 int cmdGenerateHtml(string[] args)
