@@ -97,6 +97,7 @@ class Entity {
 
 	final T lookup(T = Entity)(string qualified_name, bool recurse = true)
 	{
+		assert(qualified_name.length > 0, "Looking up empty name.");
 		auto parts = split(qualified_name, ".");
 		Entity e = this;
 		foreach( i, p; parts ){
@@ -120,6 +121,7 @@ class Entity {
 
 	final T[] lookupAll(T = Entity)(string qualified_name)
 	{
+		assert(qualified_name.length > 0, "Looking up empty name.");
 		auto parts = split(qualified_name, ".");
 		Entity e = this;
 		foreach( i, p; parts ){

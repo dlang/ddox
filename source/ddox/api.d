@@ -55,12 +55,14 @@ class DocGroupContext : DdocContext {
 
 	string lookupScopeSymbolLink(string name)
 	{
+		assert(name.length > 0, "Empty identifier!");
 		if (name == "this") return null;
 
 		bool is_global = false;
 		if (name.startsWith(".")) {
 			is_global = true;
 			name = name[1 .. $];
+			assert(name.length > 0, "Missing identifier after dot!");
 		}
 		
 		foreach( def; m_group.members ){
