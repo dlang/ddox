@@ -422,7 +422,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	for (int i = 0; i < lines.length; i++) {
 		int lntype = getLineType(i);
 		if (lntype == CODE) i = skipCodeBlock(i);
-		else lines[i] = replaceBacktickCode(lines[i]);
+		else lines[i] = lines[i].highlightAndCrossLink(context);
 	}
 	lines = renderMacros(lines.join("\n").stripDD, context, macros).splitLines();
 
@@ -500,11 +500,16 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			putFooter();
 			break;
 	}
-
 }
 
-/// private
-private void renderTextLine(R)(ref R dst, string line, DdocContext context)
+private string highlightAndCrossLink(string line, DdocContext context)
+{
+	auto dst = appender!string;
+	highlightAndCrossLink(dst, line, context);
+	return dst.data;
+}
+
+private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext context)
 {
 	size_t inCode;
 	while( line.length > 0 ){
@@ -521,15 +526,6 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 					--inCode;
 				dst.put(res);
 				break;
-			case '>':
-				dst.put("&gt;");
-				line.popFront();
-				break;
-			case '&':
-				if (line.length >= 2 && (line[1].isAlpha || line[1] == '#')) dst.put('&');
-				else dst.put("&amp;");
-				line.popFront();
-				break;
 			case '_':
 				line = line[1 .. $];
 				auto ident = skipIdent(line);
@@ -541,6 +537,24 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 						dst.put(ident);
 				}
 				else dst.put('_');
+				break;
+			case '`':
+				line.popFront();
+				auto idx = line.indexOf('`');
+				if (idx < 0) break;
+				dst.put("$(DDOC_BACKQUOTED ");
+				foreach (i; 0 .. idx) {
+					switch (line[i]) {
+						default: dst.put(line[i]); break;
+						case '&': dst.put("&amp;"); break;
+						case '<': dst.put("&lt;"); break;
+						case '>': dst.put("&gt;"); break;
+						case '(': dst.put("$(LPAREN)"); break;
+						case ')': dst.put("$(RPAREN)"); break;
+					}
+				}
+				dst.put(')');
+				line = line[idx .. $];
 				break;
 			case '.':
 				if (line.length > 1 && (line[1].isAlpha || line[1] == '_')) goto case;
@@ -578,6 +592,31 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 					else
 						dst.put(ident);
 				}
+				break;
+		}
+	}
+}
+
+/// private
+private void renderTextLine(R)(ref R dst, string line, DdocContext context)
+{
+	while( line.length > 0 ){
+		switch( line[0] ){
+			default:
+				dst.put(line[0]);
+				line = line[1 .. $];
+				break;
+			case '<':
+				dst.put(skipHtmlTag(line));
+				break;
+			case '>':
+				dst.put("&gt;");
+				line.popFront();
+				break;
+			case '&':
+				if (line.length >= 2 && (line[1].isAlpha || line[1] == '#')) dst.put('&');
+				else dst.put("&amp;");
+				line.popFront();
 				break;
 		}
 	}
@@ -740,39 +779,6 @@ private string[] splitParams(string ln)
 	}
 	if( i > start ) ret ~= ln[start .. i];
 	return ret;
-}
-
-private string replaceBacktickCode(string line)
-{
-	auto ret = appender!string;
-
-	while (line.length > 0) {
-		auto idx = line.indexOf('`');
-		if (idx < 0) break;
-
-		auto eidx = line[idx+1 .. $].indexOf('`');
-		if (eidx < 0) break;
-		eidx += idx+1;
-
-		ret.put(line[0 .. idx]);
-		ret.put("$(DDOC_BACKQUOTED ");
-		foreach (i; idx+1 .. eidx) {
-			switch (line[i]) {
-				default: ret.put(line[i]); break;
-				case '&': ret.put("&amp;"); break;
-				case '<': ret.put("&lt;"); break;
-				case '>': ret.put("&gt;"); break;
-				case '(': ret.put("$(LPAREN)"); break;
-				case ')': ret.put("$(RPAREN)"); break;
-			}
-		}
-		ret.put(")");
-		line = line[eidx+1 .. $];
-	}
-
-	if (ret.data.length == 0) return line;
-	ret.put(line);
-	return ret.data;
 }
 
 private string skipHtmlTag(ref string ln)
@@ -1104,7 +1110,7 @@ unittest { // more whitespace testing
 unittest { // escape in backtick code
 	auto src = "`<b>&amp;`";
 	auto dst = "<code class=\"lang-d\">&lt;b&gt;&amp;amp;</code>\n";
-	assert(formatDdocComment(src) == dst,formatDdocComment(src) );
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // escape in code blocks
@@ -1116,5 +1122,11 @@ unittest { // escape in code blocks
 unittest { // #81 empty first macro arguments
 	auto src = "$(BOOKTABLE,\ntest)\nMacros:\nBOOKTABLE=<table $1>$+</table>";
 	auto dst = "<table >test</table>\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #117 underscore identifiers as macro param
+	auto src = "$(M __foo) __foo `__foo` $(D_CODE __foo)\nMacros:\nM=http://$1.com";
+	auto dst = "http://_foo.com _foo <code class=\"lang-d\">__foo</code> <pre class=\"d_code\">_foo</pre>\n";
+	assert(formatDdocComment(src) == dst);
 }
