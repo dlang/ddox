@@ -66,7 +66,8 @@ private struct Parser
 		}
 
 		foreach (t; m_primTypes) {
-			auto decl = t[1].lookup!Declaration(t[0].typeName);
+			Declaration decl;
+			if (t[0].typeName.length) decl = t[1].lookup!Declaration(t[0].typeName);
 			if (!decl || !isTypeDecl(decl)) {
 				auto pd = t[0].typeName in m_typeMap;
 				if (pd) decl = *pd;
