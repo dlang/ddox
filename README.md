@@ -65,3 +65,9 @@ The `"-ddoxFilterArgs"` field in `dub.json` (resp. `x:ddoxFilterArgs` in `dub.sd
 Quickly serving the documentation on a local HTTP server, which is usually faster than writing out all HTML files to disk, is also possible:
 
 	dub run -b ddox
+
+
+DDOX specific Ddoc macros
+-------------------------
+
+Apart from the standard set of predefined macros, DDOX defines a macro `DDOX_ROOT_DIR`, which contains the relative path to the root of the documentation hierarchy (ending with a slash). It can be used to link to resources that reside in a fixed location within the same directory tree.

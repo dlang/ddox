@@ -32,6 +32,9 @@ class DocGroupContext : DdocContext {
 		m_group = grp;
 		m_linkTo = link_to;
 
+		// Path to the root of the generated docs (ends with a '/')
+		m_inheritedMacros["DDOX_ROOT_DIR"] = link_to(null);
+
 		// inherit macros of parent scopes
 		if (grp.members.length > 0) {
 			auto e = grp.members[0];
