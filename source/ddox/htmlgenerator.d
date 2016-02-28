@@ -292,7 +292,7 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.rootPackage = root_package;
 	info.node = root_package;
 
-	dst.parseDietFile!("ddox.overview.dt", req, info);
+	dst.compileDietFile!("ddox.overview.dt", req, info);
 }
 
 void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
@@ -305,7 +305,7 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.node = mod;
 	info.docGroups = null;
 
-	dst.parseDietFile!("ddox.module.dt", req, info);
+	dst.compileDietFile!("ddox.module.dt", req, info);
 }
 
 void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
@@ -322,7 +322,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, string
 	sort!((a, b) => cmpKind(a.members[0], b.members[0]))(info.docGroups);
 	info.nestedName = nested_name;
 
-	dst.parseDietFile!("ddox.docpage.dt", req, info);
+	dst.compileDietFile!("ddox.docpage.dt", req, info);
 }
 
 private bool cmpKind(Entity a, Entity b)
