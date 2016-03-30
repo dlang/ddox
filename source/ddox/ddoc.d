@@ -1142,5 +1142,18 @@ unittest { // #117 underscore identifiers as macro param
 unittest { // #109 dot followed by unicode character causes infinite loop
 	auto src = ".”";
 	auto dst = ".”\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #119 dot followed by space causes assertion
+	static class Ctx : BareContext {
+		override string lookupScopeSymbolLink(string name) {
+			writefln("IDENT: %s", name);
+			assert(name.length > 0 && name != ".");
+			return null;
+		}
+	}
+	auto src = "---\n. writeln();\n---";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><wbr/><span class=\"pun\">. </span><span class=\"pln\">writeln</span><span class=\"pun\">();</span></code></pre>\n</section>\n";
+	assert(formatDdocComment(src, new Ctx) == dst);
 }

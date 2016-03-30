@@ -69,6 +69,7 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		isBasicType, isKeyword, isStringLiteral, isNumberLiteral,
 		isOperator, str, tok;
 	import std.algorithm : endsWith;
+	import std.string : stripRight;
 
 	StringCache cache = StringCache(1024 * 4);
 
@@ -97,19 +98,36 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 
 
 	auto symbol = appender!string;
+	auto verbatim_symbol = appender!string;
+
+	void flushSymbol()
+	{
+		string vsym = verbatim_symbol.data.stripRight();
+		ident_render(symbol.data, { highlightDCodeImpl(dst, vsym, null, last_class); });
+		if (vsym.length < verbatim_symbol.data.length)
+			writeWithClass(verbatim_symbol.data[vsym.length .. $], last_class.length ? last_class : "pln");
+		symbol = appender!string();
+		verbatim_symbol = appender!string();
+	}
 
 	foreach (t; DLexer(cast(ubyte[])code, config, &cache)) {
+		if (t.type == tok!"whitespace") {
+			if (symbol.data.length) verbatim_symbol ~= t.text;
+			else writeWithClass(t.text, last_class.length ? last_class : "pln");
+			continue;
+		}
+
+
 		if (ident_render) {
 			if (t.type == tok!"." && !symbol.data.endsWith(".")) {
 				symbol ~= ".";
+				verbatim_symbol ~= ".";
 				continue;
 			} else if (t.type == tok!"identifier" && (symbol.data.empty || symbol.data.endsWith("."))) {
 				symbol ~= t.text;
+				verbatim_symbol ~= t.text;
 				continue;
-			} else if (symbol.data.length) {
-				ident_render(symbol.data, { highlightDCodeImpl(dst, symbol.data, null, last_class); });
-				symbol = appender!string();
-			}
+			} else if (symbol.data.length) flushSymbol();
 		}
 
 		if (t.type == tok!".") dst.put("<wbr/>");
@@ -128,8 +146,7 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		else writeWithClass(t.text, "pun");
 	}
 
-	if (symbol.data.length)
-		ident_render(symbol.data, { highlightDCodeImpl(dst, symbol.data, null, last_class); });
+	if (symbol.data.length) flushSymbol();
 }
 
 
