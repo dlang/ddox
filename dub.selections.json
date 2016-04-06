@@ -5,7 +5,7 @@
 		"libev": "5.0.0+4.04",
 		"openssl": "1.1.4+1.0.1g",
 		"experimental_allocator": "2.70.0-b1",
-		"libdparse": "0.5.0",
+		"libdparse": "0.6.0",
 		"memutils": "0.4.4",
 		"vibe-d": "0.7.27+commit.1.g08b9f8f",
 		"hyphenate": "1.1.1",
