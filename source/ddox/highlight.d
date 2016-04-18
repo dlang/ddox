@@ -103,7 +103,10 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 	void flushSymbol()
 	{
 		string vsym = verbatim_symbol.data.stripRight();
-		ident_render(symbol.data, { highlightDCodeImpl(dst, vsym, null, last_class); });
+		if (vsym == ".") {
+			dst.put("<wbr/>");
+			writeWithClass(".", "pun");
+		} else ident_render(symbol.data, { highlightDCodeImpl(dst, vsym, null, last_class); });
 		if (vsym.length < verbatim_symbol.data.length)
 			writeWithClass(verbatim_symbol.data[vsym.length .. $], last_class.length ? last_class : "pln");
 		symbol = appender!string();

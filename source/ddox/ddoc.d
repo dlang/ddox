@@ -1157,3 +1157,16 @@ unittest { // #119 dot followed by space causes assertion
 	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><wbr/><span class=\"pun\">. </span><span class=\"pln\">writeln</span><span class=\"pun\">();</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src, new Ctx) == dst);
 }
+
+unittest { // dot followed by non-identifier
+	static class Ctx : BareContext {
+		override string lookupScopeSymbolLink(string name) {
+			writefln("IDENT: %s", name);
+			assert(name.length > 0 && name != ".");
+			return null;
+		}
+	}
+	auto src = "---\n.()\n---";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><wbr/><span class=\"pun\">.()</span></code></pre>\n</section>\n";
+	assert(formatDdocComment(src, new Ctx) == dst);
+}
