@@ -1,14 +1,14 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"libevent": "2.0.1+2.0.16",
-		"libev": "5.0.0+4.04",
-		"openssl": "1.1.4+1.0.1g",
 		"experimental_allocator": "2.70.0-b1",
-		"libdparse": "0.6.0",
-		"memutils": "0.4.4",
-		"vibe-d": "0.7.27+commit.1.g08b9f8f",
 		"hyphenate": "1.1.1",
-		"libasync": "0.7.8"
+		"libasync": "0.7.9",
+		"libdparse": "0.6.0",
+		"libev": "5.0.0+4.04",
+		"libevent": "2.0.1+2.0.16",
+		"memutils": "0.4.5",
+		"openssl": "1.1.4+1.0.1g",
+		"vibe-d": "0.7.28"
 	}
 }
