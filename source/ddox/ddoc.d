@@ -853,6 +853,8 @@ private string skipUrl(ref string ln)
 
 private string skipIdent(ref string str)
 {
+	static import std.uni;
+
 	string strcopy = str;
 
 	if (str.length >= 2 && str[0] == '.' && (str[1].isAlpha || str[1] == '_'))

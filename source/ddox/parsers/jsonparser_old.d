@@ -532,6 +532,8 @@ private struct Parser
 	
 	string[] tokenizeDSource(string dsource_)
 	{
+		static import std.uni;
+
 		static immutable dstring[] tokens = [
 			"/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 			"-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=",
@@ -626,6 +628,8 @@ private struct Parser
 
 	bool isIdent(string str)
 	{
+		static import std.uni;
+
 		if( str.length < 1 ) return false;
 		foreach( i, dchar ch; str ){
 			if( ch == '_' || std.uni.isAlpha(ch) ) continue;

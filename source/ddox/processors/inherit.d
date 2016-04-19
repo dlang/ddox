@@ -10,6 +10,9 @@ module ddox.processors.inherit;
 import ddox.api;
 import ddox.entities;
 
+import std.algorithm : map;
+
+
 void inheritDocs(Package root)
 {
 	bool[CompositeTypeDeclaration] visited;

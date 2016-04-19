@@ -11,6 +11,7 @@ import ddox.api;
 import ddox.entities;
 import ddox.settings;
 
+import std.algorithm : canFind, countUntil, map;
 import std.array;
 import std.digest.md;
 import std.format : formattedWrite;
