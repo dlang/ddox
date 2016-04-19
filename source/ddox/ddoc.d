@@ -519,7 +519,7 @@ private string highlightAndCrossLink(string line, DdocContext context)
 
 private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext context)
 {
-	size_t inCode;
+	int inCode;
 	while( line.length > 0 ){
 		switch( line[0] ){
 			default:
@@ -546,23 +546,32 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 				}
 				else dst.put('_');
 				break;
+			case '$':
+				if (line.startsWith("$(D ")) {
+					line = line[4 .. $];
+					int l = 1;
+					size_t cidx;
+					for (cidx = 0; cidx < line.length && l > 0; cidx++) {
+						if (line[cidx] == '(') l++;
+						else if (line[cidx] == ')') l--;
+					}
+					dst.put("<code class=\"lang-d\">");
+					dst.renderCodeLine(line[0 .. cidx-1], context);
+					dst.put("</code>");
+					line = line[cidx .. $];
+				} else {
+					dst.put(line[0]);
+					line = line[1 .. $];
+				}
+				break;
 			case '`':
 				line.popFront();
 				auto idx = line.indexOf('`');
 				if (idx < 0) break;
-				dst.put("$(DDOC_BACKQUOTED ");
-				foreach (i; 0 .. idx) {
-					switch (line[i]) {
-						default: dst.put(line[i]); break;
-						case '&': dst.put("&amp;"); break;
-						case '<': dst.put("&lt;"); break;
-						case '>': dst.put("&gt;"); break;
-						case '(': dst.put("$(LPAREN)"); break;
-						case ')': dst.put("$(RPAREN)"); break;
-					}
-				}
-				dst.put(')');
-				line = line[idx .. $];
+				dst.put("<code class=\"lang-d\">");
+				dst.renderCodeLine(line[0 .. idx], context);
+				dst.put("</code>");
+				line = line[idx+1 .. $];
 				break;
 			case '.':
 				if (line.length > 1 && (line[1 .. $].front.isAlpha || line[1] == '_')) goto case;
@@ -634,15 +643,15 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 {
 	import ddox.highlight : highlightDCode;
-	dst.highlightDCode(line, (string ident, scope void delegate() insert_ident) {
+	dst.highlightDCode(line, (string ident, scope void delegate(bool) insert_ident) {
 		auto link = context.lookupScopeSymbolLink(ident);
 		if (link.length && link != "#") {
 			dst.put("<a href=\"");
 			dst.put(link);
 			dst.put("\">");
-			insert_ident();
+			insert_ident(true);
 			dst.put("</a>");
-		} else insert_ident();
+		} else insert_ident(false);
 	});
 }
 
@@ -1029,8 +1038,8 @@ unittest {
 
 unittest {
 	auto src = "Testing `inline <code>`.";
-	auto dst = "Testing <code class=\"lang-d\">inline &lt;code&gt;</code>.\n";
-	assert(formatDdocComment(src) == dst);
+	auto dst = "Testing <code class=\"lang-d\"><span class=\"pln\">inline </span><span class=\"pun\">&lt;</span><span class=\"pln\">code</span><span class=\"pun\">&gt;</span></code>.\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
 }
 
 unittest {
@@ -1117,7 +1126,7 @@ unittest { // more whitespace testing
 
 unittest { // escape in backtick code
 	auto src = "`<b>&amp;`";
-	auto dst = "<code class=\"lang-d\">&lt;b&gt;&amp;amp;</code>\n";
+	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pln\">b</span><span class=\"pun\">&gt;&amp;</span><span class=\"pln\">amp</span><span class=\"pun\">;</span></code>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -1135,7 +1144,7 @@ unittest { // #81 empty first macro arguments
 
 unittest { // #117 underscore identifiers as macro param
 	auto src = "$(M __foo) __foo `__foo` $(D_CODE __foo)\nMacros:\nM=http://$1.com";
-	auto dst = "http://_foo.com _foo <code class=\"lang-d\">__foo</code> <pre class=\"d_code\">_foo</pre>\n";
+	auto dst = "http://_foo.com _foo <code class=\"lang-d\"><span class=\"pln\">__foo</span></code> <pre class=\"d_code\">_foo</pre>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -1168,5 +1177,23 @@ unittest { // dot followed by non-identifier
 	}
 	auto src = "---\n.()\n---";
 	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><wbr/><span class=\"pun\">.()</span></code></pre>\n</section>\n";
+	assert(formatDdocComment(src, new Ctx) == dst);
+}
+
+
+unittest { // X-REF
+	static class Ctx : BareContext {
+		override string lookupScopeSymbolLink(string name) {
+			if (name == "foo") return "foo.html";
+			else return null;
+		}
+	}
+	auto src = "`foo` `bar` $(D foo) $(D bar)\n\n---\nfoo bar\n---";
+	auto dst = "<code class=\"lang-d\"><a href=\"foo.html\"><span class=\"pln\">foo</span></a></code> "
+		~ "<code class=\"lang-d\"><span class=\"pln\">bar</span></code> "
+		~ "<code class=\"lang-d\"><a href=\"foo.html\"><span class=\"pln\">foo</span></a></code> "
+		~ "<code class=\"lang-d\"><span class=\"pln\">bar</span></code>\n"
+		~ "<section><pre class=\"code\"><code class=\"lang-d\"><a href=\"foo.html\"><span class=\"pln\">foo</span></a>"
+		~ "<span class=\"pln\"> bar</span></code></pre>\n</section>\n";
 	assert(formatDdocComment(src, new Ctx) == dst);
 }

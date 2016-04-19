@@ -106,7 +106,17 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		if (vsym == ".") {
 			dst.put("<wbr/>");
 			writeWithClass(".", "pun");
-		} else ident_render(symbol.data, { highlightDCodeImpl(dst, vsym, null, last_class); });
+		} else {
+			ident_render(symbol.data, (nested) {
+				if (nested) {
+					if (last_class.length) dst.put("</span>");
+					last_class = null;
+					string internal_class;
+					highlightDCodeImpl(dst, vsym, null, internal_class);
+					if (internal_class.length) dst.put("</span>");
+				} else highlightDCodeImpl(dst, vsym, null, last_class);
+			});
+		}
 		if (vsym.length < verbatim_symbol.data.length)
 			writeWithClass(verbatim_symbol.data[vsym.length .. $], last_class.length ? last_class : "pln");
 		symbol = appender!string();
@@ -153,7 +163,7 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 }
 
 
-alias IdentifierRenderCallback = void delegate(string ident, scope void delegate() insert_ident);
+alias IdentifierRenderCallback = void delegate(string ident, scope void delegate(bool) insert_ident);
 
 private bool isCamelCase(string text)
 {
