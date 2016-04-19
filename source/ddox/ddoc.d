@@ -746,7 +746,15 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			auto tmp = appender!string;
 			renderMacros(tmp, "$0", context, macros, args, callstack);
 			dst.put("<code class=\"lang-d\">");
-			dst.renderCodeLine(tmp.data, context);
+			string c = tmp.data;
+			while (c.length) {
+				auto idx = c.indexOf('<');
+				if (idx > 0) dst.renderCodeLine(c[0 .. idx], context);
+				if (idx < 0) break;
+				c = c[idx .. $];
+				dst.put(skipHtmlTag(c));
+			}
+			if (c.length > 0) dst.renderCodeLine(c, context);
 			dst.put("</code>");
 		} else if (pm) {
 			logTrace("MACRO %s: %s", mname, *pm);
@@ -1189,5 +1197,11 @@ unittest { // X-REF
 unittest { // nested macro in $(D ...)
 	auto src = "$(D $(NOP foo))\n\nMacros: NOP: $0";
 	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n<section></section>\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+}
+
+unittest { // nested $(D $(D case)) (do not escape HTML tags)
+	auto src = "$(D $(D foo))";
+	auto dst = "<code class=\"lang-d\"><code class=\"lang-d\"><span class=\"pln\"><span class=\"pln\">foo</span></span></code></code>\n";
 	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
 }
