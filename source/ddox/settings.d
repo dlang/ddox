@@ -37,7 +37,6 @@ class DdoxSettings {
 	string[] packageOrder;
 	bool inheritDocumentation = true;
 	bool mergeEponymousTemplates = true;
-	bool oldJsonFormat; // DMD <= 2.061
 }
 
 

@@ -7,7 +7,6 @@ import ddox.htmlgenerator;
 import ddox.htmlserver;
 import ddox.parsers.dparse;
 import ddox.parsers.jsonparser;
-import ddox.parsers.jsonparser_old;
 
 import vibe.core.core;
 import vibe.core.file;
@@ -311,8 +310,7 @@ Package parseDocFile(string filename, DdoxSettings settings)
 	auto json = parseJson(text, &line);
 	writefln("Parsing docs...");
 	Package root;
-	if( settings.oldJsonFormat ) root = parseJsonDocsOld(json);
-	else root = parseJsonDocs(json);
+	root = parseJsonDocs(json);
 	writefln("Finished parsing docs.");
 
 	processDocs(root, settings);
