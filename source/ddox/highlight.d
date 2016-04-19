@@ -189,7 +189,7 @@ private void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRende
 		else if (t.type == tok!"specialTokenSequence" || t.type == tok!"scriptLine") writeWithClass(t.text, "spc");
 		else if (t.text.strip == "string") writeWithClass(t.text, "typ");
 		else if (t.type == tok!"identifier" && t.text.isCamelCase) writeWithClass(t.text, "typ");
-		else if (t.type == tok!"identifier") { assert(t.text != "immutable" || t.type == tok!"immutable", code); writeWithClass(t.text, "pln"); }
+		else if (t.type == tok!"identifier") writeWithClass(t.text, "pln");
 		else if (t.type == tok!"whitespace") writeWithClass(t.text, last_class.length ? last_class : "pln");
 		else writeWithClass(t.text, "pun");
 	}
