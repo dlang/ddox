@@ -61,8 +61,29 @@ string highlightDCode(string str, IdentifierRenderCallback ident_render = null)
 	return dst.data;
 }
 
+unittest {
+	void ident_render(string ident, scope void delegate(bool) insert) { insert(false); }
+	assert(highlightDCode("@safe", &ident_render) == `<span class="kwd">@safe</span>`);
+	assert(highlightDCode("@safe foo", &ident_render) == `<span class="kwd">@safe </span><span class="pln">foo</span>`);
+	assert(highlightDCode("@path", &ident_render) == `<span class="pun">@</span><span class="pln">path</span>`);
+	assert(highlightDCode("@path foo", &ident_render) == `<span class="pun">@</span><span class="pln">path foo</span>`);
+	assert(highlightDCode("@path(", &ident_render) == `<span class="pun">@</span><span class="pln">path</span><span class="pun">(</span>`);
+	assert(highlightDCode("@.path", &ident_render) == `<span class="pun">@<wbr/>.</span><span class="pln">path</span>`);
+	assert(highlightDCode("@ path", &ident_render) == `<span class="pun">@ </span><span class="pln">path</span>`);
 
-void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallback ident_render, ref string last_class)
+	assert(highlightDCode("@safe") == `<span class="kwd">@safe</span>`);
+	assert(highlightDCode("@safe foo") == `<span class="kwd">@safe </span><span class="pln">foo</span>`);
+	assert(highlightDCode("@path") == `<span class="pun">@</span><span class="pln">path</span>`);
+	assert(highlightDCode("@path foo") == `<span class="pun">@</span><span class="pln">path foo</span>`);
+	assert(highlightDCode("@path(") == `<span class="pun">@</span><span class="pln">path</span><span class="pun">(</span>`);
+	assert(highlightDCode("@.path") == `<span class="pun">@<wbr/>.</span><span class="pln">path</span>`);
+	assert(highlightDCode("@ path") == `<span class="pun">@ </span><span class="pln">path</span>`);
+}
+
+
+alias IdentifierRenderCallback = void delegate(string ident, scope void delegate(bool) insert_ident);
+
+private void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallback ident_render, ref string last_class)
 	if (isOutputRange!(R, char))
 {
 	import dparse.lexer : DLexer, LexerConfig, StringBehavior, StringCache, WhitespaceBehavior,
@@ -126,6 +147,17 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 	bool last_was_at = false;
 
 	foreach (t; DLexer(cast(ubyte[])code, config, &cache)) {
+		if (last_was_at) {
+			last_was_at = false;
+			switch (t.text) {
+				default: writeWithClass("@", "pun"); break;
+				case "property", "safe", "trusted", "system", "disable", "nogc":
+					writeWithClass("@", "kwd");
+					writeWithClass(t.text, "kwd");
+					continue;
+			}
+		}
+
 		if (t.type == tok!"whitespace") {
 			if (symbol.data.length) verbatim_symbol ~= t.text;
 			else writeWithClass(t.text, last_class.length ? last_class : "pln");
@@ -147,16 +179,6 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 
 		if (t.type == tok!".") dst.put("<wbr/>");
 
-		if (last_was_at) {
-			last_was_at = false;
-			switch (t.text) {
-				default: writeWithClass("@", "pun"); break;
-				case "property", "safe", "trusted", "system", "disable", "nogc":
-					writeWithClass("@", "kwd");
-					writeWithClass(t.text, "kwd");
-					continue;
-			}
-		}
 		if (t.type == tok!"@") last_was_at = true;
 		else if (isBasicType(t.type)) writeWithClass(str(t.type), "typ");
 		else if (isKeyword(t.type)) writeWithClass(str(t.type), "kwd");
@@ -167,7 +189,7 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		else if (t.type == tok!"specialTokenSequence" || t.type == tok!"scriptLine") writeWithClass(t.text, "spc");
 		else if (t.text.strip == "string") writeWithClass(t.text, "typ");
 		else if (t.type == tok!"identifier" && t.text.isCamelCase) writeWithClass(t.text, "typ");
-		else if (t.type == tok!"identifier") writeWithClass(t.text, "pln");
+		else if (t.type == tok!"identifier") { assert(t.text != "immutable" || t.type == tok!"immutable", code); writeWithClass(t.text, "pln"); }
 		else if (t.type == tok!"whitespace") writeWithClass(t.text, last_class.length ? last_class : "pln");
 		else writeWithClass(t.text, "pun");
 	}
@@ -177,9 +199,6 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 	if (symbol.data.length) flushSymbol();
 }
 
-
-alias IdentifierRenderCallback = void delegate(string ident, scope void delegate(bool) insert_ident);
-
 private bool isCamelCase(string text)
 {
 	text = text.strip();
@@ -188,3 +207,4 @@ private bool isCamelCase(string text)
 	if (!text.any!(ch => ch.isLower)) return false;
 	return true;
 }
+
