@@ -546,24 +546,6 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 				}
 				else dst.put('_');
 				break;
-			case '$':
-				if (line.startsWith("$(D ")) {
-					line = line[4 .. $];
-					int l = 1;
-					size_t cidx;
-					for (cidx = 0; cidx < line.length && l > 0; cidx++) {
-						if (line[cidx] == '(') l++;
-						else if (line[cidx] == ')') l--;
-					}
-					dst.put("<code class=\"lang-d\">");
-					dst.renderCodeLine(line[0 .. cidx-1], context);
-					dst.put("</code>");
-					line = line[cidx .. $];
-				} else {
-					dst.put(line[0]);
-					line = line[1 .. $];
-				}
-				break;
 			case '`':
 				line.popFront();
 				auto idx = line.indexOf('`');
@@ -591,16 +573,14 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if (link.length) {
+				if (link.length && inCode) {
 					import ddox.highlight : highlightDCode;
 					if( link != "#" ){
 						dst.put("<a href=\"");
 						dst.put(link);
 						dst.put("\">");
 					}
-					if (!inCode) dst.put("<code class=\"lang-d\">");
 					dst.highlightDCode(ident, null);
-					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
 				} else {
 					ident = ident.replace("._", ".");
@@ -762,7 +742,13 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		if( !pm ) pm = mname in s_defaultMacros;
 		if( !pm ) pm = mname in s_standardMacros;
 
-		if( pm ){
+		if (mname == "D") {
+			auto tmp = appender!string;
+			renderMacros(tmp, "$0", context, macros, args, callstack);
+			dst.put("<code class=\"lang-d\">");
+			dst.renderCodeLine(tmp.data, context);
+			dst.put("</code>");
+		} else if (pm) {
 			logTrace("MACRO %s: %s", mname, *pm);
 			renderMacros(dst, *pm, context, macros, args, callstack);
 		} else {
@@ -1195,5 +1181,11 @@ unittest { // X-REF
 		~ "<code class=\"lang-d\"><span class=\"pln\">bar</span></code>\n"
 		~ "<section><pre class=\"code\"><code class=\"lang-d\"><a href=\"foo.html\"><span class=\"pln\">foo</span></a>"
 		~ "<span class=\"pln\"> bar</span></code></pre>\n</section>\n";
-	assert(formatDdocComment(src, new Ctx) == dst);
+	assert(formatDdocComment(src, new Ctx) == dst, [formatDdocComment(src, new Ctx)].to!string);
+}
+
+unittest { // nested macro in $(D ...)
+	auto src = "$(D $(NOP foo))\n\nMacros: NOP: $0";
+	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n<section></section>\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
 }
