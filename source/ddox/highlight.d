@@ -123,6 +123,8 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		verbatim_symbol = appender!string();
 	}
 
+	bool last_was_at = false;
+
 	foreach (t; DLexer(cast(ubyte[])code, config, &cache)) {
 		if (t.type == tok!"whitespace") {
 			if (symbol.data.length) verbatim_symbol ~= t.text;
@@ -145,7 +147,18 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 
 		if (t.type == tok!".") dst.put("<wbr/>");
 
-		if (isBasicType(t.type)) writeWithClass(str(t.type), "typ");
+		if (last_was_at) {
+			last_was_at = false;
+			switch (t.text) {
+				default: writeWithClass("@", "pun"); break;
+				case "property", "safe", "trusted", "system", "disable", "nogc":
+					writeWithClass("@", "kwd");
+					writeWithClass(t.text, "kwd");
+					continue;
+			}
+		}
+		if (t.type == tok!"@") last_was_at = true;
+		else if (isBasicType(t.type)) writeWithClass(str(t.type), "typ");
 		else if (isKeyword(t.type)) writeWithClass(str(t.type), "kwd");
 		else if (t.type == tok!"comment") writeWithClass(t.text, "com");
 		else if (isStringLiteral(t.type) || t.type == tok!"characterLiteral") writeWithClass(t.text, "str");
@@ -158,6 +171,8 @@ void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallbac
 		else if (t.type == tok!"whitespace") writeWithClass(t.text, last_class.length ? last_class : "pln");
 		else writeWithClass(t.text, "pun");
 	}
+
+	if (last_was_at) writeWithClass("@", "pun");
 
 	if (symbol.data.length) flushSymbol();
 }
