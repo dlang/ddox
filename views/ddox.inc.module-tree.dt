@@ -3,7 +3,7 @@
 - Module getPackageModule(Package pack)
 	- import std.algorithm : find;
 	- if (auto pp = cast(Package)pack.parent)
-		- return pp.lookup!Module(pack.name);
+		- return pp.findChild!Module(pack.name);
 	- return null;
 
 - void moduleNavTree(Package pack, Module pack_mod)
@@ -20,7 +20,7 @@
 				a.module(href="#{info.linkTo(pack_mod)}", class='#{info.node is pack_mod || pack_mod.isAncestorOf(info.node) ? "selected" : ""}') Package members
 
 		- foreach(m; pack.modules)
-			- if (pack.packages.canFind!(p => p.name == m.name))
+			- if (pack.findChild!Package(m.name))
 				- continue;
 			li
 				a.module(href="#{info.linkTo(m)}", class='#{info.node is m || m.isAncestorOf(info.node) ? "selected" : ""}')= m.name
