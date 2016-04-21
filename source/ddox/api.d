@@ -314,6 +314,7 @@ Type getPropertyType(Entity[] mems...)
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
 		auto rt = ovf.returnType;
+		assert(rt !is null);
 		if (rt.typeName != "void") return rt;
 		if (ovf.parameters.length == 0) continue;
 		return ovf.parameters[0].type;
@@ -326,6 +327,7 @@ bool anyPropertyGetter(Entity[] mems...)
 	foreach (ov; mems) {
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
+		assert(ovf.returnType !is null);
 		if (ovf.returnType.typeName == "void") continue;
 		if (ovf.parameters.length == 0) return true;
 	}

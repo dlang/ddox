@@ -205,9 +205,11 @@ private struct Parser
 	{
 		auto ret = new FunctionDeclaration(parent, json.name.opt!string);
 		ret.type = parseType(json, ret, "void()");
+		assert(ret.type !is null);
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
+			assert(ret.returnType !is null);
 			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
 			if (auto psc = "storageClass" in json)
 				foreach (sc; *psc)
@@ -349,7 +351,8 @@ private struct Parser
 	}
 
 	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_if_not_exists = true)
-	{
+		out(ret) { assert(!def_type.length || ret !is null); }
+	body {
 		string str;
 		if( json.type == Json.Type.Undefined ){
 			if (warn_if_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
@@ -367,7 +370,8 @@ private struct Parser
 	}
 
 	Type parseType(string str, Entity sc)
-	{
+		out(ret) { assert(ret !is null); }
+	body {
 		auto tokens = tokenizeDSource(str);
 		
 		logDebug("parse type '%s'", str);
@@ -429,7 +433,8 @@ private struct Parser
 	}
 
 	Type parseBasicType(ref string[] tokens, Entity sc, out string[] attributes)
-	{
+		out(ret) { assert(ret !is null); }
+	body {
 		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
 			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
 			"__gshared", "scope", "static", "synchronize"];
@@ -593,6 +598,11 @@ private struct Parser
 			} else break;
 		}
 		
+		if (!type) {
+			type = new Type;
+			type.kind = TypeKind.Primitive;
+		}
+
 		while (!tokens.empty && (tokens.front == "function" || tokens.front == "delegate" || tokens.front == "(")) {
 			Type ftype = new Type;
 			ftype.kind = tokens.front == "(" || tokens.front == "function" ? TypeKind.Function : TypeKind.Delegate;
@@ -637,12 +647,6 @@ private struct Parser
 			parseAttributes(ftype.attributes, member_function_attribute_keywords);
 
 			type = ftype;
-		}
-
-		if (!type) {
-			type = new Type;
-			type.kind = TypeKind.Primitive;
-			type.typeName = "{null}";
 		}
 
 		return type;
