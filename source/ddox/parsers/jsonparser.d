@@ -667,7 +667,7 @@ private struct Parser
 				idx--;
 			}
 			if (idx <= 0 || l > 0) return type;
-			return type[0 .. idx] ~ "function" ~ type[idx .. $];
+			return type[0 .. idx] ~ " function" ~ type[idx .. $];
 		}
 		return type;
 	}
