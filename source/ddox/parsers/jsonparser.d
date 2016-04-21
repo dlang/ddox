@@ -348,21 +348,26 @@ private struct Parser
 		return ret;
 	}
 
-	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_id_not_exists = true)
+	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_if_not_exists = true)
 	{
 		string str;
 		if( json.type == Json.Type.Undefined ){
-			if (warn_id_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
+			if (warn_if_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
 			str = def_type;
-		} else if( json.type == Json.Type.String ) str = json.get!string();
-		else if( auto pv = "deco" in json ) str = demanglePrettyType(pv.get!string());
-		else if( auto pv = "type" in json ) str = pv.get!string();
-		else if( auto pv = "originalType" in json ) str = pv.get!string();
+		} else if (json.type == Json.Type.String) str = json.get!string();
+		else if (auto pv = "deco" in json) str = demanglePrettyType(pv.get!string());
+		else if (auto pv = "type" in json) str = fixFunctionType(pv.get!string(), def_type);
+		else if (auto pv = "originalType" in json) str = fixFunctionType(pv.get!string(), def_type);
 
 		if( str.length == 0 ) str = def_type;
 
 		if( !str.length ) return null;
 
+		return parseType(str, sc);
+	}
+
+	Type parseType(string str, Entity sc)
+	{
 		auto tokens = tokenizeDSource(str);
 		
 		logDebug("parse type '%s'", str);
@@ -477,7 +482,7 @@ private struct Parser
 			type.attributes ~= subattrs;
 			enforce(!tokens.empty && tokens.front == ")", format("Missing ')' for '%s('", mod));
 			tokens.popFront();
-		} else {
+		} else if (tokens.length < 1 || !tokens.front.among("function", "delegate")) {
 			type = new Type;
 			type.kind = TypeKind.Primitive;
 			m_primTypes ~= tuple(type, sc);
@@ -634,6 +639,30 @@ private struct Parser
 			type = ftype;
 		}
 
+		return type;
+	}
+
+	/* special function that looks at the default type to see if a function type
+		is expected and if that's the case, fixes up the type string to read
+		as a valid D type declaration (DMD omits "function"/"delegate", which
+		results in an ambiguous meaning)
+	*/
+	private string fixFunctionType(string type, string deftype)
+	{
+		Type dt = parseType(deftype, new Module(null, "dummy"));
+		if (deftype == "void()" || dt && dt.kind.among(TypeKind.Function, TypeKind.Delegate)) {
+			auto last_clamp = type.lastIndexOf(')');
+			auto idx = last_clamp-1;
+			int l = 1;
+			while (idx >= 0) {
+				if (type[idx] == ')') l++;
+				else if (type[idx] == '(') l--;
+				if (l == 0) break;
+				idx--;
+			}
+			if (idx <= 0 || l > 0) return type;
+			return type[0 .. idx] ~ "function" ~ type[idx .. $];
+		}
 		return type;
 	}
 	

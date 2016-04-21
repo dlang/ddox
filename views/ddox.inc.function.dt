@@ -19,9 +19,8 @@
 						br
 					- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
 					- if (rettype.length == 1 || rettype == "{null} ")
-						- static immutable scs = ["auto", "const", "immutable"];
 						- foreach (i, attr; attribs)
-							- if (scs.canFind(attr))
+							- if (attr == "auto")
 								- rettype = highlightDCode(attr) ~ " ";
 								- attribs[i] = attribs[$-1];
 								- attribs.length--;
