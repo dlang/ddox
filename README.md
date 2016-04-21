@@ -18,10 +18,11 @@ For real world examples see the [vibe.d API documentation](http://vibed.org/api/
 First steps
 -----------
 
-1. Install [dub](https://github.com/rejectedsoftware/dub/)
+1. Install [dub](https://github.com/dlang/dub/)
 2. Generate JSON for your project by adding the command line switches `-D -X -Xfdocs.json` to your DMD command line (Note that you may need to clean up all the generated .html files afterwards)
 3. Check out ddox and run `dub build` from its root folder
 
+Note that DDOX uses [vibe.d](https://github.com/rejectedsoftware/vibe.d/), which currently by default uses libevent as its core. Please follow its installation instructions, too, if necessary.
 
 Filtering docs
 --------------
