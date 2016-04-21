@@ -482,7 +482,7 @@ private struct Parser
 			type.attributes ~= subattrs;
 			enforce(!tokens.empty && tokens.front == ")", format("Missing ')' for '%s('", mod));
 			tokens.popFront();
-		} else if (tokens.length < 1 || !tokens.front.among("function", "delegate")) {
+		} else if (!tokens.empty && !tokens.front.among("function", "delegate")) {
 			type = new Type;
 			type.kind = TypeKind.Primitive;
 			m_primTypes ~= tuple(type, sc);
@@ -637,6 +637,12 @@ private struct Parser
 			parseAttributes(ftype.attributes, member_function_attribute_keywords);
 
 			type = ftype;
+		}
+
+		if (!type) {
+			type = new Type;
+			type.kind = TypeKind.Primitive;
+			type.typeName = "{null}";
 		}
 
 		return type;
