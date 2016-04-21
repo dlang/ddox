@@ -111,7 +111,7 @@ class Entity {
 		}
 		static if (is(T == Declaration)) {
 			if (auto decl = cast(Declaration)this) {
-				auto idx = decl.templateArgs.countUntil!(p => p.name == qualified_name);
+				auto idx = decl.templateArgs.countUntil!(p => p.name.stripEllipsis() == qualified_name);
 				if (idx >= 0) return decl.templateArgs[idx];
 			}
 		}
@@ -537,4 +537,9 @@ final class Type {
 		}
 		return true;
 	}
+}
+
+private string stripEllipsis(string arg)
+{
+	return arg.endsWith("...") ? arg[0 .. $-3] : arg;
 }
