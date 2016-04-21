@@ -123,6 +123,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
 
 		foreach (decl; members) {
+			if (decl.parent !is parent) continue; // exclude inherited members (issue #120)
 			auto style = settings.fileNameStyle; // workaround for invalid value when directly used inside lamba
 			auto name = decl.nestedName.splitter(".").map!(n => adjustMethodStyle(n, style)).join(".");
 			auto pl = name in pages;
