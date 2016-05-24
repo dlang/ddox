@@ -44,6 +44,7 @@ pre.prettyprint, pre.code, div.prototype {
   padding: 1em 0;
   background-color: #222;
   border: 1px solid black;
+  color: white;
 }
 
 /* Specify class=linenums on a pre to get line numbering */
