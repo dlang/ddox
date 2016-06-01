@@ -120,6 +120,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	SortMode declsort = SortMode.protectionInheritanceName;
 	bool lowercasenames;
 	bool hyphenate;
+	bool singlepageenum;
 	getopt(args,
 		//config.passThrough,
 		"decl-sort", &declsort,
@@ -132,6 +133,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 		"package-order", &pack_order,
 		"sitemap-url", &sitemapurl,
 		"std-macros", &macrofiles,
+		"enum-member-pages", &singlepageenum,
 		);
 
 	if (lowercasenames) file_name_style = MethodStyle.lowerCase;
@@ -156,6 +158,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	gensettings.siteUrl = URL(sitemapurl);
 	gensettings.navigationType = navtype;
 	gensettings.fileNameStyle = file_name_style;
+	gensettings.enumMemberPages = singlepageenum;
 	return 0;
 }
 
@@ -351,6 +354,7 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --module-sort=MODE     The sort order used for lists of modules
     --decl-sort=MODE       The sort order used for declaration lists
     --web-file-dir=DIR     Make files from dir available on the served site
+    --enum-member-pages    Generate a single page per enum member
     --hyphenate            hyphenate text
  -h --help                 Show this help
 
@@ -379,6 +383,7 @@ protectionInheritanceName
     --lowercase-names      DEPRECATED: Outputs all file names in lower case.
                            This option is useful on case insensitive file
                            systems.
+    --enum-member-pages    Generate a single page per enum member
     --hyphenate            hyphenate text
  -h --help                 Show this help
 

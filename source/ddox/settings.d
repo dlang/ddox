@@ -49,6 +49,9 @@ class GeneratorSettings {
 	/// Defines how symbol names are mapped to file names when generating file based documentation (useful for case insensitive file systems)
 	MethodStyle fileNameStyle = MethodStyle.unaltered;
 
+	/// Creates a page per enum member instead of putting everything into a single table.
+	bool enumMemberPages;
+
 	deprecated("Use fileNameStyle = MethodStyle.lowerCase instead.")
 	@property bool lowerCase() const { return fileNameStyle == MethodStyle.lowerCase; }
 	deprecated("Use fileNameStyle = MethodStyle.lowerCase instead.")

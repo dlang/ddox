@@ -25,7 +25,12 @@
 				th Description
 			- foreach( mem; enum_item.members )
 				tr
-					td
-						a(href="#{info.linkTo(mem)}")
+					- if (info.settings.enumMemberPages)
+						td
+							a(href="#{info.linkTo(mem)}")
+								code= mem.name
+						td!= info.formatDoc(mem.docGroup, 4, sec => sec == "$Short")
+					- else
+						td
 							code= mem.name
-					td!= info.formatDoc(mem.docGroup, 3, sec => sec == "$Short")
+						td!= info.formatDoc(mem.docGroup, 4, sec => true)
