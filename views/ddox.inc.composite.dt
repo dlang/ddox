@@ -1,10 +1,18 @@
 - import ddox.api;
+- import ddox.highlight;
 - import std.algorithm;
 - import std.typetuple;
 
 - void outputCompositeDescription(CompositeTypeDeclaration item)
 	- auto cls_item = cast(ClassDeclaration)item;
 	- auto intf_item = cast(InterfaceDeclaration)item;
+
+	- if (item.templateArgs.length)
+		section
+			h3 Template arguments
+
+			.prototype
+				code.lang-d <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>!{highlightDCode(item.templateArgsString)};
 
 	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
 		section

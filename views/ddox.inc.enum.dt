@@ -1,10 +1,18 @@
 - import ddox.api;
+- import ddox.highlight;
 - import std.algorithm;
 
 - void outputEnumDescription(EnumDeclaration enum_item)
 	p The enum base type is
 		code.prettyprint.lang-d!= info.formatType(enum_item.baseType, false)
 		|.
+
+	- if (enum_item.templateArgs.length)
+		section
+			h3 Template arguments
+
+			.prototype
+				code.lang-d <span class="kwd">enum</span> <span class="typ">#{enum_item.name}</span>!{highlightDCode(enum_item.templateArgsString)};
 
 - void outputEnumMembers(EnumDeclaration enum_item)
 	section
