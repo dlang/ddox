@@ -118,6 +118,9 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	void collectChildren(Entity parent, ref DocGroup[][string] pages)
 	{
 		Declaration[] members;
+		if (!settings.enumMemberPages && cast(EnumDeclaration)parent)
+			return;
+		
 		if (auto mod = cast(Module)parent) members = mod.members;
 		else if (auto ctd = cast(CompositeTypeDeclaration)parent) members = ctd.members;
 		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
