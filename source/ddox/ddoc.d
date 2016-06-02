@@ -1178,7 +1178,6 @@ unittest { // #119 dot followed by space causes assertion
 unittest { // dot followed by non-identifier
 	static class Ctx : BareContext {
 		override string lookupScopeSymbolLink(string name) {
-			writefln("IDENT: %s", name);
 			assert(name.length > 0 && name != ".");
 			return null;
 		}
@@ -1203,19 +1202,19 @@ unittest { // X-REF
 		~ "<code class=\"lang-d\"><span class=\"pln\">bar</span></code>\n"
 		~ "<section><pre class=\"code\"><code class=\"lang-d\"><a href=\"foo.html\"><span class=\"pln\">foo</span></a>"
 		~ "<span class=\"pln\"> bar</span></code></pre>\n</section>\n";
-	assert(formatDdocComment(src, new Ctx) == dst, [formatDdocComment(src, new Ctx)].to!string);
+	assert(formatDdocComment(src, new Ctx) == dst);
 }
 
 unittest { // nested macro in $(D ...)
 	auto src = "$(D $(NOP foo))\n\nMacros: NOP: $0";
 	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n<section></section>\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // nested $(D $(D case)) (do not escape HTML tags)
 	auto src = "$(D $(D foo))";
 	auto dst = "<code class=\"lang-d\"><code class=\"lang-d\"><span class=\"pln\"><span class=\"pln\">foo</span></span></code></code>\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // nested $(D $(D case)) (do not escape HTML tags)
@@ -1231,6 +1230,6 @@ unittest { // nested $(D $(D case)) (do not escape HTML tags)
 	auto src = "$(DDOX_NAMED_REF bar.baz, $(D foo))";
 	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
 	auto dst_ctx = "<a href=\"bar/baz.html\"><code class=\"lang-d\"><span class=\"pln\">foo</span></code></a>\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
-	assert(formatDdocComment(src, new Ctx) == dst_ctx, [formatDdocComment(src, new Ctx)].to!string);
+	assert(formatDdocComment(src) == dst);
+	assert(formatDdocComment(src, new Ctx) == dst_ctx);
 }
