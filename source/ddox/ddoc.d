@@ -756,6 +756,18 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			}
 			if (c.length > 0) dst.renderCodeLine(c, context);
 			dst.put("</code>");
+		} else if (mname == "DDOX_NAMED_REF") {
+			auto sym = appender!string;
+			renderMacros(sym, "$1", context, macros, args, callstack);
+
+			auto link = context.lookupScopeSymbolLink(sym.data);
+			if (link.length) {
+				dst.put(`<a href="`);
+				dst.put(link);
+				dst.put(`">`);
+			}
+			dst.renderMacros("$+", context, macros, args, callstack);			
+			if (link.length) dst.put("</a>");
 		} else if (pm) {
 			logTrace("MACRO %s: %s", mname, *pm);
 			renderMacros(dst, *pm, context, macros, args, callstack);
@@ -1204,4 +1216,21 @@ unittest { // nested $(D $(D case)) (do not escape HTML tags)
 	auto src = "$(D $(D foo))";
 	auto dst = "<code class=\"lang-d\"><code class=\"lang-d\"><span class=\"pln\"><span class=\"pln\">foo</span></span></code></code>\n";
 	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+}
+
+unittest { // nested $(D $(D case)) (do not escape HTML tags)
+	static class Ctx : BareContext {
+		override string lookupScopeSymbolLink(string symbol) {
+			if (symbol == "bar.baz")
+				return "bar/baz.html";
+			else
+				return null;
+		}
+	}
+
+	auto src = "$(DDOX_NAMED_REF bar.baz, $(D foo))";
+	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
+	auto dst_ctx = "<a href=\"bar/baz.html\"><code class=\"lang-d\"><span class=\"pln\">foo</span></code></a>\n";
+	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src, new Ctx) == dst_ctx, [formatDdocComment(src, new Ctx)].to!string);
 }
