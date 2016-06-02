@@ -760,7 +760,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			auto sym = appender!string;
 			renderMacros(sym, "$1", context, macros, args, callstack);
 
-			auto link = context.lookupScopeSymbolLink(sym.data);
+			auto link = sym.data.length > 0 && !sym.data.endsWith('.') ? context.lookupScopeSymbolLink(sym.data) : null;
 			if (link.length) {
 				dst.put(`<a href="`);
 				dst.put(link);
@@ -1165,7 +1165,6 @@ unittest { // #109 dot followed by unicode character causes infinite loop
 unittest { // #119 dot followed by space causes assertion
 	static class Ctx : BareContext {
 		override string lookupScopeSymbolLink(string name) {
-			writefln("IDENT: %s", name);
 			assert(name.length > 0 && name != ".");
 			return null;
 		}
@@ -1217,7 +1216,7 @@ unittest { // nested $(D $(D case)) (do not escape HTML tags)
 	assert(formatDdocComment(src) == dst);
 }
 
-unittest { // nested $(D $(D case)) (do not escape HTML tags)
+unittest { // DDOX_NAMED_REF special macro
 	static class Ctx : BareContext {
 		override string lookupScopeSymbolLink(string symbol) {
 			if (symbol == "bar.baz")
@@ -1232,4 +1231,20 @@ unittest { // nested $(D $(D case)) (do not escape HTML tags)
 	auto dst_ctx = "<a href=\"bar/baz.html\"><code class=\"lang-d\"><span class=\"pln\">foo</span></code></a>\n";
 	assert(formatDdocComment(src) == dst);
 	assert(formatDdocComment(src, new Ctx) == dst_ctx);
+}
+
+unittest { // DDOX_NAMED_REF special macro - handle invalid identifiers gracefully
+	static class Ctx : BareContext {
+		override string lookupScopeSymbolLink(string symbol) {
+			assert(symbol.length > 0);
+			assert(!symbol.endsWith("."));
+			return null;
+		}
+	}
+
+	auto src1 = "$(DDOX_NAMED_REF bar., $(D foo))";
+	auto src2 = "$(DDOX_NAMED_REF , $(D foo))";
+	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
+	assert(formatDdocComment(src1, new Ctx) == dst);
+	assert(formatDdocComment(src2, new Ctx) == dst);
 }
