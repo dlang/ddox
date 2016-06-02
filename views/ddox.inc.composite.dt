@@ -12,7 +12,10 @@
 			h3 Template arguments
 
 			.prototype
-				code.lang-d <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>!{highlightDCode(item.templateArgsString)};
+				code.lang-d <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>!{highlightDCode(item.templateArgsString)}#{item.templateConstraint.length?"":";"}
+					- if (item.templateConstraint.length)
+						br
+						| <span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(item.templateConstraint)}<span class="pun">);</span>
 
 	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
 		section
