@@ -223,6 +223,9 @@ final class Module : Entity{
 
 	override @property string kindCaption() const { return "Module"; }
 
+	/// Determines if this module is a "package.d" module.
+	@property bool isPackageModule() { return parent && parent.findChild!Package(this.name); }
+
 	override void iterateChildren(bool delegate(Entity) del)
 	{
 		foreach( m; members ) if( !del(m) ) return;
