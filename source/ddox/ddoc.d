@@ -764,6 +764,8 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			if (link.length) {
 				dst.put(`<a href="`);
 				dst.put(link);
+				dst.put(`" title="`);
+				dst.put(sym.data);
 				dst.put(`">`);
 			}
 			dst.renderMacros("$+", context, macros, args, callstack);			
@@ -1228,7 +1230,7 @@ unittest { // DDOX_NAMED_REF special macro
 
 	auto src = "$(DDOX_NAMED_REF bar.baz, $(D foo))";
 	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
-	auto dst_ctx = "<a href=\"bar/baz.html\"><code class=\"lang-d\"><span class=\"pln\">foo</span></code></a>\n";
+	auto dst_ctx = "<a href=\"bar/baz.html\" title=\"bar.baz\"><code class=\"lang-d\"><span class=\"pln\">foo</span></code></a>\n";
 	assert(formatDdocComment(src) == dst);
 	assert(formatDdocComment(src, new Ctx) == dst_ctx);
 }
