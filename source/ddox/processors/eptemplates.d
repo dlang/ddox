@@ -34,8 +34,10 @@ void mergeEponymousTemplates(Package root)
 						m.isTemplate = true;
 						m.protection = templ.protection;
 						m.parent = templ.parent;
-						if (templ.docGroup.text.length)
+						if (!m.docGroup.text.length)
 							m.docGroup = templ.docGroup;
+						else if (templ.docGroup.text.length)
+							m.docGroup.text = templ.docGroup.text ~ "\n" ~ m.docGroup.text;
 						m.inheritingDecl = templ.inheritingDecl;
 						epmembers ~= m;
 					}
@@ -45,7 +47,9 @@ void mergeEponymousTemplates(Package root)
 					foreach (i, m; templ.docGroup.members) {
 						if (m !is templ) continue;
 						auto newm = templ.docGroup.members[0 .. i];
-						foreach (epm; epmembers) newm ~= epm;
+						foreach (epm; epmembers)
+							if (epm.docGroup is templ.docGroup)
+								newm ~= epm;
 						newm ~= templ.docGroup.members[i+1 .. $];
 						templ.docGroup.members = newm;
 						break;
