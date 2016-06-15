@@ -27,6 +27,7 @@ void mergeEponymousTemplates(Package root)
 
 				// search for eponymous template members
 				Declaration[] epmembers;
+				bool[DocGroup] augmented_groups;
 				foreach (m; templ.members)
 					if (m.name == templ.name) {
 						m.templateArgs = templ.templateArgs;
@@ -34,10 +35,13 @@ void mergeEponymousTemplates(Package root)
 						m.isTemplate = true;
 						m.protection = templ.protection;
 						m.parent = templ.parent;
-						if (!m.docGroup.text.length)
+						if (!m.docGroup.text.length) {
 							m.docGroup = templ.docGroup;
-						else if (templ.docGroup.text.length)
+						} else if (templ.docGroup.text.length && m.docGroup !in augmented_groups) {
+							augmented_groups[m.docGroup] = true;
 							m.docGroup.text = templ.docGroup.text ~ "\n" ~ m.docGroup.text;
+							m.docGroup.comment = new DdocComment(m.docGroup.text);
+						}
 						m.inheritingDecl = templ.inheritingDecl;
 						epmembers ~= m;
 					}
