@@ -15,14 +15,14 @@ import std.algorithm;
 
 void mergeEponymousTemplates(Package root)
 {
+	import std.string : strip;
+
 	void processDecls(ref Declaration[] decls)
 	{
 		Declaration[] new_decls;
 		foreach (d; decls) {
 			if (auto templ = cast(TemplateDeclaration)d) {
 				// process members recursively
-				// FIXME: Drops template parameters of outer eponymous templates.
-				//        However, this is the same behavior as that of Ddoc.
 				processDecls(templ.members);
 
 				// search for eponymous template members
@@ -30,18 +30,26 @@ void mergeEponymousTemplates(Package root)
 				bool[DocGroup] augmented_groups;
 				foreach (m; templ.members)
 					if (m.name == templ.name) {
+						// if we encounter any templated member, skip the
+						// eponymous merge and show individual members instead.
+						if (cast(TemplateDeclaration)m || m.templateArgs.length) {
+							epmembers = null;
+							break;
+						}
+
+						// if both, the parent template and the member are documented,
+						// abort the merge
+						if (templ.docGroup.text.strip.length && m.docGroup.text.strip.length) {
+							epmembers = null;
+							break;
+						}
+
 						m.templateArgs = templ.templateArgs;
 						m.templateConstraint = templ.templateConstraint;
 						m.isTemplate = true;
 						m.protection = templ.protection;
 						m.parent = templ.parent;
-						if (!m.docGroup.text.length) {
-							m.docGroup = templ.docGroup;
-						} else if (templ.docGroup.text.length && m.docGroup !in augmented_groups) {
-							augmented_groups[m.docGroup] = true;
-							m.docGroup.text = templ.docGroup.text ~ "\n" ~ m.docGroup.text;
-							m.docGroup.comment = new DdocComment(m.docGroup.text);
-						}
+						if (templ.docGroup.text.strip.length) m.docGroup = templ.docGroup;
 						m.inheritingDecl = templ.inheritingDecl;
 						epmembers ~= m;
 					}
