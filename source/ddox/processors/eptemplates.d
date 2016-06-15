@@ -1,7 +1,7 @@
 /**
 	Merges eponymous templates to a single definition with template arguments.
 
-	Copyright: © 2012-2015 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -15,7 +15,23 @@ import std.algorithm;
 
 void mergeEponymousTemplates(Package root)
 {
+	import std.array : array;
 	import std.string : strip;
+
+	static bool canMerge(TemplateDeclaration templ, Declaration m)
+	{
+		// if we encounter any templated member, skip the
+		// eponymous merge to avoid hiding the nested template
+		// arguments/constraints
+		if (cast(TemplateDeclaration)m || m.isTemplate) return false;
+
+		// if both, the parent template and the member are documented,
+		// abort the merge, so that the member documentation is shown
+		// individually
+		if (templ.docGroup.text.strip.length && m.docGroup.text.strip.length)
+			return false;
+		return true;
+	}
 
 	void processDecls(ref Declaration[] decls)
 	{
@@ -26,24 +42,9 @@ void mergeEponymousTemplates(Package root)
 				processDecls(templ.members);
 
 				// search for eponymous template members
-				Declaration[] epmembers;
-				bool[DocGroup] augmented_groups;
-				foreach (m; templ.members)
-					if (m.name == templ.name) {
-						// if we encounter any templated member, skip the
-						// eponymous merge and show individual members instead.
-						if (cast(TemplateDeclaration)m || m.templateArgs.length) {
-							epmembers = null;
-							break;
-						}
-
-						// if both, the parent template and the member are documented,
-						// abort the merge
-						if (templ.docGroup.text.strip.length && m.docGroup.text.strip.length) {
-							epmembers = null;
-							break;
-						}
-
+				Declaration[] epmembers = templ.members.filter!(m => m.name == templ.name).array;
+				if (epmembers.all!(m => canMerge(templ, m))) {
+					foreach (m; epmembers) {
 						m.templateArgs = templ.templateArgs;
 						m.templateConstraint = templ.templateConstraint;
 						m.isTemplate = true;
@@ -51,8 +52,8 @@ void mergeEponymousTemplates(Package root)
 						m.parent = templ.parent;
 						if (templ.docGroup.text.strip.length) m.docGroup = templ.docGroup;
 						m.inheritingDecl = templ.inheritingDecl;
-						epmembers ~= m;
 					}
+				}
 
 				if (epmembers.length > 0) {
 					// if we found some, replace all references of the original template with the new modified members
