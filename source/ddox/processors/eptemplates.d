@@ -43,39 +43,40 @@ void mergeEponymousTemplates(Package root)
 
 				// search for eponymous template members
 				Declaration[] epmembers = templ.members.filter!(m => m.name == templ.name).array;
-				if (epmembers.all!(m => canMerge(templ, m))) {
-					foreach (m; epmembers) {
-						m.templateArgs = templ.templateArgs;
-						m.templateConstraint = templ.templateConstraint;
-						m.isTemplate = true;
-						m.protection = templ.protection;
-						m.parent = templ.parent;
-						if (templ.docGroup.text.strip.length) m.docGroup = templ.docGroup;
-						m.inheritingDecl = templ.inheritingDecl;
-					}
-				}
-
-				if (epmembers.length > 0) {
-					// if we found some, replace all references of the original template with the new modified members
-					foreach (i, m; templ.docGroup.members) {
-						if (m !is templ) continue;
-						auto newm = templ.docGroup.members[0 .. i];
-						foreach (epm; epmembers)
-							if (epm.docGroup is templ.docGroup)
-								newm ~= epm;
-						newm ~= templ.docGroup.members[i+1 .. $];
-						templ.docGroup.members = newm;
-						break;
-					}
-					new_decls ~= epmembers;
-				} else {
-					// keep the template if there are no eponymous members
+				if (!epmembers.length || !epmembers.all!(m => canMerge(templ, m))) {
+					// keep the template if there are no eponymous members or not all are mergeable
 					new_decls ~= templ;
+					continue;
 				}
-			} else new_decls ~= d;
 
-			if (auto comp = cast(CompositeTypeDeclaration)d)
-				processDecls(comp.members);
+				foreach (m; epmembers) {
+					m.templateArgs = templ.templateArgs;
+					m.templateConstraint = templ.templateConstraint;
+					m.isTemplate = true;
+					m.protection = templ.protection;
+					m.parent = templ.parent;
+					if (templ.docGroup.text.strip.length) m.docGroup = templ.docGroup;
+					m.inheritingDecl = templ.inheritingDecl;
+				}
+
+				// if we found some, replace all references of the original template with the new modified members
+				foreach (i, m; templ.docGroup.members) {
+					if (m !is templ) continue;
+					auto newm = templ.docGroup.members[0 .. i];
+					foreach (epm; epmembers)
+						if (epm.docGroup is templ.docGroup)
+							newm ~= epm;
+					newm ~= templ.docGroup.members[i+1 .. $];
+					templ.docGroup.members = newm;
+					break;
+				}
+				new_decls ~= epmembers;
+			} else {
+				if (auto comp = cast(CompositeTypeDeclaration)d)
+					processDecls(comp.members);
+
+				new_decls ~= d;
+			}
 		}
 		decls = new_decls;
 	}
