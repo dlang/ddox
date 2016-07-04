@@ -1,0 +1,11 @@
+name "ddox"
+description "Powerful alternative to DMD's DDOC engine."
+homepage "https://github.com/rejectedsoftware/ddox"
+authors "Sönke Ludwig"
+license "MIT"
+
+dependency "vibe-d:web" version="~>0.7.28"
+dependency "hyphenate" version="~>1.1.0"
+dependency "libdparse" version="~>0.6.0"
+
+versions "JsonLineNumbers"
