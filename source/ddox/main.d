@@ -196,16 +196,16 @@ int cmdFilterDocs(string[] args)
 		if (last_decl.type == Json.Type.undefined) last_decl = parent;
 
 		string templateName(Json j){
-			auto n = j.name.opt!string();
+			auto n = j["name"].opt!string();
 			auto idx = n.indexOf('(');
 			if( idx >= 0 ) return n[0 .. idx];
 			return n;
 		}
 
 		if( json.type == Json.Type.Object ){
-			auto comment = json.comment.opt!string;
+			auto comment = json["comment"].opt!string;
 			if( justdoc && comment.empty ){
-				if( parent.type != Json.Type.Object || parent.kind.opt!string() != "template" || templateName(parent) != json.name.opt!string() )
+				if( parent.type != Json.Type.Object || parent["kind"].opt!string() != "template" || templateName(parent) != json["name"].opt!string() )
 					return Json.undefined;
 			}
 
@@ -221,7 +221,7 @@ int cmdFilterDocs(string[] args)
 			if( comment.strip == "private" ) prot = Protection.Private;
 			if( prot < minprot ) return Json.undefined;
 
-			auto name = json.name.opt!string();
+			auto name = json["name"].opt!string();
 			bool is_internal = name.startsWith("__");
 			bool is_unittest = name.startsWith("__unittest");
 			if (name.startsWith("_staticCtor") || name.startsWith("_staticDtor")) is_internal = true;
@@ -231,14 +231,14 @@ int cmdFilterDocs(string[] args)
 				assert(last_decl.type == Json.Type.object, "Don't have a last_decl context.");
 				try {
 					string source = extractUnittestSourceCode(json, mod);
-					if (last_decl.comment.opt!string.empty) {
-						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl.name.opt!string);
+					if (last_decl["comment"].opt!string.empty) {
+						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl["name"].opt!string);
 					} else {
-						last_decl.comment ~= format("Example:\n%s\n---\n%s\n---\n", comment.strip, source);
+						last_decl["comment"] ~= format("Example:\n%s\n---\n%s\n---\n", comment.strip, source);
 					}
 				} catch (Exception e) {
 					writefln("Failed to add documented unit test %s:%s as example: %s",
-						mod.file.get!string(), json["line"].get!long, e.msg);
+						mod["file"].get!string(), json["line"].get!long, e.msg);
 					return Json.undefined;
 				}
 			}
@@ -248,14 +248,14 @@ int cmdFilterDocs(string[] args)
 			if (!keeputests && is_unittest) return Json.undefined;
 
 			if (auto mem = "members" in json)
-				json.members = filterProt(*mem, json, Json.undefined, mod);
+				json["members"] = filterProt(*mem, json, Json.undefined, mod);
 		} else if( json.type == Json.Type.Array ){
 			auto last_child_decl = Json.undefined;
 			Json[] newmem;
 			foreach (m; json) {
 				auto mf = filterProt(m, parent, last_child_decl, mod);
 				if (mf.type == Json.Type.undefined) continue;
-				if (mf.type == Json.Type.object && !mf.name.opt!string.startsWith("__unittest") && icmp(mf.comment.opt!string.strip, "ditto") != 0)
+				if (mf.type == Json.Type.object && !mf["name"].opt!string.startsWith("__unittest") && icmp(mf["comment"].opt!string.strip, "ditto") != 0)
 					last_child_decl = mf;
 				newmem ~= mf;
 			}
@@ -274,10 +274,10 @@ int cmdFilterDocs(string[] args)
 	Json[] dst;
 	foreach (m; json) {
 		if ("name" !in m) {
-			writefln("No name for module %s - ignoring", m.file.opt!string);
+			writefln("No name for module %s - ignoring", m["file"].opt!string);
 			continue;
 		}
-		auto n = m.name.get!string;
+		auto n = m["name"].get!string;
 		bool include = true;
 		foreach (ex; excluded)
 			if (n.startsWith(ex)) {
@@ -418,10 +418,10 @@ protectionInheritanceName
 
 private string extractUnittestSourceCode(Json decl, Json mod)
 {
-	auto filename = mod.file.get!string();
+	auto filename = mod["file"].get!string();
 	enforce("line" in decl && "endline" in decl, "Missing line/endline fields.");
 	auto from = decl["line"].get!long;
-	auto to = decl.endline.get!long;
+	auto to = decl["endline"].get!long;
 
 	// read the matching lines out of the file
 	auto app = appender!string();

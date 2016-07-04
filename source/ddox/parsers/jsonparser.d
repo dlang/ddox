@@ -1,7 +1,7 @@
 /**
 	Parses DMD JSON output and builds up a documentation syntax tree (JSON format from DMD 2.063.2).
 
-	Copyright: © 2012-2015 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -99,19 +99,19 @@ private struct Parser
 	{
 		Module mod;
 		if( "name" !in json ){
-			logError("No name attribute in module %s - ignoring", json.filename.opt!string);
+			logError("No name attribute in module %s - ignoring", json["filename"].opt!string);
 			return;
 		}
-		auto path = json.name.get!string.split(".");
+		auto path = json["name"].get!string.split(".");
 		Package p = root_package;
 		foreach( i, pe; path ){
 			if( i+1 < path.length ) p = p.getOrAddPackage(pe);
 			else mod = p.createModule(pe);
 		}
 
-		mod.file = json.file.get!string;
-		mod.docGroup = new DocGroup(mod, json.comment.opt!string());
-		mod.members = parseDeclList(json.members, mod);
+		mod.file = json["file"].get!string;
+		mod.docGroup = new DocGroup(mod, json["comment"].opt!string());
+		mod.members = parseDeclList(json["members"], mod);
 	}
 
 	Declaration[] parseDeclList(Json json, Entity parent)
@@ -140,12 +140,12 @@ private struct Parser
 		Declaration ret;
 
 		// DMD outputs templates with the wrong kind sometimes
-		if (json.name.get!string().canFind('(') && json.kind != "mixin") {
+		if (json["name"].get!string().canFind('(') && json["kind"] != "mixin") {
 			ret = parseTemplateDecl(json, parent);
 		} else {
-			switch( json.kind.get!string ){
+			switch( json["kind"].get!string ){
 				default:
-					logWarn("Unknown declaration kind: %s", json.kind.get!string);
+					logWarn("Unknown declaration kind: %s", json["kind"].get!string);
 					return null;
 				case "import":
 				case "static import":
@@ -183,17 +183,17 @@ private struct Parser
 			}
 		}
 
-		ret.protection = parseProtection(json.protection);
+		ret.protection = parseProtection(json["protection"]);
 		ret.line = json["line"].opt!int;
-		ret.docGroup = new DocGroup(ret, json.comment.opt!string());
+		ret.docGroup = new DocGroup(ret, json["comment"].opt!string());
 
 		return ret;
 	}
 
 	auto parseAliasDecl(Json json, Entity parent)
 	{
-		auto ret = new AliasDeclaration(parent, json.name.get!string);
-		ret.attributes = json.storageClass.opt!(Json[]).map!(j => j.get!string).array;
+		auto ret = new AliasDeclaration(parent, json["name"].get!string);
+		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => j.get!string).array;
 		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
 			ret.targetType = null;
@@ -203,7 +203,7 @@ private struct Parser
 
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
-		auto ret = new FunctionDeclaration(parent, json.name.opt!string);
+		auto ret = new FunctionDeclaration(parent, json["name"].opt!string);
 		ret.type = parseType(json, ret, "void()");
 		assert(ret.type !is null);
 		// TODO: use "storageClass" and "parameters" fields
@@ -216,12 +216,12 @@ private struct Parser
 					if (!ret.attributes.canFind(sc.get!string))
 						ret.attributes ~= sc.get!string;
 
-			auto params = json.parameters.opt!(Json[]);
+			auto params = json["parameters"].opt!(Json[]);
 			if (!params) {
 				params.length = ret.type.parameterTypes.length;
 				foreach (i, pt; ret.type.parameterTypes) {
 					auto jp = Json.emptyObject;
-					jp.name = ret.type._parameterNames[i];
+					jp["name"] = ret.type._parameterNames[i];
 					jp["type"] = pt.text;
 					if (ret.type._parameterDefaultValues[i])
 						jp["default"] = ret.type._parameterDefaultValues[i].valueString;
@@ -230,7 +230,7 @@ private struct Parser
 			}
 
 			foreach (i, p; params) {
-				auto pname = p.name.opt!string;
+				auto pname = p["name"].opt!string;
 				auto decl = new VariableDeclaration(ret, pname);
 				foreach (sc; p["storageClass"].opt!(Json[]))
 					if (!decl.attributes.canFind(sc.get!string))
@@ -248,14 +248,14 @@ private struct Parser
 
 	auto parseEnumDecl(Json json, Entity parent)
 	{
-		auto ret = new EnumDeclaration(parent, json.name.get!string);
+		auto ret = new EnumDeclaration(parent, json["name"].get!string);
 		insertIntoTypeMap(ret);
 		if( "base" !in json ){ // FIXME: parse deco instead
 			if( auto pd = "baseDeco" in json )
-				json.base = demanglePrettyType(pd.get!string());
+				json["base"] = demanglePrettyType(pd.get!string());
 		}
-		ret.baseType = parseType(json.base, ret);
-		auto mems = parseDeclList(json.members, ret);
+		ret.baseType = parseType(json["base"], ret);
+		auto mems = parseDeclList(json["members"], ret);
 		foreach( m; mems ){
 			auto em = cast(EnumMemberDeclaration)m;
 			assert(em !is null, "Enum containing non-enum-members?");
@@ -266,36 +266,36 @@ private struct Parser
 
 	auto parseEnumMemberDecl(Json json, Entity parent)
 	{
-		auto ret = new EnumMemberDeclaration(parent, json.name.get!string);
-		if (json.value.opt!string.length)
-			ret.value = parseValue(json.value.opt!string);
+		auto ret = new EnumMemberDeclaration(parent, json["name"].get!string);
+		if (json["value"].opt!string.length)
+			ret.value = parseValue(json["value"].opt!string);
 		return ret;
 	}
 
 	auto parseCompositeDecl(Json json, Entity parent)
 	{
 		CompositeTypeDeclaration ret;
-		switch(json.kind.get!string){
+		switch(json["kind"].get!string){
 			default:
-				logWarn("Invalid composite decl kind: %s", json.kind.get!string);
-				return new StructDeclaration(parent, json.name.get!string);
+				logWarn("Invalid composite decl kind: %s", json["kind"].get!string);
+				return new StructDeclaration(parent, json["name"].get!string);
 			case "struct":
-				ret = new StructDeclaration(parent, json.name.get!string);
+				ret = new StructDeclaration(parent, json["name"].get!string);
 				break;
 			case "union":
-				ret = new UnionDeclaration(parent, json.name.get!string);
+				ret = new UnionDeclaration(parent, json["name"].get!string);
 				break;
 			case "class":
-				auto clsdecl = new ClassDeclaration(parent, json.name.get!string);
+				auto clsdecl = new ClassDeclaration(parent, json["name"].get!string);
 				if( clsdecl.qualifiedName != "object.Object" )
-					clsdecl.baseClass = parseType(json.base, clsdecl, "Object", false);
-				foreach( intf; json.interfaces.opt!(Json[]) )
+					clsdecl.baseClass = parseType(json["base"], clsdecl, "Object", false);
+				foreach( intf; json["interfaces"].opt!(Json[]) )
 					clsdecl.derivedInterfaces ~= parseType(intf, clsdecl);
 				ret = clsdecl;
 				break;
 			case "interface":
-				auto intfdecl = new InterfaceDeclaration(parent, json.name.get!string);
-				foreach( intf; json.interfaces.opt!(Json[]) )
+				auto intfdecl = new InterfaceDeclaration(parent, json["name"].get!string);
+				foreach( intf; json["interfaces"].opt!(Json[]) )
 					intfdecl.derivedInterfaces ~= parseType(intf, intfdecl);
 				ret = intfdecl;
 				break;
@@ -303,20 +303,20 @@ private struct Parser
 
 		insertIntoTypeMap(ret);
 
-		ret.members = parseDeclList(json.members, ret);
+		ret.members = parseDeclList(json["members"], ret);
 
 		return ret;
 	}
 
 	Declaration parseVariableDecl(Json json, Entity parent)
 	{
-		if (json.storageClass.opt!(Json[]).canFind!(j => j.opt!string == "enum")) {
-			auto ret = new EnumMemberDeclaration(parent, json.name.get!string);
+		if (json["storageClass"].opt!(Json[]).canFind!(j => j.opt!string == "enum")) {
+			auto ret = new EnumMemberDeclaration(parent, json["name"].get!string);
 			if (json["init"].opt!string.length)
 				ret.value = parseValue(json["init"].opt!string);
 			return ret;
 		} else {
-			auto ret = new VariableDeclaration(parent, json.name.get!string);
+			auto ret = new VariableDeclaration(parent, json["name"].get!string);
 			ret.type = parseType(json, ret);
 			if (json["init"].opt!string.length)
 				ret.initializer = parseValue(json["init"].opt!string);
@@ -326,27 +326,27 @@ private struct Parser
 
 	auto parseTemplateDecl(Json json, Entity parent)
 	{
-		auto ret = new TemplateDeclaration(parent, json.name.get!string);
-		foreach (arg; json.parameters.opt!(Json[])) {
+		auto ret = new TemplateDeclaration(parent, json["name"].get!string);
+		foreach (arg; json["parameters"].opt!(Json[])) {
 			string argstr;
-			switch (arg.kind.get!string) {
+			switch (arg["kind"].get!string) {
 				case "value":
 					if (auto pt = "type" in arg) argstr = pt.get!string ~ ' ';
-					else argstr = demanglePrettyType(arg.deco.get!string) ~ ' ';
+					else argstr = demanglePrettyType(arg["deco"].get!string) ~ ' ';
 					goto default;
 				case "alias":
 					argstr = "alias ";
 					goto default;
 				case "tuple":
-					argstr ~= arg.name.get!string ~ "...";
+					argstr ~= arg["name"].get!string ~ "...";
 					break;
 				default:
-					argstr ~= arg.name.get!string;
+					argstr ~= arg["name"].get!string;
 			}
 			ret.templateArgs ~= new TemplateParameterDeclaration(ret, argstr);
-			ret.templateConstraint = json.constraint.opt!string;
+			ret.templateConstraint = json["constraint"].opt!string;
 		}
-		ret.members = parseDeclList(json.members, ret);
+		ret.members = parseDeclList(json["members"], ret);
 		return ret;
 	}
 

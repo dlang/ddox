@@ -1,7 +1,7 @@
 /**
 	Internal functions for use inside the HTML templates.
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -116,7 +116,7 @@ class DocGroupContext : DdocContext {
 ///
 string getFunctionName(Json proto)
 {
-	auto n = proto.name.get!string;
+	auto n = proto["name"].get!string;
 	if( auto ptn = "templateName" in proto ){
 		auto tn = ptn.get!string;
 		if( tn.startsWith(n~"(") )
