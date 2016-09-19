@@ -1,7 +1,7 @@
 ﻿/**
 	DietDoc/DDOC support routines
 
-	Copyright: © 2012-2015 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the MIT license, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -636,7 +636,7 @@ private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 }
 
 /// private
-private void renderMacros(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null)
+private void renderMacros(R)(ref R dst, string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null, scope void delegate() flush_param_cb = null)
 {
 	while( !line.empty ){
 		auto idx = line.indexOf('$');
@@ -646,20 +646,20 @@ private void renderMacros(R)(ref R dst, string line, DdocContext context, string
 		}
 		dst.put(line[0 .. idx]);
 		line = line[idx .. $];
-		renderMacro(dst, line, context, macros, params, callstack);
+		renderMacro(dst, line, context, macros, params, callstack, flush_param_cb);
 	}
 }
 
 /// private
-private string renderMacros(string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null)
+private string renderMacros(string line, DdocContext context, string[string] macros, string[] params = null, MacroInvocation[] callstack = null, scope void delegate() flush_param_cb = null)
 {
 	auto app = appender!string;
-	renderMacros(app, line, context, macros, params, callstack);
+	renderMacros(app, line, context, macros, params, callstack, flush_param_cb);
 	return app.data;
 }
 
 /// private
-private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params, MacroInvocation[] callstack)
+private void renderMacro(R)(ref R dst, ref string line, DdocContext context, string[string] macros, string[] params, MacroInvocation[] callstack, scope void delegate() flush_param_cb = null)
 {
 	assert(line[0] == '$');
 	line = line[1 .. $];
@@ -676,7 +676,15 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 	} else if( line[0] == '+' ){
 		if( params.length ){
 			auto idx = params[0].indexOf(',');
-			if( idx >= 0 ) dst.put(params[0][idx+1 .. $].specialStrip());
+			if( idx >= 0 ) {
+				foreach (i, arg; splitParams(params[0][idx+1 .. $].specialStrip())) {
+					if (i > 0 && flush_param_cb is null)
+						dst.put(',');
+					dst.put(arg);
+					if (flush_param_cb !is null)
+						flush_param_cb();
+				}
+			}
 		}
 		line = line[1 .. $];
 	} else if( line[0] == '(' ){
@@ -710,12 +718,16 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 		string[] args;
 		if (rawargtext.length) {
 			auto rawargs = splitParams(rawargtext);
-			foreach( arg; rawargs ){
+			foreach (arg; rawargs) {
 				auto argtext = appender!string();
-				renderMacros(argtext, arg, context, macros, params, callstack);
-				auto newargs = splitParams(argtext.data);
-				if (newargs.length == 0) args ~= ""; // always add at least one argument per raw argument
-				else args ~= newargs;
+				bool any = false;
+				renderMacros(argtext, arg, context, macros, params, callstack, {
+					args ~= argtext.data;
+					argtext = appender!string();
+					any = true;
+				});
+				if (!any || argtext.data.length) // always add at least one argument per raw argument
+					args ~= argtext.data;
 			}
 		}
 		if (args.length == 1 && args[0].specialStrip.length == 0) args = null; // remove a single empty argument
@@ -1049,7 +1061,7 @@ unittest {
 unittest {
 	auto src = "Testing `inline <code>`.";
 	auto dst = "Testing <code class=\"lang-d\"><span class=\"pln\">inline </span><span class=\"pun\">&lt;</span><span class=\"pln\">code</span><span class=\"pun\">&gt;</span></code>.\n";
-	assert(formatDdocComment(src) == dst, [formatDdocComment(src)].to!string);
+	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
@@ -1249,4 +1261,10 @@ unittest { // DDOX_NAMED_REF special macro - handle invalid identifiers graceful
 	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
 	assert(formatDdocComment(src1, new Ctx) == dst);
 	assert(formatDdocComment(src2, new Ctx) == dst);
+}
+
+unittest { // #130 macro argument processing order
+	auto src = "$(TEST)\nMacros:\nIGNORESECOND = [$1]\nDOLLARZERO = dzbegin $0 dzend\nTEST = before $(IGNORESECOND $(DOLLARZERO one, two)) after";
+	auto dst = "before [dzbegin one, two dzend] after\n";
+	assert(formatDdocComment(src) == dst);
 }
