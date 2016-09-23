@@ -14,7 +14,7 @@ import hyphenate : Hyphenator;
 
 import std.algorithm : canFind, countUntil, map, min, remove;
 import std.array;
-import std.conv;
+import std.conv : to;
 import std.string;
 import std.uni : isAlpha;
 
@@ -519,41 +519,57 @@ private string highlightAndCrossLink(string line, DdocContext context)
 
 private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext context)
 {
-	int inCode;
+	while (line.length > 0) {
+		auto idx = line.indexOf('`');
+		if (idx < 0) idx = line.length;
+
+		foreach (el; HTMLTagStream(line[0 .. idx])) {
+			if (el.isTag) {
+				dst.put(el.text);
+				continue;
+			}
+
+			highlightAndCrossLinkRaw(dst, el.text, context, el.inCode);
+		}
+
+		line = line[idx .. $];
+		if (line.length) {
+			auto idx2 = line[1 .. $].indexOf('`');
+			auto eidx = idx2 >= 0 ? idx2+1 : line.length;
+			dst.put("<code class=\"lang-d\">");
+			dst.renderCodeLine(line[1 .. eidx], context);
+			dst.put("</code>");
+			line = line[eidx+1 .. $];
+		}
+	}
+}
+
+private string highlightAndCrossLinkRaw(string line, DdocContext context, bool in_code)
+{
+	auto dst = appender!string;
+	highlightAndCrossLinkRaw(dst, line, context, in_code);
+	return dst.data;
+}
+
+private void highlightAndCrossLinkRaw(R)(ref R dst, string line, DdocContext context, bool in_code)
+{
 	while( line.length > 0 ){
 		switch( line[0] ){
 			default:
 				dst.put(line[0]);
 				line = line[1 .. $];
 				break;
-			case '<':
-				auto res = skipHtmlTag(line);
-				if (res.startsWith("<code"))
-					++inCode;
-				else if (res == "</code>")
-					--inCode;
-				dst.put(res);
-				break;
 			case '_':
 				line = line[1 .. $];
 				auto ident = skipIdent(line);
 				if( ident.length )
 				{
-					if (s_enableHyphenation && !inCode)
+					if (s_enableHyphenation && !in_code)
 						hyphenate(ident, dst);
 					else
 						dst.put(ident);
 				}
 				else dst.put('_');
-				break;
-			case '`':
-				line.popFront();
-				auto idx = line.indexOf('`');
-				if (idx < 0) break;
-				dst.put("<code class=\"lang-d\">");
-				dst.renderCodeLine(line[0 .. idx], context);
-				dst.put("</code>");
-				line = line[idx+1 .. $];
 				break;
 			case '.':
 				if (line.length > 1 && (line[1 .. $].front.isAlpha || line[1] == '_')) goto case;
@@ -573,7 +589,7 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if (link.length && inCode) {
+				if (link.length && in_code) {
 					import ddox.highlight : highlightDCode;
 					if( link != "#" ){
 						dst.put("<a href=\"");
@@ -584,7 +600,7 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 					if( link != "#" ) dst.put("</a>");
 				} else {
 					ident = ident.replace("._", ".");
-					if (s_enableHyphenation && !inCode)
+					if (s_enableHyphenation && !in_code)
 						hyphenate(ident, dst);
 					else
 						dst.put(ident);
@@ -597,25 +613,9 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 /// private
 private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 {
-	while( line.length > 0 ){
-		switch( line[0] ){
-			default:
-				dst.put(line[0]);
-				line = line[1 .. $];
-				break;
-			case '<':
-				dst.put(skipHtmlTag(line));
-				break;
-			case '>':
-				dst.put("&gt;");
-				line.popFront();
-				break;
-			case '&':
-				if (line.length >= 2 && (line[1].isAlpha || line[1] == '#')) dst.put('&');
-				else dst.put("&amp;");
-				line.popFront();
-				break;
-		}
+	foreach (el; HTMLTagStream(line)) {
+		if (el.isTag) dst.put(el.text);
+		else dst.htmlEscape(el.text);
 	}
 }
 
@@ -758,15 +758,10 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			auto tmp = appender!string;
 			renderMacros(tmp, "$0", context, macros, args, callstack);
 			dst.put("<code class=\"lang-d\">");
-			string c = tmp.data;
-			while (c.length) {
-				auto idx = c.indexOf('<');
-				if (idx > 0) dst.renderCodeLine(c[0 .. idx], context);
-				if (idx < 0) break;
-				c = c[idx .. $];
-				dst.put(skipHtmlTag(c));
+			foreach (el; HTMLTagStream(tmp.data)) {
+				if (el.isTag) dst.put(el.text);
+				else dst.renderCodeLine(el.text, context);
 			}
-			if (c.length > 0) dst.renderCodeLine(c, context);
 			dst.put("</code>");
 		} else if (mname == "DDOX_NAMED_REF") {
 			auto sym = appender!string;
@@ -818,39 +813,100 @@ private string[] splitParams(string ln)
 	return ret;
 }
 
-private string skipHtmlTag(ref string ln)
-{
-	assert(ln[0] == '<');
+struct HTMLTagStream {
+	private struct Element {
+		string text;
+		bool isTag;
+		bool inCode;
+	}
 
-	// skip HTML comment
-	if (ln.startsWith("<!--")) {
-		auto idx = ln[4 .. $].indexOf("-->");
-		if (idx < 0) {
-			ln.popFront();
-			return "&lt;";
+	private {
+		string m_text;
+		size_t m_endIndex;
+		bool m_isTag;
+		int m_inCode;
+	}
+
+	this(string text)
+	{
+		m_text = text;
+		determineNextElement();
+	}
+
+	@property Element front() { return Element(m_text[0 .. m_endIndex], m_isTag, m_inCode > 0); }
+
+	void popFront()
+	{
+		m_text = m_text[m_endIndex .. $];
+		determineNextElement();
+	}
+
+	@property bool empty() const { return m_text.length == 0; }
+
+	private void determineNextElement()
+	{
+		auto idx = m_text.indexOf('<');
+		m_endIndex = idx < 0 ? m_text.length : idx;
+		m_isTag = false;
+
+		if (m_endIndex > 0 || m_text.length == 0) return;
+
+		// skip HTML comment
+		if (m_text.startsWith("<!--")) {
+			idx = m_text[4 .. $].indexOf("-->");
+			if (idx < 0) {
+				m_endIndex = m_text.length;
+				m_isTag = false;
+				return;
+			}
+
+			m_endIndex = idx+4+3;
+			m_isTag = true;
+			return;
 		}
-		auto ret = ln[0 .. idx+7];
-		ln = ln[ret.length .. $];
-		return ret;
-	}
 
-	// too short for a tag
-	if (ln.length < 2 || (!ln[1].isAlpha && ln[1] != '#' && ln[1] != '/')) {
-		// found no match, return escaped '<'
-		logTrace("Found stray '<' in DDOC string.");
-		ln.popFront();
-		return "&lt;";
-	}
+		idx = m_text.indexOf(">");
 
-	// skip over regular start/end tag
-	auto idx = ln.indexOf(">");
-	if (idx < 0) {
-		ln.popFront();
-		return "<";
+		// is this a (potentially) valid tag?
+		if (idx < 2 || (!m_text[1].isAlpha && m_text[1] != '#' && m_text[1] != '/')) {
+			// found no match, return escaped '<'
+			logTrace("Found stray '<' in DDOC string.");
+			m_endIndex = 1;
+			m_isTag = false;
+			return;
+		}
+
+		m_endIndex = idx+1;
+		m_isTag = true;
+
+		if (m_text.startsWith("<code ") || m_text[0 .. m_endIndex] == "<code>" ) ++m_inCode;
+		else if (m_text[0 .. m_endIndex] == "</code>") --m_inCode;
 	}
-	auto ret = ln[0 .. idx+1];
-	ln = ln[ret.length .. $];
-	return ret;
+}
+
+unittest {
+	import std.algorithm.comparison : equal;
+	alias E = HTMLTagStream.Element;
+	assert(HTMLTagStream("<foo").equal([E("<", false, false), E("foo", false, false)]));
+	assert(HTMLTagStream("<foo>bar").equal([E("<foo>", true, false), E("bar", false, false)]));
+	assert(HTMLTagStream("foo<bar>").equal([E("foo", false, false), E("<bar>", true, false)]));
+	assert(HTMLTagStream("<code>foo</code>").equal([E("<code>", true, true), E("foo", false, true), E("</code>", true, false)]), HTMLTagStream("<code>foo</code>").array.to!string);
+	assert(HTMLTagStream("foo<code>").equal([E("foo", false, false), E("<code>", true, true)]), HTMLTagStream("foo<code>").array.to!string);
+}
+
+private void htmlEscape(R)(ref R dst, string str)
+{
+	foreach (size_t i, char ch; str) {
+		switch (ch) {
+			default: dst.put(ch); break;
+			case '<': dst.put("&lt;"); break;
+			case '>': dst.put("&gt;"); break;
+			case '&':
+				if (i+1 < str.length && (str[i+1].isAlpha || str[i+1] == '#')) dst.put('&');
+				else dst.put("&amp;");
+				break;
+		}
+	}
 }
 
 private string skipUrl(ref string ln)
@@ -1266,5 +1322,17 @@ unittest { // DDOX_NAMED_REF special macro - handle invalid identifiers graceful
 unittest { // #130 macro argument processing order
 	auto src = "$(TEST)\nMacros:\nIGNORESECOND = [$1]\nDOLLARZERO = dzbegin $0 dzend\nTEST = before $(IGNORESECOND $(DOLLARZERO one, two)) after";
 	auto dst = "before [dzbegin one, two dzend] after\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "`<&`";
+	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "$(D <&)";
+	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pun\">&amp;</span></code>\n";
 	assert(formatDdocComment(src) == dst);
 }
