@@ -1326,19 +1326,7 @@ unittest { // #130 macro argument processing order
 }
 
 unittest {
-	auto src = "`<&`";
-	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n";
-	assert(formatDdocComment(src) == dst);
-}
-
-unittest {
-	auto src = "$(D <&)";
-	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pun\">&amp;</span></code>\n";
-	assert(formatDdocComment(src) == dst);
-}
-
-unittest {
-	auto src = "`foo";
-	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
-	assert(formatDdocComment(src) == dst);
+	assert(formatDdocComment("`<&`") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
+	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pun\">&amp;</span></code>\n");
+	assert(formatDdocComment("`foo") == "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n");
 }
