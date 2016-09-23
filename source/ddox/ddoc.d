@@ -845,50 +845,70 @@ struct HTMLTagStream {
 
 	private void determineNextElement()
 	{
-		auto idx = m_text.indexOf('<');
-		m_endIndex = idx < 0 ? m_text.length : idx;
+		if (m_text.length == 0) return;
+
+		// are we at a valid tag start?
+		if (m_text[0] == '<') {
+			auto tlen = getTagLength(m_text);
+			if (tlen > 0) {
+				m_isTag = true;
+				m_endIndex = tlen;
+				if (m_text.startsWith("<code ") || m_text[0 .. m_endIndex] == "<code>" ) ++m_inCode;
+				else if (m_text[0 .. m_endIndex] == "</code>") --m_inCode;
+				return;
+			}
+		}
+
 		m_isTag = false;
+		m_endIndex = 0;
 
-		if (m_endIndex > 0 || m_text.length == 0) return;
-
-		// skip HTML comment
-		if (m_text.startsWith("<!--")) {
-			idx = m_text[4 .. $].indexOf("-->");
+		// else skip to the next valid tag
+		while (m_endIndex < m_text.length) {
+			auto idx = m_text[m_endIndex .. $].indexOf('<');
 			if (idx < 0) {
 				m_endIndex = m_text.length;
-				m_isTag = false;
 				return;
 			}
 
-			m_endIndex = idx+4+3;
-			m_isTag = true;
-			return;
+			auto tlen = getTagLength(m_text[m_endIndex+idx .. $]);
+			if (tlen > 0) {
+				m_endIndex += idx;
+				return;
+			}
+
+			m_endIndex += idx + 1;
+		}
+	}
+
+	private static size_t getTagLength(string text)
+	{
+		assert(text.startsWith('<'));
+
+		// skip HTML comment
+		if (text.startsWith("<!--")) {
+			auto idx = text[4 .. $].indexOf("-->");
+			if (idx < 0) return 0;
+			return idx+4+3;
 		}
 
-		idx = m_text.indexOf(">");
+		auto idx = text.indexOf(">");
 
 		// is this a (potentially) valid tag?
-		if (idx < 2 || (!m_text[1].isAlpha && m_text[1] != '#' && m_text[1] != '/')) {
+		if (idx < 2 || (!text[1].isAlpha && text[1] != '#' && text[1] != '/')) {
 			// found no match, return escaped '<'
 			logTrace("Found stray '<' in DDOC string.");
-			m_endIndex = 1;
-			m_isTag = false;
-			return;
+			return 0;
 		}
 
-		m_endIndex = idx+1;
-		m_isTag = true;
-
-		if (m_text.startsWith("<code ") || m_text[0 .. m_endIndex] == "<code>" ) ++m_inCode;
-		else if (m_text[0 .. m_endIndex] == "</code>") --m_inCode;
+		return idx + 1;
 	}
 }
 
 unittest {
 	import std.algorithm.comparison : equal;
 	alias E = HTMLTagStream.Element;
-	assert(HTMLTagStream("<foo").equal([E("<", false, false), E("foo", false, false)]));
-	assert(HTMLTagStream("<foo>bar").equal([E("<foo>", true, false), E("bar", false, false)]));
+	assert(HTMLTagStream("<foo").equal([E("<foo", false, false)]));
+	assert(HTMLTagStream("<foo>bar").equal([E("<foo>", true, false), E("bar", false, false)]), HTMLTagStream("<foo>bar").array.to!string);
 	assert(HTMLTagStream("foo<bar>").equal([E("foo", false, false), E("<bar>", true, false)]));
 	assert(HTMLTagStream("<code>foo</code>").equal([E("<code>", true, true), E("foo", false, true), E("</code>", true, false)]), HTMLTagStream("<code>foo</code>").array.to!string);
 	assert(HTMLTagStream("foo<code>").equal([E("foo", false, false), E("<code>", true, true)]), HTMLTagStream("foo<code>").array.to!string);
@@ -1327,6 +1347,7 @@ unittest { // #130 macro argument processing order
 
 unittest {
 	assert(formatDdocComment("`<&`") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
-	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pun\">&amp;</span></code>\n");
+	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
 	assert(formatDdocComment("`foo") == "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n");
+	assert(formatDdocComment("$(D \"a < b\")") == "<code class=\"lang-d\"><span class=\"str\">\"a &lt; b\"</span></code>\n", formatDdocComment("$(D \"a < b\")"));
 }
