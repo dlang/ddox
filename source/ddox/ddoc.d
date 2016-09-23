@@ -539,7 +539,7 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 			dst.put("<code class=\"lang-d\">");
 			dst.renderCodeLine(line[1 .. eidx], context);
 			dst.put("</code>");
-			line = line[eidx+1 .. $];
+			line = line[min(eidx+1, $) .. $];
 		}
 	}
 }
@@ -1334,5 +1334,11 @@ unittest {
 unittest {
 	auto src = "$(D <&)";
 	auto dst = "<code class=\"lang-d\"><span class=\"pun\">&lt;</span><span class=\"pun\">&amp;</span></code>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest {
+	auto src = "`foo";
+	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n";
 	assert(formatDdocComment(src) == dst);
 }
