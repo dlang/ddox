@@ -9,6 +9,10 @@ PID=$!
 cleanup() { kill $PID; }
 trap cleanup EXIT
 
+wget https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
+tar -C $HOME -jxf phantomjs-2.1.1-linux-x86_64.tar.bz2
+export PATH="$HOME/phantomjs-2.1.1-linux-x86_64/bin/:$PATH"
+
 npm install phantomcss -q
 if ! ./node_modules/phantomcss/node_modules/.bin/casperjs test test/test.js ; then
     # upload failing screenshots
