@@ -6,6 +6,6 @@ license "MIT"
 
 dependency "vibe-d:web" version="~>0.7.28"
 dependency "hyphenate" version="~>1.1.0"
-dependency "libdparse" version="~>0.6.0"
+dependency "libdparse" version="~>0.7.0-beta.2"
 
 versions "JsonLineNumbers"
