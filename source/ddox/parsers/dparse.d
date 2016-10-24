@@ -12,6 +12,7 @@ import ddox.entities;
 import dparse = dparse.parser;
 import dlex = dparse.lexer;
 import dformat = dparse.formatter;
+import dparse.rollback_allocator : RollbackAllocator;
 
 import std.algorithm;
 import std.conv;
@@ -128,7 +129,8 @@ private struct DParser
 		config.stringBehavior = dlex.StringBehavior.source;
 		dlex.StringCache cache = dlex.StringCache(1024 * 4);
 		auto tokens = dlex.getTokensForParser(cast(ubyte[])std.file.read(filename), config, &cache).array;
-		auto dmod = dparse.parseModule(tokens, filename);
+                RollbackAllocator rba;
+		auto dmod = dparse.parseModule(tokens, filename, &rba);
 
 		Module mod;
 		if (!dmod.moduleDeclaration) {
