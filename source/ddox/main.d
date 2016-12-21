@@ -234,7 +234,7 @@ int cmdFilterDocs(string[] args)
 					if (last_decl["comment"].opt!string.empty) {
 						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl["name"].opt!string);
 					} else {
-						last_decl["comment"] ~= format("Example:\n%s\n---\n%s\n---\n", comment.strip, source);
+						last_decl["comment"] ~= format("Example:\n%s$(DDOX_UNITTEST \n---\n%s\n---\n)\n", comment.strip, source);
 					}
 				} catch (Exception e) {
 					writefln("Failed to add documented unit test %s:%s as example: %s",
