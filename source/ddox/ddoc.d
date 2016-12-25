@@ -111,6 +111,9 @@ shared static this()
 		 `DDOC_PSYMBOL` : `$(U $0)`,
 		 `DDOC_KEYWORD` : `$(B $0)`,
 		 `DDOC_PARAM` : `$(I $0)`,
+
+		 `DDOX_UNITTEST_HEADER`: ``,
+		 `DDOX_UNITTEST_FOOTER`: ``
 		 ];
 	import std.datetime : Clock;
 	auto now = Clock.currTime();
@@ -1349,5 +1352,5 @@ unittest {
 	assert(formatDdocComment("`<&`") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
 	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
 	assert(formatDdocComment("`foo") == "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n");
-	assert(formatDdocComment("$(D \"a < b\")") == "<code class=\"lang-d\"><span class=\"str\">\"a &lt; b\"</span></code>\n", formatDdocComment("$(D \"a < b\")"));
+	assert(formatDdocComment("$(D \"a < b\")") == "<code class=\"lang-d\"><span class=\"str\">\"a &lt; b\"</span></code>\n");
 }
