@@ -18,9 +18,8 @@ if ! ./node_modules/phantomcss/node_modules/.bin/casperjs test test/test.js ; th
     # upload failing screenshots
     cd test/screenshots
     for img in *.{diff,fail}.png; do
-        ARGS="$ARGS -F image=@$img"
+        ARGS="$ARGS -F name=@$img"
     done
-    ARGS="$ARGS -F build_id=$TRAVIS_BUILD_ID"
-    curl -fsSL https://ddox-test-uploads.herokuapp.com $ARGS
+    curl -fsSL https://img.vim-cn.com/ $ARGS
     exit 1
 fi
