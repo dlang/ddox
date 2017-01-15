@@ -113,7 +113,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 {
 	string[] macrofiles;
 	string[] overridemacrofiles;
-	NavigationType navtype;
+	NavigationType navtype = NavigationType.ModuleTree;
 	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
 	MethodStyle file_name_style = MethodStyle.unaltered;
@@ -348,7 +348,7 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --override-macros=FILE File containing DDOC macros that will override local
                            definitions (Macros: section)
     --navigation-type=TYPE Change the type of navigation (ModuleList,
-                           ModuleTree, DeclarationTree)
+                           ModuleTree (default), DeclarationTree)
     --package-order=NAME   Causes the specified module to be ordered first. Can
                            be specified multiple times.
     --sitemap-url          Specifies the base URL used for sitemap generation
