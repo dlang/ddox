@@ -137,5 +137,5 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 
 	// convenience redirects (when leaving off the trailing slash)
 	if( path_prefix.length ) router.get(path_prefix, staticRedirect(path_prefix~"/"));
-	router.get(path_prefix~"/:modulename", delegate(req, res){ res.redirect(path_prefix~"/"~req.params["modulename"]~"/"); });
+	router.get(path_prefix~"/:modulename", (HTTPServerRequest req, HTTPServerResponse res){ res.redirect(path_prefix~"/"~req.params["modulename"]~"/"); });
 }
