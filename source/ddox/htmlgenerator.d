@@ -23,7 +23,8 @@ import vibe.core.stream;
 import vibe.data.json;
 import vibe.inet.path;
 import vibe.http.server;
-import vibe.templ.diet;
+import vibe.stream.wrapper : StreamOutputRange;
+import diet.html;
 
 
 /*
@@ -256,8 +257,6 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 
 void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to)
 {
-	import vibe.stream.wrapper;
-
 	bool[string] visited;
 
 	auto rng = StreamOutputRange(dst);
@@ -297,7 +296,8 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.rootPackage = root_package;
 	info.node = root_package;
 
-	dst.compileDietFile!("ddox.overview.dt", req, info);
+	auto rng = StreamOutputRange(dst);
+	rng.compileHTMLDietFile!("ddox.overview.dt", req, info);
 }
 
 void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
@@ -310,7 +310,8 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.node = mod;
 	info.docGroups = null;
 
-	dst.compileDietFile!("ddox.module.dt", req, info);
+	auto rng = StreamOutputRange(dst);
+	rng.compileHTMLDietFile!("ddox.module.dt", req, info);
 }
 
 void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
@@ -327,7 +328,8 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, string
 	sort!((a, b) => cmpKind(a.members[0], b.members[0]))(info.docGroups);
 	info.nestedName = nested_name;
 
-	dst.compileDietFile!("ddox.docpage.dt", req, info);
+	auto rng = StreamOutputRange(dst);
+	rng.compileHTMLDietFile!("ddox.docpage.dt", req, info);
 }
 
 private bool cmpKind(Entity a, Entity b)

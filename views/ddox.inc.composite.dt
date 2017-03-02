@@ -1,6 +1,7 @@
 - import ddox.api;
 - import ddox.highlight;
 - import std.algorithm;
+- import std.string : toLower;
 - import std.typetuple;
 
 - void outputCompositeDescription(CompositeTypeDeclaration item)
