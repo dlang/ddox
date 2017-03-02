@@ -5,7 +5,7 @@
 
 - void outputTemplateDescription(TemplateDeclaration item)
 	section
-		h2 Arguments
+		h3 Arguments
 
 		.prototype
 			code.lang-d
