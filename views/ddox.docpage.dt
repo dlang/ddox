@@ -12,20 +12,17 @@ block ddox.title
 		- auto names = info.docGroups.map!(g => g.members[0].name).array.sort().uniq;
 		- string prefix = cast(Module)info.docGroups[0].members[0].parent is null ? info.docGroups[0].members[0].parent.nestedName ~ "." : "";
 		- title = prefix ~ names.join("/") ~ " - multiple declarations";
-	
-block ddox.members
 
-	- if (info.docGroups.length > 1)
-		ul
-			- foreach (dg; info.docGroups)
-				- auto itm = dg.members[0];
-				li #{itm.kindCaption} #{itm.nestedName}
+block ddox.members
 
 	include ddox.inc.composite
 	include ddox.inc.enum
 	include ddox.inc.function
 	include ddox.inc.template
 	include ddox.inc.variable
+
+	p!= info.formatDoc(info.docGroups[0], 3, sec => sec == "$Short")
+	|!= info.formatDoc(info.docGroups[0], 3, sec => sec == "$Long")
 
 	- foreach (dg; info.docGroups)
 		- auto item = cast(Declaration)dg.members[0];
@@ -34,9 +31,6 @@ block ddox.members
 		section
 			- if (info.docGroups.length > 1)
 				h2 #{item.kindCaption} #{item.nestedName}
-
-			p!= info.formatDoc(dg, 3, sec => sec == "$Short")
-			|!= info.formatDoc(dg, 3, sec => sec == "$Long")
 
 			- switch (item.kind) with (DeclarationKind)
 				- default: break;
@@ -52,22 +46,45 @@ block ddox.members
 					- auto cdecl = cast(CompositeTypeDeclaration)item;
 					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName);
 					- outputCompositeDescription(cdecl);
-					- outputCompositeMembers(cdecl);
 					- break;
 				- case Template:
 					- auto tdecl = cast(TemplateDeclaration)item;
 					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName);
 					- outputTemplateDescription(tdecl);
-					- outputTemplateMembers(tdecl);
 					- break;
 				- case Enum:
 					- auto edecl = cast(EnumDeclaration)item;
 					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName);
 					- outputEnumDescription(edecl);
+					- break;
+
+	- foreach (dg; info.docGroups)
+		- auto item = cast(Declaration)dg.members[0];
+		- assert (item !is null, "Unknown entity type: "~dg.members[0].classinfo.toString());
+
+		section
+			- switch (item.kind) with (DeclarationKind)
+				- default: break;
+				- case Variable, EnumMember, Alias:
+				- case Function:
+					- break;
+				- case Interface, Class, Struct, Union:
+					- auto cdecl = cast(CompositeTypeDeclaration)item;
+					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName);
+					- outputCompositeMembers(cdecl);
+					- break;
+				- case Template:
+					- auto tdecl = cast(TemplateDeclaration)item;
+					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName);
+					- outputTemplateMembers(tdecl);
+					- break;
+				- case Enum:
+					- auto edecl = cast(EnumDeclaration)item;
+					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName);
 					- outputEnumMembers(edecl);
 					- break;
 
-			|!= info.formatDoc(item.docGroup, 3, sec => sec != "$Short" && sec != "$Long" && sec != "Copyright" && sec != "Authors" && sec != "License")
+	|!= info.formatDoc(info.docGroups[0], 3, sec => sec != "$Short" && sec != "$Long" && sec != "Copyright" && sec != "Authors" && sec != "License")
 
 block ddox.authors
 	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")
