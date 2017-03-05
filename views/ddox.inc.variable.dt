@@ -2,10 +2,9 @@
 - import std.algorithm;
 - import std.string : toLower;
 
-- void outputVariableDescription(Declaration item)
+- void outputVariableDescription(Declaration item, int hlevel)
 	- auto docgroup = item.docGroup;
 	section
-		h3 Declaration
 		.prototype
 			code.lang-d
 				- string value;

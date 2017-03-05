@@ -2,7 +2,9 @@ extends ddox.layout
 
 block ddox.defs
 	- import ddox.api;
+	- import std.array : array, join;
 	- import std.algorithm;
+	- import std.range.primitives : walkLength;
 
 block ddox.title
 	- if (info.docGroups.length == 1)
@@ -14,60 +16,76 @@ block ddox.title
 		- title = prefix ~ names.join("/") ~ " - multiple declarations";
 	
 block ddox.members
+	- bool multi_page = info.docGroups.length > 1;
 
-	- if (info.docGroups.length > 1)
-		ul
-			- foreach (dg; info.docGroups)
-				- auto itm = dg.members[0];
-				li #{itm.kindCaption} #{itm.nestedName}
+	- if (multi_page)
+		nav.page-nav
+			ul
+				- foreach (i, dg; info.docGroups)
+					- auto itm = dg.members[0];
+					li: a(href="\##{i}") #{dg.collectKinds().joiner("/")} #{itm.nestedName}
 
+	include ddox.inc.utils
 	include ddox.inc.composite
 	include ddox.inc.enum
 	include ddox.inc.function
 	include ddox.inc.template
 	include ddox.inc.variable
 
-	- foreach (dg; info.docGroups)
-		- auto item = cast(Declaration)dg.members[0];
-		- assert (item !is null, "Unknown entity type: "~dg.members[0].classinfo.toString());
+	- foreach (i, dg; info.docGroups)
+		- bool got_function = false;
+		- int hlevel = 2 + multi_page;
+		- auto kinds = dg.collectKinds();
 
-		section
-			- if (info.docGroups.length > 1)
-				h2 #{item.kindCaption} #{item.nestedName}
+		- if (multi_page)
+			h2(id=i) #{kinds.joiner("/")} #{dg.members[0].nestedName}
 
-			p!= info.formatDoc(dg, 3, sec => sec == "$Short")
-			|!= info.formatDoc(dg, 3, sec => sec == "$Long")
+		p!= info.formatDoc(dg, hlevel, sec => sec == "$Short")
+		|!= info.formatDoc(dg, hlevel, sec => sec == "$Long")
+
+		- foreach (itement; dg.members)
+			- auto item = cast(Declaration)itement;
+			- assert (item !is null, "Unknown entity type: "~dg.members[0].classinfo.toString());
+			- auto shlevel = hlevel;
+
+			- if (got_function && cast(FunctionDeclaration)item)
+				- continue;
+
+			- if (kinds.walkLength > 1)
+				- shlevel++;
+				- heading(hlevel, item.kindCaption, " ", item.nestedName);
 
 			- switch (item.kind) with (DeclarationKind)
 				- default: break;
 				- case Variable, EnumMember, Alias:
-					- outputVariableDescription(item);
+					- outputVariableDescription(item, shlevel);
 					- break;
 				- case Function:
+					- got_function = true;
 					- auto fdecl = cast(FunctionDeclaration)item;
 					- assert(fdecl !is null, "Invalid node of function kind: " ~ item.qualifiedName);
-					- outputFunctionDescription(fdecl);
+					- outputFunctionDescription(fdecl, shlevel);
 					- break;
 				- case Interface, Class, Struct, Union:
 					- auto cdecl = cast(CompositeTypeDeclaration)item;
 					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName);
-					- outputCompositeDescription(cdecl);
-					- outputCompositeMembers(cdecl);
+					- outputCompositeDescription(cdecl, shlevel);
+					- outputCompositeMembers(cdecl, shlevel);
 					- break;
 				- case Template:
 					- auto tdecl = cast(TemplateDeclaration)item;
 					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName);
-					- outputTemplateDescription(tdecl);
-					- outputTemplateMembers(tdecl);
+					- outputTemplateDescription(tdecl, shlevel);
+					- outputTemplateMembers(tdecl, shlevel);
 					- break;
 				- case Enum:
 					- auto edecl = cast(EnumDeclaration)item;
 					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName);
-					- outputEnumDescription(edecl);
-					- outputEnumMembers(edecl);
+					- outputEnumDescription(edecl, shlevel);
+					- outputEnumMembers(edecl, shlevel);
 					- break;
 
-			|!= info.formatDoc(item.docGroup, 3, sec => sec != "$Short" && sec != "$Long" && sec != "Copyright" && sec != "Authors" && sec != "License")
+		|!= info.formatDoc(dg, hlevel, sec => sec != "$Short" && sec != "$Long" && sec != "Copyright" && sec != "Authors" && sec != "License")
 
 block ddox.authors
 	|!= info.formatDoc(info.mod.docGroup, 0, sec => sec == "Authors")

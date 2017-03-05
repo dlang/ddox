@@ -4,13 +4,13 @@
 - import std.string : toLower;
 - import std.typetuple;
 
-- void outputCompositeDescription(CompositeTypeDeclaration item)
+- void outputCompositeDescription(CompositeTypeDeclaration item, int hlevel)
 	- auto cls_item = cast(ClassDeclaration)item;
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
 	- if (item.templateArgs.length)
 		section
-			h3 Template arguments
+			- heading(hlevel, "Template arguments");
 
 			.prototype
 				code.lang-d <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>!{highlightDCode(item.templateArgsString)}#{item.templateConstraint.length?"":";"}
@@ -20,7 +20,7 @@
 
 	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
 		section
-			h3 Inherits from
+			- heading(hlevel, "Inherits from");
 
 			ul
 				- if( cls_item.baseClass )
@@ -33,7 +33,7 @@
 
 	- if( intf_item && intf_item.derivedInterfaces.length )
 		section
-			h3 Inherits from
+			- heading(hlevel, "Inherits frmo");
 
 			ul
 				- foreach( intf; intf_item.derivedInterfaces )
@@ -41,7 +41,7 @@
 						code.prettyprint.lang-d!= info.formatType(intf, false)
 
 
-- void outputCompositeMembers(CompositeTypeDeclaration item)
+- void outputCompositeMembers(CompositeTypeDeclaration item, int hlevel)
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
@@ -57,7 +57,7 @@
 
 	- if( constructors.length )
 		section
-			h3 Constructors
+			- heading(hlevel, "Constructors");
 			table
 				col.caption
 				tr
@@ -72,7 +72,7 @@
 
 	- if( hasChild!VariableDeclaration(item) )
 		section
-			h3 Fields
+			- heading(hlevel, "Fields");
 			table
 				col.caption
 				tr
@@ -88,7 +88,7 @@
 
 	- if( properties.length )
 		section
-			h3 Properties
+			- heading(hlevel, "Properties");
 			table
 				col.caption
 				tr
@@ -106,7 +106,7 @@
 
 	- if( methods.length )
 		section
-			h3 Methods
+			- heading(hlevel, "Methods");
 			table
 				col.caption
 				tr
@@ -122,7 +122,7 @@
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(item) )
 			section
-				h3= kindnames[i]
+				- heading(hlevel, kindnames[i]);
 				table
 					col.caption
 					tr

@@ -3,28 +3,26 @@
 - import std.algorithm;
 - import std.typetuple;
 
-- void outputTemplateDescription(TemplateDeclaration item)
+- void outputTemplateDescription(TemplateDeclaration item, int hlevel)
 	section
-		h3 Arguments
-
 		.prototype
 			code.lang-d
 				|<span class="kwd">template</span> <span class="pln">#{item.name}</span>!{highlightDCode(item.templateArgsString)};
 
-- void outputTemplateMembers(TemplateDeclaration item)
+- void outputTemplateMembers(TemplateDeclaration item, int hlevel)
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
 	- auto kindnames =      ["Functions", "Interfaces", "Classes", "Structs", "Unions", "Enums", "Aliases", "Templates"];
 	- auto kindnames_sing = ["Function",  "Interface",  "Class",   "Struct",  "Union",  "Enum",  "Alias",   "Template"];
 
 	- if( hasChild!VariableDeclaration(item) )
 		section
-			h3 Variables
+			- heading(hlevel, "Contained Variables");
 			table
 				col.caption
 				tr
-					th Field name
-					th Field Type
-					th Descrption
+					th Name
+					th Type
+					th Description
 				- foreach( f; getChildren!VariableDeclaration(item) )
 					tr
 						td
@@ -37,11 +35,11 @@
 	- foreach( i, kind; kinds )
 		- if( hasChild!kind(item) )
 			section
-				h3= kindnames[i]
+				- heading(hlevel, "Contained " ~ kindnames[i]);
 				table
 					col.caption
 					tr
-						th #{kindnames_sing[i]} name
+						th Name
 						th Description
 					- foreach( grp; getDocGroups!kind(item) )
 						tr

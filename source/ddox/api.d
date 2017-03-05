@@ -146,6 +146,14 @@ DocGroup[] docGroups(Declaration[] items)
 	return ret;
 }
 
+auto collectKinds(DocGroup grp)
+{
+	return grp.members
+		.map!(e => e.kindCaption)
+		.array
+		.sort()
+		.uniq;
+}
 
 bool hasChild(T)(Module mod){ return hasChild!T(mod.members); }
 bool hasChild(T)(CompositeTypeDeclaration decl){ return hasChild!T(decl.members); }

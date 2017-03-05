@@ -25,14 +25,18 @@ block body
 
 	block ddox.members
 
-	section
-		h2 Authors
-		block ddox.authors
+	table.license-info
+		tr
+			th Authors
+			td
+				block ddox.authors
 
-	section
-		h2 Copyright
-		block ddox.copyright
+		tr
+			th Copyright
+			td
+				block ddox.copyright
 
-	section
-		h2 License
-		block ddox.license
+		tr
+			th License
+			td
+				block ddox.license
