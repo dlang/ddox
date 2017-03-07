@@ -41,10 +41,12 @@ pre .pln, div.prototype .pln { color: #fff }  /* plain text */
 
 /* Put a border around prettyprinted code snippets. */
 pre.prettyprint, pre.code, div.prototype {
-  padding: 1em 0;
-  background-color: #222;
+  padding: 1em 0.5em;
+  background-color: #282822;
   border: 1px solid black;
   color: white;
+  max-width: 100em;
+  overflow: auto;
 }
 
 /* Specify class=linenums on a pre to get line numbering */

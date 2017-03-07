@@ -25,7 +25,6 @@ block ddox.members
 					- auto itm = dg.members[0];
 					li: a(href="\##{i}") #{dg.collectKinds().joiner("/")} #{itm.nestedName}
 
-	include ddox.inc.utils
 	include ddox.inc.composite
 	include ddox.inc.enum
 	include ddox.inc.function

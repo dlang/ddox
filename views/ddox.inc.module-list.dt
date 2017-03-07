@@ -1,11 +1,15 @@
 - import ddox.entities;
 
 - void moduleNavList(Package pack)
+	- auto pmod = getPackageModule(pack);
+	- if (pmod)
+		li: a(href=info.linkTo(pmod))= pmod.qualifiedName
 	- foreach(p; pack.packages)
 		- moduleNavList(p);
 	- foreach(m; pack.modules)
-		li
-			a(href="#{info.linkTo(m)}")= m.qualifiedName
+		- if (m !is pmod)
+			li
+				a(href="#{info.linkTo(m)}")= m.qualifiedName
 
 ul
 	- moduleNavList(info.rootPackage);
