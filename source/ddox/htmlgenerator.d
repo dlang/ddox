@@ -226,6 +226,7 @@ class DocPageInfo {
 	void renderTemplateArgs(R)(R output, Declaration decl) { .renderTemplateArgs(output, decl, linkTo); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
+		if (!group) return null;
 		// TODO: memoize the DocGroupContext
 		return group.comment.renderSections(new DocGroupContext(group, linkTo, settings), display_section, hlevel);
 	}

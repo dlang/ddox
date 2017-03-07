@@ -55,34 +55,40 @@ span.decoration { color: #888; }
 
 #symbolSearchResults {
 	position: absolute;
-	list-style: none;
-	padding: 0;
 	padding-right: 0.5em;
 	margin: 0;
 	margin-top: -1.5em;
-	overflow: hidden;
 	background: white;
 	min-width: 20em;
 	border: 1px solid #ddd;
 	box-shadow: 0px 5px 20px 0 rgba(0,0,0,0.5);
 }
-#symbolSearchResults li {
+.symbolList {
+	list-style: none;
+	padding: 0;
+	overflow: hidden;
+}
+.symbolList li {
 	background-repeat: no-repeat;
-	background-position: left center;
+	background-position: 0 1pt;
 	padding-left: 18px;
 }
-#symbolSearchResults .deprecated a { color: gray; }
-#symbolSearchResults .module { background-image: url(../images/ddox/module.png); }
-#symbolSearchResults .functiondeclaration { background-image: url(../images/ddox/function.png); }
-#symbolSearchResults .classdeclaration { background-image: url(../images/ddox/class.png); }
-#symbolSearchResults .interfacedeclaration { background-image: url(../images/ddox/interface.png); }
-#symbolSearchResults .structdeclaration { background-image: url(../images/ddox/struct.png); }
-#symbolSearchResults .variabledeclaration { background-image: url(../images/ddox/variable.png); }
-#symbolSearchResults .property { background-image: url(../images/ddox/property.png); }
-#symbolSearchResults .enumdeclaration { background-image: url(../images/ddox/enum.png); }
-#symbolSearchResults .enummemberdeclaration { background-image: url(../images/ddox/enummember.png); }
-#symbolSearchResults .aliasdeclaration { background-image: url(../images/ddox/alias.png); }
-#symbolSearchResults .templatedeclaration { background-image: url(../images/ddox/template.png); }
+
+.searchResults.symbolList li { background-position: 0 5pt; }
+.searchResults h2 { margin-bottom: 0; }
+
+.symbolList .deprecated a { color: gray; }
+.symbolList .module { background-image: url(../images/ddox/module.png); }
+.symbolList .functiondeclaration { background-image: url(../images/ddox/function.png); }
+.symbolList .classdeclaration { background-image: url(../images/ddox/class.png); }
+.symbolList .interfacedeclaration { background-image: url(../images/ddox/interface.png); }
+.symbolList .structdeclaration { background-image: url(../images/ddox/struct.png); }
+.symbolList .variabledeclaration { background-image: url(../images/ddox/variable.png); }
+.symbolList .property { background-image: url(../images/ddox/property.png); }
+.symbolList .enumdeclaration { background-image: url(../images/ddox/enum.png); }
+.symbolList .enummemberdeclaration { background-image: url(../images/ddox/enummember.png); }
+.symbolList .aliasdeclaration { background-image: url(../images/ddox/alias.png); }
+.symbolList .templatedeclaration { background-image: url(../images/ddox/template.png); }
 
 
 ul.tree-view li {
