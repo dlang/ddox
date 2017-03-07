@@ -33,7 +33,7 @@ void processDocs(Package root, DdoxSettings settings)
 		inheritDocs(root);
 	}
 
-	splitDocGroups(root, true, true, false);
+	splitDocGroups(root, true, false, false);
 
 	if (settings.moduleSort != SortMode.none) {
 		auto mpred = sortPred(settings.moduleSort);

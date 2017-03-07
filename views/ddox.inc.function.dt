@@ -2,11 +2,9 @@
 - import ddox.highlight;
 - import std.algorithm;
 
-- void outputFunctionDescription(FunctionDeclaration item)
+- void outputFunctionDescription(FunctionDeclaration item, int hlevel)
 	- auto docgroup = item.docGroup;
 	section
-		- auto heading = docgroup.members.length > 1 ? "Prototypes" : "Prototype";
-		h3= heading
 		.prototype
 			code.lang-d
 				- auto mems = docgroup.members;

@@ -127,6 +127,16 @@ a.inherited:after { content: url(../images/ddox/inherited.png); padding-left: 2p
 	padding-left: 18px;
 }
 
+nav.page-nav ul { list-style: none; padding-left: 0; }
+nav.page-nav li a { color: black; }
+nav.page-nav li:before { content: ""; padding-right: 3px; }
+
+.license-info {
+	margin-top: 18px;
+	border-top: 1px solid #eee;
+	width: 100%;
+}
+
 #symbolSearchResults .deprecated a { color: gray; }
 #symbolSearchResults .module { background-image: url(../images/ddox/module.png); }
 #symbolSearchResults .functiondeclaration { background-image: url(../images/ddox/function.png); }
