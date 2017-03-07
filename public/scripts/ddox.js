@@ -57,12 +57,10 @@ function performSymbolSearch(maxlen, maxresults)
 	function getPrefixIndex(parts)
 	{
 		for (var i = parts.length-1; i >= 0; i--)
-			for (j in terms) {
+			for (j in terms)
 				if (parts[i].length >= terms[j].length && parts[i].substr(0, terms[j].length) == terms[j])
 					return parts.length - 1 - i;
-				return parts.length;
-			}
-		return prats.length;
+		return parts.length;
 	}
 
 	function compare(a, b) {
