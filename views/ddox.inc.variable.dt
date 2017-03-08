@@ -47,13 +47,13 @@
 					br
 					span.pun {
 					br
-					|&nbsp;&nbsp;<span class="com">// ...</span>
+					| &nbsp;&nbsp;<span class="com">// ...</span>
 					br
 					- if (value.length)
-						|&nbsp;&nbsp;!{attributes}!{itemname} <span class="pun">=</span> !{value}!{terminator}
+						| &nbsp;&nbsp;!{attributes}!{itemname} <span class="pun">=</span> !{value}!{terminator}
 					- else
-						|&nbsp;&nbsp;!{attributes}!{itemname}!{terminator}
+						| &nbsp;&nbsp;!{attributes}!{itemname}!{terminator}
 					br
-					|&nbsp;&nbsp;<span class="com">// ...</span>
+					| &nbsp;&nbsp;<span class="com">// ...</span>
 					br
 					span.pun }
