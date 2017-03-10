@@ -1,4 +1,5 @@
 - void heading(int hlevel, string[] caption...)
+	- import std.algorithm.iteration : joiner;
 	- if (hlevel == 1)
 		h1= caption.joiner()
 	- if (hlevel == 2)
@@ -7,3 +8,9 @@
 		h3= caption.joiner()
 	- else
 		h4= caption.joiner()
+
+- Module getPackageModule(Package pack)
+	- import std.algorithm : find;
+	- if (auto pp = cast(Package)pack.parent)
+		- return pp.findChild!Module(pack.name);
+	- return null;

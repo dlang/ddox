@@ -2,7 +2,6 @@ noscript
 	p(style="color: red") The search functionality needs JavaScript enabled
 
 #symbolSearchPane(style="display: none")
-	p
-		input#symbolSearch(type="text", placeholder="Search for symbols", onchange="performSymbolSearch(24);", onkeypress="this.onchange();", onpaste="this.onchange();", oninput="this.onchange();", autofocus=info.settings.focusSearchField)
+	input#symbolSearch(type="text", placeholder="Search for symbols", onchange="performSymbolSearch(40);", onkeypress="this.onchange();", onpaste="this.onchange();", oninput="this.onchange();", autofocus=info.settings.focusSearchField)
 
 	include ddox.inc.symbol-search.results

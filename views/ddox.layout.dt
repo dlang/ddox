@@ -5,6 +5,9 @@ block title
 	block ddox.title
 
 block navigation
+	include ddox.inc.utils
+	include ddox.inc.symbol-search
+
 	- final switch( info.settings.navigationType )
 		- case NavigationType.moduleTree:
 			include ddox.inc.module-tree
@@ -16,8 +19,6 @@ block navigation
 			include ddox.inc.decl-tree
 			- break;
 
-	include ddox.inc.symbol-search
-
 block body
 	block ddox.description
 
@@ -25,18 +26,16 @@ block body
 
 	block ddox.members
 
-	table.license-info
-		tr
-			th Authors
-			td
-				block ddox.authors
+	footer
+		table.license-info
+			tr
+				th Authors
+				td: block ddox.authors
+			tr
+				th Copyright
+				td: block ddox.copyright
+			tr
+				th License
+				td: block ddox.license
 
-		tr
-			th Copyright
-			td
-				block ddox.copyright
-
-		tr
-			th License
-			td
-				block ddox.license
+		p.faint Generated using the DDOX documentation generator

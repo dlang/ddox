@@ -1,28 +1,23 @@
 - import ddox.entities;
 
-- Module getPackageModule(Package pack)
-	- import std.algorithm : find;
-	- if (auto pp = cast(Package)pack.parent)
-		- return pp.findChild!Module(pack.name);
-	- return null;
-
-- void moduleNavTree(Package pack, Module pack_mod)
+- void moduleNavTree(Package pack)
 	ul.tree-view
 		- foreach (i, p; pack.packages)
 			- auto subpackmod = getPackageModule(p);
-			- bool is_active = !pack.parent && i == 0 && !info.node.parent || p.isAncestorOf(info.node) || subpackmod && subpackmod.isAncestorOf(info.node) || subpackmod is info.node;
+			- bool is_active = !pack.parent && !info.node.parent || p.isAncestorOf(info.node) || subpackmod && subpackmod.isAncestorOf(info.node) || subpackmod is info.node;
 			li.tree-view(class=is_active ? "" : "collapsed")
-				a.package(href="#")= p !is info.rootPackage ? p.name : null
-				- moduleNavTree(p, subpackmod);
-
-		- if (pack_mod)
-			li
-				a.module(href="#{info.linkTo(pack_mod)}", class='#{info.node is pack_mod || pack_mod.isAncestorOf(info.node) ? "selected" : ""}') Package members
+				.package(class=info.node is subpackmod || subpackmod && subpackmod.isAncestorOf(info.node) ? "selected" : "")
+					- if (subpackmod)
+						a(href=info.linkTo(subpackmod))= subpackmod.name
+					- else
+						|= p !is info.rootPackage ? p.name : null
+				- moduleNavTree(p);
 
 		- foreach(m; pack.modules)
 			- if (pack.findChild!Package(m.name))
 				- continue;
 			li
-				a.module(href="#{info.linkTo(m)}", class='#{info.node is m || m.isAncestorOf(info.node) ? "selected" : ""}')= m.name
+				.module(class=info.node is m || m.isAncestorOf(info.node) ? "selected" : "")
+					a(href=info.linkTo(m))= m.name
 
-- moduleNavTree(info.rootPackage, null);
+- moduleNavTree(info.rootPackage);

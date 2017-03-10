@@ -1,9 +1,12 @@
 function setupDdox()
 {
-	$(".tree-view").children(".package").click(toggleTree);
-	$(".tree-view.collapsed").children("ul").hide();
+	$(".tree-view .package").click(toggleTree);
+	$(".tree-view .package a").click(dummy);
+	//$(".tree-view.collapsed").children("ul").hide();
 	$("#symbolSearch").attr("tabindex", "1000");
 }
+
+function dummy() { window.location = $(this).attr("href"); }
 
 function toggleTree()
 {
@@ -20,9 +23,10 @@ function toggleTree()
 var searchCounter = 0;
 var lastSearchString = "";
 
-function performSymbolSearch(maxlen)
+function performSymbolSearch(maxlen, maxresults)
 {
 	if (maxlen === 'undefined') maxlen = 26;
+	if (maxresults === undefined) maxresults = 40;
 
 	var searchstring = $("#symbolSearch").val().toLowerCase();
 
@@ -50,6 +54,15 @@ function performSymbolSearch(maxlen)
 		results.push(sym);
 	}
 
+	function getPrefixIndex(parts)
+	{
+		for (var i = parts.length-1; i >= 0; i--)
+			for (j in terms)
+				if (parts[i].length >= terms[j].length && parts[i].substr(0, terms[j].length) == terms[j])
+					return parts.length - 1 - i;
+		return parts.length;
+	}
+
 	function compare(a, b) {
 		// prefer non-deprecated matches
 		var adep = a.attributes.indexOf("deprecated") >= 0;
@@ -71,6 +84,11 @@ function performSymbolSearch(maxlen)
 		var bexact = terms.indexOf(bsname) >= 0;
 		if (aexact != bexact) return bexact - aexact;
 
+		// prefer prefix matches
+		var apidx = getPrefixIndex(anameparts);
+		var bpidx = getPrefixIndex(bnameparts);
+		if (apidx != bpidx) return apidx - bpidx;
+
 		// prefer elements with less nesting
 		if (anameparts.length < bnameparts.length) return -1;
 		if (anameparts.length > bnameparts.length) return 1;
@@ -87,7 +105,7 @@ function performSymbolSearch(maxlen)
 
 	results.sort(compare);
 
-	for (i = 0; i < results.length && i < 100; i++) {
+	for (i = 0; i < results.length && i < maxresults; i++) {
 			var sym = results[i];
 
 			var el = $(document.createElement("li"));
@@ -112,7 +130,7 @@ function performSymbolSearch(maxlen)
 			$('#symbolSearchResults').append(el);
 		}
 
-	if (results.length > 100) {
+	if (results.length > maxresults) {
 		$('#symbolSearchResults').append("<li>&hellip;"+(results.length-100)+" additional results</li>");
 	}
 
