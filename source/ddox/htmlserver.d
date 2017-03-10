@@ -138,8 +138,8 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 			if (adep != bdep) return bdep;
 
 			// normalize the names
-			auto aname = a.name.toLower();
-			auto bname = b.name.toLower();
+			auto aname = a.qualifiedName.toLower();
+			auto bname = b.qualifiedName.toLower();
 
 			auto anameparts = aname.split(".");
 			auto bnameparts = bname.split(".");
@@ -228,9 +228,11 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 }
 
 private void searchEntries(R)(ref R dst, Entity root_ent, string[] search_terms) {
+	bool[DocGroup] known_groups;
 	void searchRec(Entity ent) {
-		if (matchesSearch(ent.qualifiedName, search_terms))
+		if ((!ent.docGroup || ent.docGroup !in known_groups) && matchesSearch(ent.qualifiedName, search_terms))
 			dst.put(ent);
+		known_groups[ent.docGroup] = true;
 		if (cast(FunctionDeclaration)ent) return;
 		ent.iterateChildren((ch) { searchRec(ch); return true; });
 	}

@@ -1,3 +1,5 @@
+- import ddox.entities : Module, Package;
+
 - void heading(int hlevel, string[] caption...)
 	- import std.algorithm.iteration : joiner;
 	- if (hlevel == 1)
