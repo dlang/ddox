@@ -107,7 +107,8 @@ ul.tree-view .module {
 	padding-left: 18px;
 	background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url(../images/ddox/module.png);
 	background-repeat: no-repeat, no-repeat;
-	background-position: left 2px, left 2px;
+	background-position: left 1px, left 1px;
+	background-size: 18px 16px;
 }
 
 ul.tree-view .module.selected, ul.tree-view .package.selected { font-weight: bold; }
