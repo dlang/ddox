@@ -285,7 +285,7 @@ class Declaration : Entity {
 
 	@property string templateArgsString() const {
 		if (!isTemplate) return null;
-		return format("(%s)", (cast(string[])templateArgs.map!(a => a.name).array).join(", "));
+		return format("(%s)", templateArgs.map!(a => a.name[]).joiner(", "));
 	}
 
 	this(Entity parent, string name){ super(parent, name); }
