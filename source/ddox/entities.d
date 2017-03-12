@@ -547,7 +547,6 @@ struct CachedType {
 			m_id = cast(uint)s_types.length;
 			s_types ~= tp;
 			s_typeIDs[tp] = m_id;
-			import vibe.core.log; logInfo("TYPE #%s",m_id);
 		}
 		return this.type;
 	}
@@ -648,7 +647,6 @@ struct CachedString {
 			s_strings ~= su;
 			s_stringIDs[su] = id;
 			m_id = id;
-			import vibe.core.log; logInfo("STRING #%s", id);
 		}
 		return this.str;
 	}
