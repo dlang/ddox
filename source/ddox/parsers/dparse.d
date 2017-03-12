@@ -346,7 +346,7 @@ private struct DParser
 			switch (as) {
 				default:
 					if (!decl.attributes.canFind(as))
-						decl.attributes ~= as;
+						decl.attributes ~= CachedString(as);
 					break;
 				case "private": decl.protection = Protection.Private; break;
 				case "package": decl.protection = Protection.Package; break;
@@ -385,7 +385,7 @@ private struct DParser
 	{
 		auto ret = parseType(type.type2, scope_);
 		foreach (tc; type.typeConstructors)
-			ret.modifiers ~= dlex.str(tc);
+			ret.modifiers ~= CachedString(dlex.str(tc));
 
 		foreach (sf; type.typeSuffixes) {
 			if (sf.delegateOrFunction.text) {
@@ -427,7 +427,7 @@ private struct DParser
 			m_primTypes ~= tuple(ret, scope_);
 		} else if (auto tc = type.typeConstructor) {
 			ret = parseType(type.type, scope_);
-			ret.modifiers = dlex.str(tc) ~ ret.modifiers;
+			ret.modifiers = CachedString(dlex.str(tc)) ~ ret.modifiers;
 		} else if (auto tp = type.type) {
 			return parseType(tp, scope_);
 		} else {

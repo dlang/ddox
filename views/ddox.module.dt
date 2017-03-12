@@ -34,14 +34,14 @@ block ddox.members
 						tr
 							td
 								code
-									a(id="#{grp.name}", class=declStyleClasses(grp), href="#{info.linkTo(grp)}")= grp.name
+									a(id=grp.name[], class=declStyleClasses(grp), href=info.linkTo(grp))= grp.name
 									- if (auto fd = cast(FunctionDeclaration)grp)
-										span.decoration (#{fd.parameters.map!(p => p.name).joiner(", ")})
+										span.decoration (#{fd.parameters.map!(p => p.name[]).joiner(", ")})
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 	- alias TypeTuple!(EnumMemberDeclaration, VariableDeclaration, AliasDeclaration) tkinds;
-	- auto tkindnames =      ["Enum values", "Global variables", "Aliases"];
-	- auto tkindnames_sing = ["Enum value",  "Variable",  "Alias"];
+	- auto tkindnames =      ["Manifest constants", "Global variables", "Aliases"];
+	- auto tkindnames_sing = ["Manifest constant",  "Variable",  "Alias"];
 
 	- foreach( i, kind; tkinds )
 		- if( hasChild!kind(info.mod) )
@@ -56,7 +56,7 @@ block ddox.members
 					- foreach( f; getDocGroups!kind(info.mod)  )
 						tr
 							td
-								a(id="#{f.name}", class=declStyleClasses(f), href="#{info.linkTo(f)}")
+								a(id=f.name[], class=declStyleClasses(f), href=info.linkTo(f))
 									code= f.name
 							td
 								- if( f.type )

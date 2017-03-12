@@ -193,7 +193,7 @@ private struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json["name"].get!string);
-		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => j.get!string).array;
+		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => CachedString(j.get!string)).array;
 		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
 			ret.targetType = null;
@@ -214,7 +214,7 @@ private struct Parser
 			if (auto psc = "storageClass" in json)
 				foreach (sc; *psc)
 					if (!ret.attributes.canFind(sc.get!string))
-						ret.attributes ~= sc.get!string;
+						ret.attributes ~= CachedString(sc.get!string);
 
 			auto params = json["parameters"].opt!(Json[]);
 			if (!params) {
@@ -234,7 +234,7 @@ private struct Parser
 				auto decl = new VariableDeclaration(ret, pname);
 				foreach (sc; p["storageClass"].opt!(Json[]))
 					if (!decl.attributes.canFind(sc.get!string))
-						decl.attributes ~= sc.get!string;
+						decl.attributes ~= CachedString(sc.get!string);
 				decl.type = parseType(p, ret);
 				if (auto pdv = "default" in p)
 					decl.initializer = parseValue(pdv.opt!string);
@@ -426,13 +426,13 @@ private struct Parser
 
 	Type parseType(ref string[] tokens, Entity sc)
 	{
-		string[] attributes;
+		CachedString[] attributes;
 		auto basic_type = parseBasicType(tokens, sc, attributes);
 		basic_type.attributes ~= attributes;
 		return basic_type;	
 	}
 
-	Type parseBasicType(ref string[] tokens, Entity sc, out string[] attributes)
+	Type parseBasicType(ref string[] tokens, Entity sc, out CachedString[] attributes)
 		out(ret) { assert(ret !is null); }
 	body {
 		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
@@ -448,26 +448,26 @@ private struct Parser
 		if( tokens.length > 0 && tokens[0] == "extern" ){
 			enforce(tokens[1] == "(");
 			enforce(tokens[3] == ")");
-			attributes ~= join(tokens[0 .. 4]);
+			attributes ~= CachedString(join(tokens[0 .. 4]));
 			tokens = tokens[4 .. $];
 		}
 		
-		immutable string[] attribute_keywords = global_attribute_keywords ~ parameter_attribute_keywords ~ member_function_attribute_keywords;
+		static immutable string[] attribute_keywords = global_attribute_keywords ~ parameter_attribute_keywords ~ member_function_attribute_keywords;
 		/*final switch( sc ){
 			case DeclScope.Global: attribute_keywords = global_attribute_keywords; break;
 			case DeclScope.Parameter: attribute_keywords = parameter_attribute_keywords; break;
 			case DeclScope.Class: attribute_keywords = member_function_attribute_keywords; break;
 		}*/
 
-		void parseAttributes(ref string[] dst, const(string)[] keywords)
+		void parseAttributes(ref CachedString[] dst, const(string)[] keywords)
 		{
 			while( tokens.length > 0 ){
 				if( tokens.front == "@" ){
 					tokens.popFront();
-					dst ~= "@"~tokens.front;
+					dst ~= CachedString("@"~tokens.front);
 					tokens.popFront();
 				} else if( keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
-					dst ~= tokens.front;
+					dst ~= CachedString(tokens.front);
 					tokens.popFront();
 				} else break;
 			}
@@ -481,9 +481,9 @@ private struct Parser
 		if (tokens.length > 2 && tokens[1] == "(" && const_modifiers.countUntil(tokens[0]) >= 0) {
 			auto mod = tokens.front;
 			tokens.popFrontN(2);
-			string[] subattrs;
+			CachedString[] subattrs;
 			type = parseBasicType(tokens, sc, subattrs);
-			type.modifiers ~= mod;
+			type.modifiers ~= CachedString(mod);
 			type.attributes ~= subattrs;
 			enforce(!tokens.empty && tokens.front == ")", format("Missing ')' for '%s('", mod));
 			tokens.popFront();
@@ -616,9 +616,9 @@ private struct Parser
 				enforce(!tokens.empty);
 				ftype.parameterTypes ~= parseTypeDecl(tokens, sc);
 				if (tokens.front != "," && tokens.front != ")") {
-					ftype._parameterNames ~= tokens.front;
+					ftype._parameterNames ~= CachedString(tokens.front);
 					tokens.popFront();
-				} else ftype._parameterNames ~= null;
+				} else ftype._parameterNames ~= CachedString(null);
 				if (tokens.front == "...") {
 					ftype._parameterNames[$-1] ~= tokens.front;
 					tokens.popFront();

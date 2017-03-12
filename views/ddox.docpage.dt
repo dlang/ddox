@@ -11,7 +11,7 @@ block ddox.title
 		- auto itm = info.docGroups[0].members[0];
 		- title = itm.kindCaption ~ " " ~ itm.nestedName;
 	- else
-		- auto names = info.docGroups.map!(g => g.members[0].name).array.sort().uniq;
+		- auto names = info.docGroups.map!(g => g.members[0].name[]).array.sort().uniq;
 		- string prefix = cast(Module)info.docGroups[0].members[0].parent is null ? info.docGroups[0].members[0].parent.nestedName ~ "." : "";
 		- title = prefix ~ names.join("/") ~ " - multiple declarations";
 	

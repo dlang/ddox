@@ -45,18 +45,18 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 				ent = ent.parent;
 			}
 			foreach_reverse(i, n; nodes[mod_idx .. $-1]){
-				dst.put(n.name);
+				dst.put(n.name[]);
 				if( i > 0 ) dst.put('.');
 			}
 			dst.put("/");
 			foreach_reverse(i, n; nodes[0 .. mod_idx]){
-				dst.put(n.name);
+				dst.put(n.name[]);
 				if( i > 0 ) dst.put('.');
 			}
 
 			if( dp && dfn ){
 				dst.put('#');
-				dst.put(dp.name);
+				dst.put(dp.name[]);
 			}
 		}
 

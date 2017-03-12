@@ -193,7 +193,7 @@ T[] getDocGroups(T)(Declaration[] decls)
 }
 
 ///
-string getAttributeString(string[] attributes, AttributeStringKind kind)
+string getAttributeString(S : string)(S[] attributes, AttributeStringKind kind)
 {
 	enum backAttributes = ["const", "immutable", "shared", "nothrow", "@safe", "@trusted", "@system", "pure", "@property", "@nogc"];
 	auto ret = appender!string();
@@ -201,7 +201,7 @@ string getAttributeString(string[] attributes, AttributeStringKind kind)
 		bool back = backAttributes.canFind(a);
 		if (kind == AttributeStringKind.normal || back == (kind == AttributeStringKind.functionSuffix)) {
 			if (kind == AttributeStringKind.functionSuffix) ret.put(' ');
-			ret.put(a);
+			ret.put(a[]);
 			if (kind != AttributeStringKind.functionSuffix) ret.put(' ');
 		}
 	}
@@ -265,7 +265,7 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 			}
 			if( type.templateArgs.length ){
 				dst.put('!');
-				dst.put(type.templateArgs);
+				dst.put(type.templateArgs[]);
 			}
 			break;
 		case TypeKind.Function:
@@ -279,18 +279,16 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 				formatType(dst, pt, link_to, false);
 				if( type._parameterNames[i].length ){
 					dst.put(' ');
-					dst.put(type._parameterNames[i]);
+					dst.put(type._parameterNames[i][]);
 				}
 				if( type._parameterDefaultValues[i] ){
 					dst.highlightDCode(" = ");
-					dst.put(type._parameterDefaultValues[i].valueString);
+					dst.put(type._parameterDefaultValues[i].valueString.str);
 				}
 			}
 			dst.highlightDCode(")");
-			foreach( att; type.modifiers ){
-				dst.put(' ');
-				dst.put(att);
-			}
+			foreach (att; type.modifiers)
+				dst.formattedWrite(" %s", att);
 			break;
 		case TypeKind.Pointer:
 			formatType(dst, type.elementType, link_to, false);

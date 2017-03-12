@@ -93,7 +93,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				ent = ent.parent;
 			}
 			foreach_reverse(i, n; nodes[mod_idx .. $-1]){
-				dst.put(n.name);
+				dst.put(n.name[]);
 				if( i > 0 ) dst.put('/');
 			}
 			if( mod_idx == 0 ) dst.put(".html");
@@ -109,7 +109,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 			// FIXME: must also work for multiple function overloads in separate doc groups!
 			if( dp && dfn ){
 				dst.put('#');
-				dst.put(dp.name);
+				dst.put(dp.name[]);
 			}
 		}
 
@@ -267,11 +267,11 @@ void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings
 		visited[ent.qualifiedName] = true;
 
 		string kind = ent.classinfo.name.split(".")[$-1].toLower;
-		string[] attributes;
-		if (auto fdecl = cast(FunctionDeclaration)ent) attributes = fdecl.attributes;
-		else if (auto adecl = cast(AliasDeclaration)ent) attributes = adecl.attributes;
-		else if (auto tdecl = cast(TypedDeclaration)ent) attributes = tdecl.type.attributes;
-		attributes = attributes.map!(a => a.startsWith("@") ? a[1 .. $] : a).array;
+		CachedString[] cattributes;
+		if (auto fdecl = cast(FunctionDeclaration)ent) cattributes = fdecl.attributes;
+		else if (auto adecl = cast(AliasDeclaration)ent) cattributes = adecl.attributes;
+		else if (auto tdecl = cast(TypedDeclaration)ent) cattributes = tdecl.type.attributes;
+		auto attributes = cattributes.map!(a => a.str.startsWith("@") ? a[1 .. $] : a);
 		(&rng).formattedWrite(`{name: '%s', kind: "%s", path: '%s', attributes: %s},`, ent.qualifiedName, kind, link_to(ent), attributes);
 		rng.put('\n');
 	}

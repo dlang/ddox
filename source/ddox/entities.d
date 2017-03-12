@@ -16,7 +16,7 @@ import std.typecons;
 
 class Entity {
 	Entity parent;
-	string name;
+	CachedString name;
 	DocGroup docGroup;
 
 	this(Entity parent, string name)
@@ -163,7 +163,7 @@ class Entity {
 
 final class DocGroup {
 	Entity[] members;
-	string text;
+	CachedString text;
 	DdocComment comment;
 
 	this(Entity entity, string text)
@@ -217,7 +217,7 @@ final class Package : Entity {
 
 final class Module : Entity{
 	Declaration[] members;
-	string file;
+	CachedString file;
 
 	this(Entity parent, string name){ super(parent, name); }
 
@@ -256,11 +256,11 @@ enum Protection {
 class Declaration : Entity {
 	Declaration inheritingDecl;
 	Protection protection = Protection.Public;
-	string[] attributes;
+	CachedString[] attributes;
 	int line;
 	bool isTemplate;
 	TemplateParameterDeclaration[] templateArgs;
-	string templateConstraint;
+	CachedString templateConstraint;
 
 	override @property string kindCaption() const { return "Declaration"; }
 	abstract @property Declaration dup();
@@ -430,7 +430,7 @@ final class EnumMemberDeclaration : Declaration {
 final class AliasDeclaration : Declaration {
 	Declaration targetDecl;
 	Type targetType;
-	string targetString;
+	CachedString targetString;
 
 	override @property string kindCaption() const { return "Alias"; }
 	override @property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.copyFrom(this); ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
@@ -469,7 +469,7 @@ final class TemplateParameterDeclaration : TypedDeclaration {
 
 final class Value {
 	Type type;
-	string valueString;
+	CachedString valueString;
 
 	this() {}
 	this(Type type, string value_string) { this.type = type; this.valueString = value_string; }
@@ -487,23 +487,24 @@ enum TypeKind {
 
 final class Type {
 	TypeKind kind;
-	string[] attributes;
-	string[] modifiers;
-	string templateArgs;
-	string text; // original text as in DMDs JSON output
+
+	CachedString[] attributes;
+	CachedString[] modifiers;
+	CachedString templateArgs;
+	CachedString text; // original text as in DMDs JSON output
 	// Primitive
-	string typeName;
+	CachedString typeName;
 	Declaration typeDecl;
 	// P, A, SA, AA
 	Type elementType;
 	// SA
-	string arrayLength;
+	CachedString arrayLength;
 	// AA
 	Type keyType;
 	// Function/Delegate
 	Type returnType;
 	Type[] parameterTypes;
-	string[] _parameterNames;
+	CachedString[] _parameterNames;
 	Value[] _parameterDefaultValues;
 
 	this() {}
@@ -540,6 +541,43 @@ final class Type {
 		}
 		return true;
 	}
+}
+
+struct CachedString {
+	private {
+		uint m_id = uint.max;
+		static uint[string] s_stringIDs;
+		static string[] s_strings;
+	}
+
+	this(string str) { this.str = str; }
+
+	string toString() const { return this.str; }
+
+	@property size_t length() const { return this.str.length; }
+
+	string opSlice(size_t lo, size_t hi) const { return this.str[lo .. hi]; }
+	string opSlice() const { return this.str; }
+	size_t opDollar() const { return this.length; }
+
+	string opOpAssign(string op : "~")(string val) { return this.str = this.str ~ val; }
+
+	@property string str() const { return m_id == uint.max ? "" : s_strings[m_id]; }
+	@property string str(string value) {
+		if (auto pi = value in s_stringIDs) {
+			m_id = *pi;
+		} else {
+			// TODO: use a big pool of memory instead of individual allocations
+			auto su = value.idup;
+			auto id = cast(uint)s_strings.length;
+			s_strings ~= su;
+			s_stringIDs[su] = id;
+			m_id = id;
+		}
+		return this.str;
+	}
+
+	alias str this;
 }
 
 private string stripEllipsis(string arg)
