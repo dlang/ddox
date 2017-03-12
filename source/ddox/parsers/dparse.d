@@ -52,14 +52,14 @@ Package parseD(string[] d_files, Package root = null)
 
 private struct DParser
 {
-	private Tuple!(Type, Entity)[] m_primTypes;
+	private Tuple!(CachedType, Rebindable!(const(Entity)))[] m_primTypes;
 	private Declaration[string] m_typeMap;
 
 	void resolveTypes(Package root)
 	{
-		bool isTypeDecl(Declaration a)
+		bool isTypeDecl(const(Declaration) a)
 		{
-			switch(a.kind){
+			switch (a.kind) {
 				default: return false;
 				case DeclarationKind.Struct:
 				case DeclarationKind.Union:
@@ -68,7 +68,7 @@ private struct DParser
 				case DeclarationKind.Enum:
 					return true;
 				case DeclarationKind.Alias:
-					return (cast(AliasDeclaration)a).targetType !is null;
+					return !!(cast(AliasDeclaration)a).targetType;
 				case DeclarationKind.TemplateParameter:
 					return true;
 				case DeclarationKind.Template:
@@ -82,40 +82,58 @@ private struct DParser
 			}
 		}
 
-		foreach (t; m_primTypes) {
-			auto decl = t[1].lookup!Declaration(t[0].typeName);
+		foreach (ref t; m_primTypes) {
+			Rebindable!(const(Declaration)) decl = t[1].lookup!Declaration(t[0].typeName);
 			if (!decl || !isTypeDecl(decl)) {
 				auto pd = t[0].typeName in m_typeMap;
 				if (pd) decl = *pd;
 			}
-			if (decl && isTypeDecl(decl))
-				t[0].typeDecl = decl;
+			if (decl && isTypeDecl(decl)) {
+				Type tp = t[0];
+				tp.typeDecl = decl;
+				t[0] = tp;
+			}
 		}
 
 		// fixup class bases
-		root.visit!ClassDeclaration((decl){
-			if (decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl)
-				decl.baseClass.typeDecl = null;
-
-			foreach (ref i; decl.derivedInterfaces) {
-				if (i.typeDecl && !decl.baseClass && cast(ClassDeclaration)i.typeDecl) {
-					decl.baseClass = i;
-					i = null;
-				} else if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
-					i.typeDecl = null;
-				}
+		root.visit!ClassDeclaration((ClassDeclaration decl){
+			if (decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl) {
+				Type t = decl.baseClass;
+				t.typeDecl = null;
+				decl.baseClass = t;
 			}
 
-			decl.derivedInterfaces = decl.derivedInterfaces.filter!(i => i !is null).array;
+			if (!decl.baseClass) {
+				auto idx = decl.derivedInterfaces.countUntil!(i => cast(ClassDeclaration)i.typeDecl !is null);
+				if (idx >= 0) decl.baseClass = decl.derivedInterfaces[idx];
+			}
+
+			decl.derivedInterfaces = decl.derivedInterfaces
+				.filter!(i => !!i)
+				.map!((i) {
+					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
+						Type tp = i;
+						tp.typeDecl = null;
+						return CachedType(tp);
+					} else return i;
+				})
+				.array;
 
 			assert(decl);
 		});
 
 		// fixup interface bases
-		root.visit!InterfaceDeclaration((decl){
-			foreach( i; decl.derivedInterfaces )
-				if( i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl )
-					i.typeDecl = null;
+		root.visit!InterfaceDeclaration((InterfaceDeclaration decl){
+			decl.derivedInterfaces = decl.derivedInterfaces
+				.filter!(i => !!i)
+				.map!((i) {
+					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
+						Type tp = i;
+						tp.typeDecl = null;
+						return CachedType(tp);
+					} else return i;
+				})
+				.array;
 			assert(decl);
 		});
 	}
@@ -194,12 +212,13 @@ private struct DParser
 			auto fdr = new FunctionDeclaration(parent, fd.name.text.idup);
 			fdr.returnType = parseType(fd.returnType, parent);
 			fdr.parameters = parseParameters(fd.parameters, fdr);
-			fdr.type = new Type;
-			fdr.type.kind = TypeKind.Function;
-			//fdr.type.attributes = ...; // TODO!
-			//fdr.type.modifiers = ...; // TODO!
-			fdr.type.returnType = fdr.returnType;
-			fdr.type.parameterTypes = fdr.parameters.map!(p => p.type).array;
+			Type ft;
+			ft.kind = TypeKind.Function;
+			//ft.attributes = ...; // TODO!
+			//ft.modifiers = ...; // TODO!
+			ft.returnType = fdr.returnType;
+			ft.parameterTypes = fdr.parameters.map!(p => cast(immutable)p.type).array;
+			fdr.type = ft;
 			addAttributes(fdr, fd.attributes);
 			addTemplateInfo(fdr, fd);
 
@@ -207,7 +226,7 @@ private struct DParser
 		} else if (auto vd = decl.variableDeclaration) {
 			comment = vd.comment.undecorateComment();
 			line = vd.declarators[0].name.line;
-			auto tp = parseType(vd.type, parent);
+			auto tp = CachedType(parseType(vd.type, parent));
 			foreach (d; vd.declarators) {
 				auto v = new VariableDeclaration(parent, d.name.text.idup);
 				v.type = tp;
@@ -233,11 +252,12 @@ private struct DParser
 			line = cd.name.line;
 			auto cdr = new ClassDeclaration(parent, cd.name.text.idup);
 			if (cd.baseClassList) foreach (bc; cd.baseClassList.items) {
-				auto t = new Type;
+				Type t;
 				t.kind = TypeKind.Primitive;
 				t.typeName = formatNode(bc);
-				cdr.derivedInterfaces ~= t;
-				m_primTypes ~= tuple(t, parent);
+				auto ct = CachedType(t);
+				cdr.derivedInterfaces ~= ct;
+				addPrimType(ct, parent);
 			}
 			cdr.members = parseDeclList(cd.structBody.declarations, cdr);
 			addTemplateInfo(cdr, cd);
@@ -248,11 +268,12 @@ private struct DParser
 			line = id.name.line;
 			auto idr = new InterfaceDeclaration(parent, id.name.text.idup);
 			if (id.baseClassList) foreach (bc; id.baseClassList.items) {
-				auto t = new Type;
+				Type t;
 				t.kind = TypeKind.Primitive;
 				t.typeName = formatNode(bc);
-				idr.derivedInterfaces ~= t;
-				m_primTypes ~= tuple(t, parent);
+				CachedType ct = t;
+				idr.derivedInterfaces ~= ct;
+				addPrimType(ct, parent);
 			}
 			idr.members = parseDeclList(id.structBody.declarations, idr);
 			addTemplateInfo(idr, id);
@@ -290,9 +311,11 @@ private struct DParser
 
 			auto cdr = new FunctionDeclaration(parent, "this");
 			cdr.parameters = parseParameters(cd.parameters, cdr);
-			cdr.type = new Type;
-			cdr.type.kind = TypeKind.Function;
-			cdr.type.parameterTypes = cdr.parameters.map!(p => p.type).array;
+
+			Type t;
+			t.kind = TypeKind.Function;
+			t.parameterTypes = cdr.parameters.map!(p => p.type).array.assumeUnique;
+			cdr.type = t;
 			//addAttributes(cdr, cd.memberFunctionAttributes); // TODO!
 			addTemplateInfo(cdr, cd);
 			ret ~= cdr;
@@ -390,14 +413,14 @@ private struct DParser
 		foreach (sf; type.typeSuffixes) {
 			if (sf.delegateOrFunction.text) {
 				if (sf.delegateOrFunction.text == "function")
-					ret = Type.makeFunction(ret, parseParameters(sf.parameters, null).map!(p => p.type).array);
-				else ret = Type.makeDelegate(ret, parseParameters(sf.parameters, null).map!(p => p.type).array);
+					ret = Type.makeFunction(CachedType(ret), parseParameters(sf.parameters, null).map!(p => p.type).array.assumeUnique);
+				else ret = Type.makeDelegate(CachedType(ret), parseParameters(sf.parameters, null).map!(p => p.type).array.assumeUnique);
 			}
-			else if (sf.star.type != dlex.tok!"") ret = Type.makePointer(ret);
+			else if (sf.star.type != dlex.tok!"") ret = Type.makePointer(CachedType(ret));
 			else if (sf.array) {
-				if (sf.type) ret = ret.makeAssociativeArray(ret, parseType(sf.type, scope_));
-				else if (sf.low) ret = ret.makeStaticArray(ret, formatNode(sf.low));
-				else ret = Type.makeArray(ret);
+				if (sf.type) ret = ret.makeAssociativeArray(CachedType(ret), CachedType(parseType(sf.type, scope_)));
+				else if (sf.low) ret = ret.makeStaticArray(CachedType(ret), formatNode(sf.low));
+				else ret = Type.makeArray(CachedType(ret));
 			}
 		}
 
@@ -407,14 +430,14 @@ private struct DParser
 
 	Type parseType(in dparse.Type2 type, Entity scope_)
 	{
-		auto ret = new Type;
+		Type ret;
 		if (type.builtinType) {
 			ret.kind = TypeKind.Primitive;
 			ret.typeName = dlex.str(type.builtinType);
 		} else if (type.symbol) {
 			ret.kind = TypeKind.Primitive;
 			ret.typeName = formatNode(type.symbol);
-			m_primTypes ~= tuple(ret, scope_);
+			addPrimType(CachedType(ret), scope_);
 		} else if (auto te = type.typeofExpression) {
 			ret.kind = TypeKind.Primitive;
 			ret.typeName = formatNode(te.expression);
@@ -424,7 +447,7 @@ private struct DParser
 			ret.typeName = itc.identifiersOrTemplateInstances
 				.map!(it => it.templateInstance ? formatNode(it.templateInstance) : it.identifier.text.idup)
 				.join(".");
-			m_primTypes ~= tuple(ret, scope_);
+			addPrimType(CachedType(ret), scope_);
 		} else if (auto tc = type.typeConstructor) {
 			ret = parseType(type.type, scope_);
 			ret.modifiers = CachedString(dlex.str(tc)) ~ ret.modifiers;
@@ -444,6 +467,11 @@ private struct DParser
 			auto partial_name = join(parts[i .. $], ".");
 			m_typeMap[partial_name] = decl;
 		}
+	}
+
+	private void addPrimType(CachedType tp, const(Entity) decl)
+	{
+		m_primTypes ~= tuple(tp, Rebindable!(const(Entity))(decl));
 	}
 }
 

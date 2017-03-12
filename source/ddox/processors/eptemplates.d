@@ -81,7 +81,7 @@ void mergeEponymousTemplates(Package root)
 		decls = new_decls;
 	}
 
-	root.visit!Module((mod){
+	root.visit!Module((Module mod){
 		processDecls(mod.members);
 	});
 }

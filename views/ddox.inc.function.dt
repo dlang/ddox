@@ -11,7 +11,7 @@
 				- foreach( size_t pi, pd; mems )
 					- auto proto = cast(FunctionDeclaration)pd;
 					- if( !proto ) continue;
-					- auto attribs = proto.attributes;
+					- auto attribs = proto.attributes.dup;
 					- if( pi > 0 )
 						br
 						br

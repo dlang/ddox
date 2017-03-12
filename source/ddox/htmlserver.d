@@ -25,8 +25,11 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 {
 	if( !settings ) settings = new GeneratorSettings;
 
-	string linkTo(Entity ent, size_t level)
+	string linkTo(in Entity ent_, size_t level)
 	{
+		import std.typecons : Rebindable;
+
+		Rebindable!(const(Entity)) ent = ent_;
 		auto dst = appender!string();
 
 		if( level ) foreach( i; 0 .. level ) dst.put("../");
@@ -37,7 +40,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 			auto dfn = cast(FunctionDeclaration)ent.parent;
 			if( dp && dfn ) ent = ent.parent;
 
-			Entity[] nodes;
+			const(Entity)[] nodes;
 			size_t mod_idx = 0;
 			while( ent ){
 				if( cast(Module)ent ) mod_idx = nodes.length;

@@ -35,12 +35,12 @@ Package parseJsonDocs(Json json, Package root = null)
 
 private struct Parser
 {
-	private Tuple!(Type, Entity)[] m_primTypes;
+	private Tuple!(CachedType, Rebindable!(const(Entity)))[] m_primTypes;
 	private Declaration[string] m_typeMap;
 
 	void resolveTypes(Package root)
 	{
-		bool isTypeDecl(Declaration a)
+		bool isTypeDecl(in Declaration a)
 		{
 			switch(a.kind){
 				default: return false;
@@ -51,7 +51,7 @@ private struct Parser
 				case DeclarationKind.Enum:
 					return true;
 				case DeclarationKind.Alias:
-					return (cast(AliasDeclaration)a).targetType !is null;
+					return !!(cast(AliasDeclaration)a).targetType;
 				case DeclarationKind.TemplateParameter:
 					return true;
 				case DeclarationKind.Template:
@@ -66,31 +66,59 @@ private struct Parser
 		}
 
 		foreach (t; m_primTypes) {
-			Declaration decl;
+			Rebindable!(const(Declaration)) decl;
 			if (t[0].typeName.length) decl = t[1].lookup!Declaration(t[0].typeName);
 			if (!decl || !isTypeDecl(decl)) {
 				auto pd = t[0].typeName in m_typeMap;
 				if (pd) decl = *pd;
 			}
-			if (decl && isTypeDecl(decl))
-				t[0].typeDecl = decl;
+			if (decl && isTypeDecl(decl)) {
+				Type tp = t[0];
+				tp.typeDecl = decl;
+				t[0] = tp;
+			}
 		}
 
+
 		// fixup class bases
-		root.visit!ClassDeclaration((decl){
-			if( decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl )
-				decl.baseClass = null;
-			foreach( i; decl.derivedInterfaces )
-				if( i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl )
-					i.typeDecl = null;
+		root.visit!ClassDeclaration((ClassDeclaration decl){
+			if (decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl) {
+				Type t = decl.baseClass;
+				t.typeDecl = null;
+				decl.baseClass = t;
+			}
+
+			if (!decl.baseClass) {
+				auto idx = decl.derivedInterfaces.countUntil!(i => cast(ClassDeclaration)i.typeDecl !is null);
+				if (idx >= 0) decl.baseClass = decl.derivedInterfaces[idx];
+			}
+
+			decl.derivedInterfaces = decl.derivedInterfaces
+				.filter!(i => !!i)
+				.map!((i) {
+					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
+						Type tp = i;
+						tp.typeDecl = null;
+						return CachedType(tp);
+					} else return i;
+				})
+				.array;
+
 			assert(decl);
 		});
 
 		// fixup interface bases
-		root.visit!InterfaceDeclaration((decl){
-			foreach( i; decl.derivedInterfaces )
-				if( i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl )
-					i.typeDecl = null;
+		root.visit!InterfaceDeclaration((InterfaceDeclaration decl){
+			decl.derivedInterfaces = decl.derivedInterfaces
+				.filter!(i => !!i)
+				.map!((i) {
+					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
+						Type tp = i;
+						tp.typeDecl = null;
+						return CachedType(tp);
+					} else return i;
+				})
+				.array;
 			assert(decl);
 		});
 	}
@@ -193,10 +221,10 @@ private struct Parser
 	auto parseAliasDecl(Json json, Entity parent)
 	{
 		auto ret = new AliasDeclaration(parent, json["name"].get!string);
-		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => CachedString(j.get!string)).array;
+		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => CachedString(j.get!string)).array.assumeUnique;
 		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
-			ret.targetType = null;
+			ret.targetType = CachedType.init;
 		insertIntoTypeMap(ret);
 		return ret;
 	}
@@ -205,11 +233,11 @@ private struct Parser
 	{
 		auto ret = new FunctionDeclaration(parent, json["name"].opt!string);
 		ret.type = parseType(json, ret, "void()");
-		assert(ret.type !is null);
+		assert(!!ret.type);
 		// TODO: use "storageClass" and "parameters" fields
 		if( ret.type.kind == TypeKind.Function ){
 			ret.returnType = ret.type.returnType;
-			assert(ret.returnType !is null);
+			assert(!!ret.returnType);
 			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
 			if (auto psc = "storageClass" in json)
 				foreach (sc; *psc)
@@ -290,13 +318,13 @@ private struct Parser
 				if( clsdecl.qualifiedName != "object.Object" )
 					clsdecl.baseClass = parseType(json["base"], clsdecl, "Object", false);
 				foreach( intf; json["interfaces"].opt!(Json[]) )
-					clsdecl.derivedInterfaces ~= parseType(intf, clsdecl);
+					clsdecl.derivedInterfaces ~= CachedType(parseType(intf, clsdecl));
 				ret = clsdecl;
 				break;
 			case "interface":
 				auto intfdecl = new InterfaceDeclaration(parent, json["name"].get!string);
 				foreach( intf; json["interfaces"].opt!(Json[]) )
-					intfdecl.derivedInterfaces ~= parseType(intf, intfdecl);
+					intfdecl.derivedInterfaces ~= CachedType(parseType(intf, intfdecl));
 				ret = intfdecl;
 				break;
 		}
@@ -351,7 +379,7 @@ private struct Parser
 	}
 
 	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_if_not_exists = true)
-		out(ret) { assert(!def_type.length || ret !is null); }
+		out(ret) { assert(!def_type.length || ret != Type.init); }
 	body {
 		string str;
 		if( json.type == Json.Type.Undefined ){
@@ -364,13 +392,13 @@ private struct Parser
 
 		if( str.length == 0 ) str = def_type;
 
-		if( !str.length ) return null;
+		if( !str.length ) return Type.init;
 
 		return parseType(str, sc);
 	}
 
 	Type parseType(string str, Entity sc)
-		out(ret) { assert(ret !is null); }
+		out(ret) { assert(ret != Type.init); }
 	body {
 		auto tokens = tokenizeDSource(str);
 		
@@ -381,7 +409,7 @@ private struct Parser
 			return type;
 		} catch( Exception e ){
 			logError("Error parsing type '%s': %s", str, e.msg);
-			auto type = new Type;
+			Type type;
 			type.text = str;
 			type.typeName = str;
 			type.kind = TypeKind.Primitive;
@@ -433,7 +461,7 @@ private struct Parser
 	}
 
 	Type parseBasicType(ref string[] tokens, Entity sc, out CachedString[] attributes)
-		out(ret) { assert(ret !is null); }
+		out(ret) { assert(ret != Type.init); }
 	body {
 		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
 			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
@@ -459,21 +487,21 @@ private struct Parser
 			case DeclScope.Class: attribute_keywords = member_function_attribute_keywords; break;
 		}*/
 
-		void parseAttributes(ref CachedString[] dst, const(string)[] keywords)
+		void parseAttributes(const(string)[] keywords, scope void delegate(CachedString s) del)
 		{
 			while( tokens.length > 0 ){
 				if( tokens.front == "@" ){
 					tokens.popFront();
-					dst ~= CachedString("@"~tokens.front);
+					del(CachedString("@"~tokens.front));
 					tokens.popFront();
 				} else if( keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
-					dst ~= CachedString(tokens.front);
+					del(CachedString(tokens.front));
 					tokens.popFront();
 				} else break;
 			}
 		}
 
-		parseAttributes(attributes, attribute_keywords);
+		parseAttributes(attribute_keywords, (k) { attributes ~= k; });
 
 
 		Type type;
@@ -488,9 +516,8 @@ private struct Parser
 			enforce(!tokens.empty && tokens.front == ")", format("Missing ')' for '%s('", mod));
 			tokens.popFront();
 		} else if (!tokens.empty && !tokens.front.among("function", "delegate")) {
-			type = new Type;
 			type.kind = TypeKind.Primitive;
-			m_primTypes ~= tuple(type, sc);
+			addPrimType(CachedType(type), sc);
 
 			size_t start = 0, end;
 			if( tokens[start] == "." ) start++;
@@ -556,7 +583,7 @@ private struct Parser
 		
 		while( !tokens.empty ){
 			if( tokens.front == "*" ){
-				auto ptr = new Type;
+				Type ptr;
 				ptr.kind = TypeKind.Pointer;
 				ptr.elementType = type;
 				type = ptr;
@@ -564,7 +591,7 @@ private struct Parser
 			} else if( tokens.front == "[" ){
 				tokens.popFront();
 				if( tokens.front == "]" ){
-					auto arr = new Type;
+					Type arr;
 					arr.kind = TypeKind.Array;
 					arr.elementType = type;
 					type = arr;
@@ -572,16 +599,15 @@ private struct Parser
 					string[] tokens_copy = tokens;
 					Type keytp;
 					if (!isDigit(tokens.front[0]) && tokens.front != "!") keytp = parseType(tokens_copy, sc);
-					if (keytp && !tokens_copy.empty && tokens_copy.front == "]") {
+					if (keytp != Type.init && !tokens_copy.empty && tokens_copy.front == "]") {
 						tokens = tokens_copy;
-						logDebug("GOT TYPE: %s", keytp.toString());
-						auto aa = new Type;
+						Type aa;
 						aa.kind = TypeKind.AssociativeArray;
 						aa.elementType = type;
 						aa.keyType = keytp;
 						type = aa;
 					} else {
-						auto arr = new Type;
+						Type arr;
 						arr.kind = TypeKind.StaticArray;
 						arr.elementType = type;
 						arr.arrayLength = tokens.front;
@@ -598,13 +624,13 @@ private struct Parser
 			} else break;
 		}
 		
-		if (!type) {
-			type = new Type;
+		if (type == Type.init) {
 			type.kind = TypeKind.Primitive;
+			type.typeName = "auto";
 		}
 
 		while (!tokens.empty && (tokens.front == "function" || tokens.front == "delegate" || tokens.front == "(")) {
-			Type ftype = new Type;
+			Type ftype;
 			ftype.kind = tokens.front == "(" || tokens.front == "function" ? TypeKind.Function : TypeKind.Delegate;
 			ftype.returnType = type;
 			if (tokens.front != "(") tokens.popFront();
@@ -614,15 +640,17 @@ private struct Parser
 			while (true) {
 				if (tokens.front == ")") break;
 				enforce(!tokens.empty);
-				ftype.parameterTypes ~= parseTypeDecl(tokens, sc);
+				ftype.parameterTypes ~= CachedType(parseTypeDecl(tokens, sc));
+				string pname;
 				if (tokens.front != "," && tokens.front != ")") {
-					ftype._parameterNames ~= CachedString(tokens.front);
-					tokens.popFront();
-				} else ftype._parameterNames ~= CachedString(null);
-				if (tokens.front == "...") {
-					ftype._parameterNames[$-1] ~= tokens.front;
+					pname = tokens.front;
 					tokens.popFront();
 				}
+				if (tokens.front == "...") {
+					pname ~= tokens.front;
+					tokens.popFront();
+				}
+				ftype._parameterNames ~= CachedString(pname);
 				if (tokens.front == "=") {
 					tokens.popFront();
 					string defval;
@@ -635,7 +663,7 @@ private struct Parser
 						defval ~= tokens.front;
 						tokens.popFront();
 					}
-					ftype._parameterDefaultValues ~= parseValue(defval);
+					ftype._parameterDefaultValues ~= cast(immutable)parseValue(defval);
 					logDebug("got defval %s", defval);
 				} else ftype._parameterDefaultValues ~= null;
 				if (tokens.front == ")") break;
@@ -644,7 +672,7 @@ private struct Parser
 			}
 			tokens.popFront();
 
-			parseAttributes(ftype.attributes, member_function_attribute_keywords);
+			parseAttributes(member_function_attribute_keywords, (k) { ftype.attributes ~= cast(immutable)k; });
 
 			type = ftype;
 		}
@@ -660,7 +688,7 @@ private struct Parser
 	private string fixFunctionType(string type, string deftype)
 	{
 		Type dt = parseType(deftype, new Module(null, "dummy"));
-		if (deftype == "void()" || dt && dt.kind.among(TypeKind.Function, TypeKind.Delegate)) {
+		if (deftype == "void()" || dt != Type.init && dt.kind.among(TypeKind.Function, TypeKind.Delegate)) {
 			auto last_clamp = type.lastIndexOf(')');
 			auto idx = last_clamp-1;
 			int l = 1;
@@ -800,6 +828,11 @@ private struct Parser
 			auto partial_name = join(parts[i .. $], ".");
 			m_typeMap[partial_name] = decl;
 		}
+	}
+
+	private void addPrimType(CachedType tp, const(Entity) decl)
+	{
+		m_primTypes ~= tuple(tp, Rebindable!(const(Entity))(decl));
 	}
 }
 

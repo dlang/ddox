@@ -36,7 +36,7 @@ void inheritDocs(Package root)
 		return null;
 	}
 
-	void inheritMembers(CompositeTypeDeclaration decl, Declaration[] parentmembers, Declaration parent)
+	void inheritMembers(CompositeTypeDeclaration decl, Declaration[] parentmembers, const(Declaration) parent)
 	{
 		foreach (parentgrp; docGroups(parentmembers)) {
 			DocGroup inhgrp;

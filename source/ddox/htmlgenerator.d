@@ -68,9 +68,12 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		file_hashes = deserializeJson!(string[string])(hf);
 	}
 
-	string linkTo(Entity ent, size_t level)
+	string linkTo(in Entity ent_, size_t level)
 	{
+		import std.typecons : Rebindable;
+
 		auto dst = appender!string();
+		Rebindable!(const(Entity)) ent = ent_;
 
 		if( level ) foreach( i; 0 .. level ) dst.put("../");
 		else dst.put("./");
@@ -85,11 +88,11 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 			auto dfn = ent.parent ? cast(FunctionDeclaration)ent.parent : null;
 			if( dp && dfn ) ent = ent.parent;
 
-			Entity[] nodes;
+			const(Entity)[] nodes;
 			size_t mod_idx = 0;
 			while( ent ){
 				if( cast(Module)ent ) mod_idx = nodes.length;
-				nodes ~= ent;
+				nodes ~= ent.get;
 				ent = ent.parent;
 			}
 			foreach_reverse(i, n; nodes[mod_idx .. $-1]){
@@ -210,7 +213,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 }
 
 class DocPageInfo {
-	string delegate(Entity ent) linkTo;
+	string delegate(in Entity ent) linkTo;
 	GeneratorSettings settings;
 	Package rootPackage;
 	Entity node;
@@ -219,7 +222,7 @@ class DocPageInfo {
 	string nestedName;
 	
 	@property NavigationType navigationType() const { return settings.navigationType; }
-	string formatType(Type tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
+	string formatType(CachedType tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
 		// TODO: memoize the DocGroupContext
@@ -227,7 +230,7 @@ class DocPageInfo {
 	}
 }
 
-void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
+void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
 {
 	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
@@ -255,7 +258,7 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 	dst.flush();
 }
 
-void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to)
+void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to)
 {
 	bool[string] visited;
 
@@ -267,7 +270,7 @@ void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings
 		visited[ent.qualifiedName] = true;
 
 		string kind = ent.classinfo.name.split(".")[$-1].toLower;
-		CachedString[] cattributes;
+		const(CachedString)[] cattributes;
 		if (auto fdecl = cast(FunctionDeclaration)ent) cattributes = fdecl.attributes;
 		else if (auto adecl = cast(AliasDeclaration)ent) cattributes = adecl.attributes;
 		else if (auto tdecl = cast(TypedDeclaration)ent) cattributes = tdecl.type.attributes;
@@ -288,7 +291,7 @@ void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings
 	rng.put("];\n");
 }
 
-void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
+void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
 {
 	auto info = new DocPageInfo;
 	info.linkTo = link_to;
@@ -300,7 +303,7 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	rng.compileHTMLDietFile!("ddox.overview.dt", req, info);
 }
 
-void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
+void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
 {
 	auto info = new DocPageInfo;
 	info.linkTo = link_to;
@@ -314,7 +317,7 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	rng.compileHTMLDietFile!("ddox.module.dt", req, info);
 }
 
-void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(Entity) link_to, HTTPServerRequest req = null)
+void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
 {
 	import std.algorithm : sort;
 

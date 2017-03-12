@@ -23,11 +23,11 @@ import vibe.data.json;
 class DocGroupContext : DdocContext {
 	private {
 		DocGroup m_group;
-		string delegate(Entity ent) m_linkTo;
+		string delegate(in Entity ent) m_linkTo;
 		string[string] m_inheritedMacros;
 	}
 
-	this(DocGroup grp, string delegate(Entity ent) link_to)
+	this(DocGroup grp, string delegate(in Entity ent) link_to)
 	{
 		m_group = grp;
 		m_linkTo = link_to;
@@ -221,23 +221,23 @@ string[] declStyleClasses(Declaration decl)
 	ret ~= decl.protection.to!string().toLower();
 	if (decl.inheritingDecl) ret ~= "inherited";
 	if (auto tdecl = cast(TypedDeclaration)decl) {
-		assert(tdecl.type !is null, typeid(tdecl).name~" declaration without type!?");
+		assert(tdecl.type != CachedType.init, typeid(tdecl).name~" declaration without type!?");
 		if (tdecl.type.attributes.canFind("@property")) ret ~= "property";
 		if (tdecl.type.attributes.canFind("static")) ret ~= "static";
 	}
 	return ret;
 }
 
-string formatType()(Type type, string delegate(Entity) link_to, bool include_code_tags = true)
+string formatType()(CachedType type, string delegate(in Entity) link_to, bool include_code_tags = true)
 {
-	if( !type ) return "{null}";
+	if (!type) return "{null}";
 	//logDebug("format type: %s", type);
 	auto ret = appender!string();
 	formatType(ret, type, link_to, include_code_tags);
 	return ret.data();
 }
 
-void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool include_code_tags = true)
+void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_to, bool include_code_tags = true)
 {
 	import ddox.highlight;
 
@@ -317,18 +317,18 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 	if (include_code_tags) dst.put("</code>");
 }
 
-Type getPropertyType(Entity[] mems...)
+CachedType getPropertyType(Entity[] mems...)
 {
 	foreach (ov; mems) {
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
 		auto rt = ovf.returnType;
-		assert(rt !is null);
+		assert(!!rt);
 		if (rt.typeName != "void") return rt;
 		if (ovf.parameters.length == 0) continue;
 		return ovf.parameters[0].type;
 	}
-	return null;
+	return CachedType.init;
 }
 
 bool anyPropertyGetter(Entity[] mems...)
@@ -336,7 +336,7 @@ bool anyPropertyGetter(Entity[] mems...)
 	foreach (ov; mems) {
 		auto ovf = cast(FunctionDeclaration)ov;
 		if (!ovf) continue;
-		assert(ovf.returnType !is null);
+		assert(!!ovf.returnType);
 		if (ovf.returnType.typeName == "void") continue;
 		if (ovf.parameters.length == 0) return true;
 	}
