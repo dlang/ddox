@@ -2,54 +2,51 @@
 - import std.algorithm;
 - import std.string : toLower;
 
-- void outputVariableDescription(Declaration item, int hlevel)
+- void outputVariablePrototype(Declaration item)
 	- auto docgroup = item.docGroup;
-	section
-		.prototype
-			code.lang-d
-				- string value;
-				- string terminator = "<span class=\"pun\">;</span>";
-				- string attributes;
-				- if (auto a = getAttributeString(item, AttributeStringKind.normal))
-					- attributes ~= highlightDCode(a);
-				- if (auto var = cast(VariableDeclaration)item)
-					- if (var.type) attributes ~= info.formatType(var.type, false) ~ " ";
-					- if (var.initializer) value = highlightDCode(var.initializer.valueString);
-				- else if (auto ev = cast(EnumMemberDeclaration)item)
-					- if (ev.type) attributes ~= info.formatType(ev.type, false) ~ " ";
-					- if (ev.value) value = highlightDCode(ev.value.valueString);
-					- if (ev.parent && cast(EnumDeclaration)ev.parent)
-						- terminator = "<span class=\"pun\">,</span>";
-					- else
-						- attributes = "<span class=\"kwd\">enum</span> " ~ attributes;
-				- else if (auto ad = cast(AliasDeclaration)item)
-					- attributes = "<span class=\"kwd\">alias</span> " ~ attributes;
-					- if (ad.targetType)
-						- value = info.formatType(ad.targetType, false);
-					- else if (ad.targetDecl)
-						//- TODO!
+	- string value;
+	- string terminator = "<span class=\"pun\">;</span>";
+	- string attributes;
+	- if (auto a = getAttributeString(item, AttributeStringKind.normal))
+		- attributes ~= highlightDCode(a);
+	- if (auto var = cast(VariableDeclaration)item)
+		- if (var.type) attributes ~= info.formatType(var.type, false) ~ " ";
+		- if (var.initializer) value = highlightDCode(var.initializer.valueString);
+	- else if (auto ev = cast(EnumMemberDeclaration)item)
+		- if (ev.type) attributes ~= info.formatType(ev.type, false) ~ " ";
+		- if (ev.value) value = highlightDCode(ev.value.valueString);
+		- if (ev.parent && cast(EnumDeclaration)ev.parent)
+			- terminator = "<span class=\"pun\">,</span>";
+		- else
+			- attributes = "<span class=\"kwd\">enum</span> " ~ attributes;
+	- else if (auto ad = cast(AliasDeclaration)item)
+		- attributes = "<span class=\"kwd\">alias</span> " ~ attributes;
+		- if (ad.targetType)
+			- value = info.formatType(ad.targetType, false);
+		- else if (ad.targetDecl)
+			//- TODO!
 
-				- string indent;
-				- if (!cast(Module)item.parent)
-					- if( auto ctd = cast(Declaration)item.parent )
-						|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
-					- else
-						|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName.to!string)}</a>
-					br
-					span.pun {#[br]
-					| &nbsp;&nbsp;#[span.com // ...]#[br]
-					- indent = "&nbsp;&nbsp;";
+	- string indent;
+	- if (!cast(Module)item.parent)
+		- if( auto ctd = cast(Declaration)item.parent )
+			|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
+		- else
+			|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName.to!string)}</a>
+		br
+		span.pun {#[br]
+		| &nbsp;&nbsp;#[span.com // ...]#[br]
+		- indent = "&nbsp;&nbsp;";
 
-				| !{indent}!{attributes}<span class="pln">#{item.name}</span>
-				- info.renderTemplateArgs(&_diet_output, item);
+	| !{indent}!{attributes}<span class="pln">#{item.name}</span>
+	- info.renderTemplateArgs(&_diet_output, item);
 
-				- if (value.length)
-					|  <span class="pun">=</span> !{value}!{terminator}
-				- else
-					|!= terminator
+	- if (value.length)
+		|  <span class="pun">=</span> !{value}!{terminator}
+	- else
+		|!= terminator
 
-				- if (!cast(Module)item.parent)
-					br
-					| &nbsp;&nbsp;<span class="com">// ...</span>
-					br
-					span.pun }
+	- if (!cast(Module)item.parent)
+		br
+		| &nbsp;&nbsp;<span class="com">// ...</span>
+		br
+		span.pun }

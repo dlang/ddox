@@ -4,44 +4,37 @@
 - import std.string : toLower;
 - import std.typetuple;
 
-- void outputCompositeDescription(CompositeTypeDeclaration item, int hlevel)
+- void outputCompositePrototype(CompositeTypeDeclaration item)
 	- auto cls_item = cast(ClassDeclaration)item;
 	- auto intf_item = cast(InterfaceDeclaration)item;
 
-	- if (item.templateArgs.length)
-		section
-			- heading(hlevel, "Template arguments");
+	| <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>
+	- info.renderTemplateArgs(&_diet_output, item);
 
-			.prototype
-				code.lang-d <span class="kwd">#{item.kind.to!string.toLower()}</span> <span class="typ">#{item.name}</span>
-				- info.renderTemplateArgs(&_diet_output, item);
-				| #{item.templateConstraint.length?"":";"}
-					- if (item.templateConstraint.length)
-						br
-						| <span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(item.templateConstraint)}<span class="pun">);</span>
+	- bool first = true;
+	- void outputBase(CachedType tp)
+		- if (tp.typeName.among("Object", "object.Object"))
+			- return;
+		| !{first ? "<br>&nbsp;&nbsp;: " : "<br>&nbsp;&nbsp;, "}!{info.formatType(tp, false)}
+		- first = false;
 
-	- if( cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length) )
-		section
-			- heading(hlevel, "Inherits from");
+	- if (cls_item && (cls_item.baseClass || cls_item.derivedInterfaces.length))
+		- if (cls_item.baseClass)
+			- outputBase(cls_item.baseClass);
+		- foreach (intf; cls_item.derivedInterfaces)
+			- outputBase(intf);
 
-			ul
-				- if( cls_item.baseClass )
-					li
-						code.prettyprint.lang-d!= info.formatType(cls_item.baseClass, false)
-						| (base class)
-				- foreach( intf; cls_item.derivedInterfaces )
-					li
-						code.prettyprint.lang-d!= info.formatType(intf, false)
+	- if (intf_item && intf_item.derivedInterfaces.length)
+		- foreach (intf; intf_item.derivedInterfaces)
+			- outputBase(intf);
 
-	- if( intf_item && intf_item.derivedInterfaces.length )
-		section
-			- heading(hlevel, "Inherits frmo");
-
-			ul
-				- foreach( intf; intf_item.derivedInterfaces )
-					li
-						code.prettyprint.lang-d!= info.formatType(intf, false)
-
+	- if (item.templateConstraint.length)
+		| #[br]&nbsp;&nbsp;
+		- if (item.templateConstraint.length)
+			br
+			| <span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(item.templateConstraint)}<span class="pun">);</span>
+	- else
+		span.pun ;
 
 - void outputCompositeMembers(CompositeTypeDeclaration item, int hlevel)
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;

@@ -2,22 +2,10 @@
 - import ddox.highlight;
 - import std.algorithm;
 
-- void outputEnumDescription(EnumDeclaration enum_item, int hlevel)
-	p The enum base type is
-		code.prettyprint.lang-d!= info.formatType(enum_item.baseType, false)
-		|.
-
-	- if (enum_item.templateArgs.length)
-		section
-			- heading(hlevel, "Template arguments");
-
-			.prototype
-				code.lang-d <span class="kwd">enum</span> <span class="typ">#{enum_item.name}</span>
-				- info.renderTemplateArgs(&_diet_output, enum_item);
-				| #{enum_item.templateConstraint.length?"":";"}
-					- if (enum_item.templateConstraint.length)
-						br
-						| <span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(enum_item.templateConstraint)}<span class="pun">);</span>
+- void outputEnumPrototype(EnumDeclaration enum_item)
+	| #[span.kwd enum] #[span.typ= enum_item.name]
+	- info.renderTemplateArgs(&_diet_output, enum_item);
+	|  #[span.pun :] !{info.formatType(enum_item.baseType, false)} #[span.pun { ... }]
 
 - void outputEnumMembers(EnumDeclaration enum_item, int hlevel)
 	section

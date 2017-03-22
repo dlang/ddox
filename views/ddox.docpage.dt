@@ -40,6 +40,48 @@ block ddox.members
 			h2(id=i) #{kinds.joiner("/")} #{dg.members[0].nestedName}
 
 		p!= info.formatDoc(dg, hlevel, sec => sec == "$Short")
+		
+		.prototype
+			code.lang-d
+				- foreach (itement; dg.members)
+					- auto item = cast(Declaration)itement;
+					- assert (item !is null, "Unknown entity type: "~dg.members[0].classinfo.toString());
+
+					- if (got_function && cast(FunctionDeclaration)item)
+						- continue;
+
+					- switch (item.kind) with (DeclarationKind)
+						- default: break;
+						- case Variable, EnumMember, Alias:
+							.single-prototype
+								- outputVariablePrototype(item);
+							- break;
+						- case Function:
+							- got_function = true;
+							- auto fdecl = cast(FunctionDeclaration)item;
+							- assert(fdecl !is null, "Invalid node of function kind: " ~ item.qualifiedName.to!string);
+							.single-prototype
+								- outputFunctionPrototype(fdecl);
+							- break;
+						- case Interface, Class, Struct, Union:
+							- auto cdecl = cast(CompositeTypeDeclaration)item;
+							- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName.to!string);
+							.single-prototype
+								- outputCompositePrototype(cdecl);
+							- break;
+						- case Template:
+							- auto tdecl = cast(TemplateDeclaration)item;
+							- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName.to!string);
+							.single-prototype
+								- outputTemplatePrototype(tdecl);
+							- break;
+						- case Enum:
+							- auto edecl = cast(EnumDeclaration)item;
+							- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName.to!string);
+							.single-prototype
+								- outputEnumPrototype(edecl);
+							- break;
+
 		|!= info.formatDoc(dg, hlevel, sec => sec == "$Long")
 
 		- foreach (itement; dg.members)
@@ -47,40 +89,25 @@ block ddox.members
 			- assert (item !is null, "Unknown entity type: "~dg.members[0].classinfo.toString());
 			- auto shlevel = hlevel;
 
-			- if (got_function && cast(FunctionDeclaration)item)
-				- continue;
-
 			- if (kinds.walkLength > 1)
 				- shlevel++;
 				- heading(hlevel, item.kindCaption, " ", item.nestedName);
 
 			- switch (item.kind) with (DeclarationKind)
 				- default: break;
-				- case Variable, EnumMember, Alias:
-					- outputVariableDescription(item, shlevel);
-					- break;
-				- case Function:
-					- got_function = true;
-					- auto fdecl = cast(FunctionDeclaration)item;
-					- assert(fdecl !is null, "Invalid node of function kind: " ~ item.qualifiedName.to!string);
-					- outputFunctionDescription(fdecl, shlevel);
-					- break;
 				- case Interface, Class, Struct, Union:
 					- auto cdecl = cast(CompositeTypeDeclaration)item;
 					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName.to!string);
-					- outputCompositeDescription(cdecl, shlevel);
 					- outputCompositeMembers(cdecl, shlevel);
 					- break;
 				- case Template:
 					- auto tdecl = cast(TemplateDeclaration)item;
 					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName.to!string);
-					- outputTemplateDescription(tdecl, shlevel);
 					- outputTemplateMembers(tdecl, shlevel);
 					- break;
 				- case Enum:
 					- auto edecl = cast(EnumDeclaration)item;
 					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName.to!string);
-					- outputEnumDescription(edecl, shlevel);
 					- outputEnumMembers(edecl, shlevel);
 					- break;
 
