@@ -29,17 +29,7 @@
 					- else if (ad.targetDecl)
 						//- TODO!
 
-				- auto itemname = "<span class=\"pln\">" ~ item.name ~ "</span>" ~ highlightDCode(item.templateArgsString);
-				- if (auto m = cast(Module)item.parent)
-					//- |module <a href="#{info.linkTo(item.parent)}">#{item.parent.qualifiedName}</a>;
-					//- |
-					//- |// ...
-					- if (value.length)
-						|!{attributes}!{itemname} <span class="pun">=</span> !{value}<span class="pun">;</span>
-					- else
-						|!{attributes}!{itemname}<span class="pun">;</span>
-					//- |// ...
-				- else
+				- if (!cast(Module)item.parent)
 					- if( auto ctd = cast(Declaration)item.parent )
 						|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
 					- else
@@ -49,10 +39,16 @@
 					br
 					| &nbsp;&nbsp;<span class="com">// ...</span>
 					br
+					| &nbsp;&nbsp;
+
+				| !{attributes}<span class="pln">#{item.name}</span>
+				- info.renderTemplateArgs(&_diet_output, item);
+
+				- if (!cast(Module)item.parent)
 					- if (value.length)
-						| &nbsp;&nbsp;!{attributes}!{itemname} <span class="pun">=</span> !{value}!{terminator}
+						|  <span class="pun">=</span> !{value}!{terminator}
 					- else
-						| &nbsp;&nbsp;!{attributes}!{itemname}!{terminator}
+						| !{terminator}
 					br
 					| &nbsp;&nbsp;<span class="com">// ...</span>
 					br

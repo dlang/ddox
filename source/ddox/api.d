@@ -15,6 +15,7 @@ import std.array;
 import std.conv;
 import std.format;
 import std.string;
+import std.range : isOutputRange;
 import vibe.core.log;
 import vibe.data.json;
 
@@ -248,7 +249,7 @@ string[] declStyleClasses(Declaration decl)
 	return ret;
 }
 
-string formatType()(CachedType type, string delegate(in Entity) link_to, bool include_code_tags = true)
+string formatType()(CachedType type, scope string delegate(in Entity) link_to, bool include_code_tags = true)
 {
 	if (!type) return "{null}";
 	//logDebug("format type: %s", type);
@@ -257,7 +258,7 @@ string formatType()(CachedType type, string delegate(in Entity) link_to, bool in
 	return ret.data();
 }
 
-void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_to, bool include_code_tags = true)
+void formatType(R)(ref R dst, CachedType type, scope string delegate(in Entity) link_to, bool include_code_tags = true)
 {
 	import ddox.highlight;
 	import std.range : chain, walkLength;
@@ -336,6 +337,29 @@ void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_t
 		foreach( att; type.modifiers ) dst.highlightDCode(")");
 	}
 	if (include_code_tags) dst.put("</code>");
+}
+
+void renderTemplateArgs(R)(ref R output, Declaration decl, scope string delegate(in Entity) link_to)
+	if (isOutputRange!(R, char))
+{
+	import ddox.highlight : highlightDCode;
+
+	if (!decl.templateArgs.length) return;
+
+	output.put('(');
+	foreach (i, arg; decl.templateArgs) {
+		if (i > 0) output.put(", ");
+		if (arg.type != CachedType.init) {
+			output.formatType(arg.type, link_to, false);
+			output.put(' ');
+		}
+		output.put(arg.name);
+		if (arg.defaultValue.length) {
+			output.highlightDCode(" = ");
+			output.highlightDCode(arg.defaultValue);
+		}
+	}
+	output.put(')');
 }
 
 CachedType getPropertyType(const(Entity)[] mems...)

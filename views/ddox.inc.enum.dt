@@ -12,7 +12,9 @@
 			- heading(hlevel, "Template arguments");
 
 			.prototype
-				code.lang-d <span class="kwd">enum</span> <span class="typ">#{enum_item.name}</span>!{highlightDCode(enum_item.templateArgsString)}#{enum_item.templateConstraint.length?"":";"}
+				code.lang-d <span class="kwd">enum</span> <span class="typ">#{enum_item.name}</span>
+				- info.renderTemplateArgs(&_diet_output, enum_item);
+				| #{enum_item.templateConstraint.length?"":";"}
 					- if (enum_item.templateConstraint.length)
 						br
 						| <span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(enum_item.templateConstraint)}<span class="pun">);</span>

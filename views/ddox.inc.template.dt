@@ -7,7 +7,9 @@
 	section
 		.prototype
 			code.lang-d
-				|<span class="kwd">template</span> <span class="pln">#{item.name}</span>!{highlightDCode(item.templateArgsString)};
+				| <span class="kwd">template</span> <span class="pln">#{item.name}</span>
+				- info.renderTemplateArgs(&_diet_output, item);
+				| ;
 
 - void outputTemplateMembers(TemplateDeclaration item, int hlevel)
 	- alias TypeTuple!(FunctionDeclaration, InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;

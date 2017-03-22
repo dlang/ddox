@@ -130,6 +130,9 @@ private struct Parser
 					} break;
 				case DeclarationKind.Template: break;
 				case DeclarationKind.TemplateParameter:
+					auto tp = cast(TemplateParameterDeclaration)decl;
+					if (json["kind"] == "value")
+						tp.type = parseType(json, tp, null);
 					break;
 			}
 		}
@@ -309,23 +312,30 @@ private struct Parser
 	{
 		auto ret = new TemplateDeclaration(parent, json["name"].get!string);
 		foreach (arg; json["parameters"].opt!(Json[])) {
-			string argstr;
+			string pname = arg["name"].get!string;
+			string defvalue = arg["defaultValue"].opt!string;
+			bool needs_type_parse = false;
+
 			switch (arg["kind"].get!string) {
+				default: break;
 				case "value":
-					if (auto pt = "type" in arg) argstr = pt.get!string ~ ' ';
-					else argstr = demanglePrettyType(arg["deco"].get!string) ~ ' ';
-					goto default;
-				case "alias":
-					argstr = "alias ";
-					goto default;
-				case "tuple":
-					argstr ~= arg["name"].get!string ~ "...";
+					needs_type_parse = true;
 					break;
-				default:
-					argstr ~= arg["name"].get!string;
+				case "alias":
+					pname = "alias " ~ pname;
+					break;
+				case "tuple":
+					pname ~= "...";
+					break;
 			}
-			ret.templateArgs ~= new TemplateParameterDeclaration(ret, argstr);
+
+			auto pdecl = new TemplateParameterDeclaration(ret, pname);
+			pdecl.defaultValue = defvalue;
+			ret.templateArgs ~= pdecl;
 			ret.templateConstraint = json["constraint"].opt!string;
+
+			if (needs_type_parse)
+				m_declarations ~= tuple(cast(Declaration)pdecl, arg);
 		}
 		ret.members = parseDeclList(json["members"], ret);
 		return ret;

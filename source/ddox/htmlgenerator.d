@@ -223,6 +223,7 @@ class DocPageInfo {
 	
 	@property NavigationType navigationType() const { return settings.navigationType; }
 	string formatType(CachedType tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
+	void renderTemplateArgs(R)(R output, Declaration decl) { .renderTemplateArgs(output, decl, linkTo); }
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
 		// TODO: memoize the DocGroupContext

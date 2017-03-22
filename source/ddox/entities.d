@@ -337,11 +337,6 @@ class Declaration : Entity {
 		assert(false, "Declaration without module?");
 	}
 
-	@property string templateArgsString() const {
-		if (!isTemplate) return null;
-		return format("(%s)", templateArgs.map!(a => a.name[]).joiner(", "));
-	}
-
 	this(Entity parent, string name){ super(parent, name); }
 
 	abstract override void iterateChildren(scope bool delegate(Entity) del);
@@ -512,11 +507,13 @@ final class TemplateDeclaration : Declaration {
 }
 
 final class TemplateParameterDeclaration : TypedDeclaration {
+	string defaultValue;
+
 	override @property string kindCaption() const { return "Template parameter"; }
 	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.TemplateParameter; }
 
-	this(Entity parent, string name){ super(parent, name); type = CachedType.fromTypeDecl(this); }
+	this(Entity parent, string name){ super(parent, name); }
 
 	override void iterateChildren(scope bool delegate(Entity) del) {}
 }

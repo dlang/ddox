@@ -28,7 +28,9 @@
 					- if (!proto.templateConstraint.length) attribute_suffix ~= "<span class=\"pun\">;</span>";
 
 					- if (proto.parameters.length)
-						|!{attribute_prefix}!{rettype}<span class="pln">#{proto.name}</span>!{highlightDCode(proto.templateArgsString)}<span class="pun">(</span>
+						| !{attribute_prefix}!{rettype}<span class="pln">#{proto.name}</span>
+						- info.renderTemplateArgs(&_diet_output, proto);
+						| <span class="pun">(</span>
 						br
 						- foreach (size_t i, p; proto.parameters)
 							- auto pattribs = highlightDCode(getAttributeString(p.attributes, AttributeStringKind.normal));
@@ -40,7 +42,9 @@
 							br
 						|<span class="pun">)</span>!{attribute_suffix}
 					- else
-						|!{attribute_prefix}!{rettype}<span class="pln">#{proto.name}!{highlightDCode(proto.templateArgsString)}<span class="pun">()</span>!{attribute_suffix}
+						| !{attribute_prefix}!{rettype}<span class="pln">#{proto.name}
+						- info.renderTemplateArgs(&_diet_output, proto);
+						| <span class="pun">()</span>!{attribute_suffix}
 
 					- if (proto.templateConstraint.length)
 						br
