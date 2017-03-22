@@ -25,21 +25,50 @@ class Entity {
 		this.name = name;
 	}
 
-	@property string qualifiedName()
+	@property auto qualifiedName() const { return qualifiedPath().map!(e => e.name[]).joiner("."); }
+
+	auto qualifiedPath()
 	const {
-		string s = name;
-		Rebindable!(const(Entity)) e = parent;
-		while( e && e.parent ){
-			s = e.name ~ "." ~ s;
-			e = e.parent;
+		static struct R {
+			private {
+				Rebindable!(const(Entity)) m_current;
+				Rebindable!(const(Entity)) m_back;
+				size_t m_length;
+			}
+
+			@property const(Entity) front() { return m_current; }
+			@property bool empty() const { return m_current is null; }
+			@property size_t length() const { return m_length; }
+			void popFront()
+			{
+				if (m_back is m_current) {
+					m_current = null;
+				} else {
+					Rebindable!(const(Entity)) e = m_back;
+					while (e.parent !is m_current)
+						e = e.parent;
+					m_current = e;
+					m_length--;
+				}
+			}
 		}
-		return s;
+
+		R ret;
+		ret.m_current = this;
+		ret.m_length = 1;
+		while (ret.m_current.parent && ret.m_current.parent.parent) {
+			ret.m_current = ret.m_current.parent;
+			ret.m_length++;
+		}
+		ret.m_back = this;
+		return ret;
 	}
 
 	@property string moduleName()
 	const {
+		import std.conv : text;
 		auto m = this.module_();
-		return m ? m.qualifiedName : null;
+		return m ? text(m.qualifiedName) : null;
 	}
 
 	@property const(Module) module_()
@@ -60,7 +89,7 @@ class Entity {
 		string s = name;
 		Rebindable!(const(Entity)) e = parent;
 		while( e && e.parent ){
-			if( cast(Module)e ) break;
+			if (cast(const(Module))e) break;
 			s = e.name ~ "." ~ s;
 			e = e.parent;
 		}
@@ -122,7 +151,7 @@ class Entity {
 			}
 		}
 		static if (is(T == Declaration)) {
-			if (auto decl = cast(Declaration)this) {
+			if (auto decl = cast(inout(Declaration))this) {
 				auto idx = decl.templateArgs.countUntil!(p => p.name.stripEllipsis() == qualified_name);
 				if (idx >= 0) return cast(inout)decl.templateArgs[idx];
 			}
@@ -487,7 +516,7 @@ final class TemplateParameterDeclaration : TypedDeclaration {
 	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.TemplateParameter; }
 
-	this(Entity parent, string name){ super(parent, name); type = Type(this); }
+	this(Entity parent, string name){ super(parent, name); type = CachedType.fromTypeDecl(this); }
 
 	override void iterateChildren(scope bool delegate(Entity) del) {}
 }
@@ -519,6 +548,19 @@ struct CachedType {
 		static const(Type) s_emptyType;
 	}
 
+	static CachedType fromTypeDecl(Declaration decl)
+	{
+		Type tp;
+		tp.kind = TypeKind.Primitive;
+		tp.typeName = decl.qualifiedName.to!string;
+		tp.typeDecl = decl;
+		tp.text = decl.name;
+		auto ct = CachedType(tp);
+		auto existing = ct.typeDecl;
+		//assert(!existing || existing is decl, "Replacing type decl "~existing.qualifiedName.to!string~" with "~decl.qualifiedName.to!string);
+		return ct;
+	}
+
 	this(in ref Type tp)
 	{
 		this.type = tp;
@@ -532,17 +574,12 @@ struct CachedType {
 	bool opCast() const { return m_id != uint.max; }
 
 	@property ref const(Type) type() const { return m_id == uint.max ? s_emptyType : s_types[m_id]; }
-	@property ref const(Type) type(Type tp)
+	@property ref const(Type) type(const(Type) tp)
 	{
 		if (auto pi = tp in s_typeIDs) {
 			m_id = *pi;
 		} else {
-			if (!s_types.length) {
-				auto tps = new Type[16384];
-				tps.length = 0;
-				tps.assumeSafeAppend();
-				s_types = tps;
-			}
+			if (!s_types.length) s_types.reserve(16384);
 
 			m_id = cast(uint)s_types.length;
 			s_types ~= tp;
@@ -578,8 +615,6 @@ struct Type {
 	immutable(CachedString)[] _parameterNames;
 	immutable(Value)[] _parameterDefaultValues;
 
-	this(Declaration decl) { kind = TypeKind.Primitive; text = decl.nestedName; typeName = text; typeDecl = decl; }
-
 	static Type makePointer(CachedType base_type) { Type ret; ret.kind = TypeKind.Pointer; ret.elementType = base_type; return ret; }
 	static Type makeArray(CachedType base_type) { Type ret; ret.kind = TypeKind.Array; ret.elementType = base_type; return ret; }
 	static Type makeStaticArray(CachedType base_type, string length) { Type ret; ret.kind = TypeKind.StaticArray; ret.elementType = base_type; ret.arrayLength = length; return ret; }
@@ -594,7 +629,7 @@ struct Type {
 		if( modifiers != other.modifiers ) return false; // TODO: use set comparison instead
 
 		final switch( kind ){
-			case TypeKind.Primitive: return typeName == other.typeName && typeDecl == other.typeDecl;
+			case TypeKind.Primitive: return typeName == other.typeName;
 			case TypeKind.Pointer: 
 			case TypeKind.Array: return elementType == other.elementType;
 			case TypeKind.StaticArray: return elementType == other.elementType && arrayLength == other.arrayLength;

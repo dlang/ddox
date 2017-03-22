@@ -62,24 +62,24 @@ block ddox.members
 				- case Function:
 					- got_function = true;
 					- auto fdecl = cast(FunctionDeclaration)item;
-					- assert(fdecl !is null, "Invalid node of function kind: " ~ item.qualifiedName);
+					- assert(fdecl !is null, "Invalid node of function kind: " ~ item.qualifiedName.to!string);
 					- outputFunctionDescription(fdecl, shlevel);
 					- break;
 				- case Interface, Class, Struct, Union:
 					- auto cdecl = cast(CompositeTypeDeclaration)item;
-					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName);
+					- assert(cdecl !is null, "Invalid node of composite kind: " ~ item.qualifiedName.to!string);
 					- outputCompositeDescription(cdecl, shlevel);
 					- outputCompositeMembers(cdecl, shlevel);
 					- break;
 				- case Template:
 					- auto tdecl = cast(TemplateDeclaration)item;
-					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName);
+					- assert(tdecl !is null, "Invalid node of template kind: " ~ item.qualifiedName.to!string);
 					- outputTemplateDescription(tdecl, shlevel);
 					- outputTemplateMembers(tdecl, shlevel);
 					- break;
 				- case Enum:
 					- auto edecl = cast(EnumDeclaration)item;
-					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName);
+					- assert(edecl !is null, "Invalid node of enum kind: " ~ item.qualifiedName.to!string);
 					- outputEnumDescription(edecl, shlevel);
 					- outputEnumMembers(edecl, shlevel);
 					- break;

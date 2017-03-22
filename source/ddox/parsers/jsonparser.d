@@ -26,104 +26,21 @@ Package parseJsonDocs(Json json, Package root = null)
 {
 	if( !root ) root = new Package(null, null);
 	Parser p;
-	foreach( mod; json ){
-		p.parseModule(mod, root);
-	}
-	p.resolveTypes(root);
+	foreach (mod; json)
+		p.parseModuleDecls(mod, root);
+	p.parseTypes();
 	return root;
 }
 
 private struct Parser
 {
-	private Tuple!(CachedType, Rebindable!(const(Entity)))[] m_primTypes;
+	// global map of type declarations with all partially qualified names
+	// used to lookup type names for which the regular lookup has failed
 	private Declaration[string] m_typeMap;
 
-	void resolveTypes(Package root)
-	{
-		bool isTypeDecl(in Declaration a)
-		{
-			switch(a.kind){
-				default: return false;
-				case DeclarationKind.Struct:
-				case DeclarationKind.Union:
-				case DeclarationKind.Class:
-				case DeclarationKind.Interface:
-				case DeclarationKind.Enum:
-					return true;
-				case DeclarationKind.Alias:
-					return !!(cast(AliasDeclaration)a).targetType;
-				case DeclarationKind.TemplateParameter:
-					return true;
-				case DeclarationKind.Template:
-					// support eponymous template types
-					auto td = cast(TemplateDeclaration)a;
-					// be optimistic for templates without content that they are in fact types
-					if (!td.members.length) return true;
-					// otherwise require an actual eponymous type member
-					auto mi = td.members.countUntil!(m => m.name == a.name);
-					return mi >= 0 && isTypeDecl(td.members[mi]);
-			}
-		}
+	Tuple!(Declaration, Json)[] m_declarations;
 
-		foreach (t; m_primTypes) {
-			Rebindable!(const(Declaration)) decl;
-			if (t[0].typeName.length) decl = t[1].lookup!Declaration(t[0].typeName);
-			if (!decl || !isTypeDecl(decl)) {
-				auto pd = t[0].typeName in m_typeMap;
-				if (pd) decl = *pd;
-			}
-			if (decl && isTypeDecl(decl)) {
-				Type tp = t[0];
-				tp.typeDecl = decl;
-				t[0] = tp;
-			}
-		}
-
-
-		// fixup class bases
-		root.visit!ClassDeclaration((ClassDeclaration decl){
-			if (decl.baseClass && decl.baseClass.typeDecl && !cast(ClassDeclaration)decl.baseClass.typeDecl) {
-				Type t = decl.baseClass;
-				t.typeDecl = null;
-				decl.baseClass = t;
-			}
-
-			if (!decl.baseClass) {
-				auto idx = decl.derivedInterfaces.countUntil!(i => cast(ClassDeclaration)i.typeDecl !is null);
-				if (idx >= 0) decl.baseClass = decl.derivedInterfaces[idx];
-			}
-
-			decl.derivedInterfaces = decl.derivedInterfaces
-				.filter!(i => !!i)
-				.map!((i) {
-					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
-						Type tp = i;
-						tp.typeDecl = null;
-						return CachedType(tp);
-					} else return i;
-				})
-				.array;
-
-			assert(decl);
-		});
-
-		// fixup interface bases
-		root.visit!InterfaceDeclaration((InterfaceDeclaration decl){
-			decl.derivedInterfaces = decl.derivedInterfaces
-				.filter!(i => !!i)
-				.map!((i) {
-					if (i.typeDecl && !cast(InterfaceDeclaration)i.typeDecl) {
-						Type tp = i;
-						tp.typeDecl = null;
-						return CachedType(tp);
-					} else return i;
-				})
-				.array;
-			assert(decl);
-		});
-	}
-
-	void parseModule(Json json, Package root_package)
+	void parseModuleDecls(Json json, Package root_package)
 	{
 		Module mod;
 		if( "name" !in json ){
@@ -132,7 +49,7 @@ private struct Parser
 		}
 		auto path = json["name"].get!string.split(".");
 		Package p = root_package;
-		foreach( i, pe; path ){
+		foreach (i, pe; path) {
 			if( i+1 < path.length ) p = p.getOrAddPackage(pe);
 			else mod = p.createModule(pe);
 		}
@@ -140,6 +57,82 @@ private struct Parser
 		mod.file = json["file"].get!string;
 		mod.docGroup = new DocGroup(mod, json["comment"].opt!string());
 		mod.members = parseDeclList(json["members"], mod);
+	}
+
+	void parseTypes()
+	{
+		foreach (d; m_declarations) {
+			auto decl = d[0];
+			auto json = d[1];
+			final switch (decl.kind) {
+				case DeclarationKind.Variable: {
+						auto v = cast(VariableDeclaration)decl;
+						v.type = parseType(json, v);
+					} break;
+				case DeclarationKind.Function: {
+						auto f = cast(FunctionDeclaration)decl;
+						f.type = parseType(json, f, "void()");
+						if (f.type.kind != TypeKind.Function) {
+							logError("Function %s has non-function type: %s", f.qualifiedName, f.type.kind);
+							break;
+						}
+						f.returnType = f.type.returnType;
+						f.attributes ~= f.type.attributes ~ f.type.modifiers;
+
+						auto params = json["parameters"].opt!(Json[]);
+						if (!params) {
+							params.length = f.type.parameterTypes.length;
+							foreach (i, pt; f.type.parameterTypes) {
+								auto jp = Json.emptyObject;
+								jp["name"] = f.type._parameterNames[i];
+								jp["type"] = pt.text;
+								if (f.type._parameterDefaultValues[i])
+									jp["default"] = f.type._parameterDefaultValues[i].valueString;
+								params[i] = jp;
+							}
+						}
+
+						f.parameters.reserve(params.length);
+						foreach (i, p; params) {
+							auto pname = p["name"].opt!string;
+							auto pdecl = new VariableDeclaration(f, pname);
+							pdecl.type = parseType(p, f);
+							foreach (sc; p["storageClass"].opt!(Json[]))
+								if (!pdecl.attributes.canFind(sc.get!string))
+									pdecl.attributes ~= CachedString(sc.get!string);
+							if (auto pdv = "default" in p)
+								pdecl.initializer = parseValue(pdv.opt!string);
+							f.parameters ~= pdecl;
+						}
+					} break;
+				case DeclarationKind.Struct: break;
+				case DeclarationKind.Union: break;
+				case DeclarationKind.Class: {
+						auto c = cast(ClassDeclaration)decl;
+						if (!c.qualifiedName.equal("object.Object"))
+							c.baseClass = parseType(json["base"], c, "Object", false);
+						foreach (intf; json["interfaces"].opt!(Json[]))
+							c.derivedInterfaces ~= CachedType(parseType(intf, c));
+					} break;
+				case DeclarationKind.Interface: {
+						auto i = cast(InterfaceDeclaration)decl;
+						foreach (intf; json["interfaces"].opt!(Json[]))
+							i.derivedInterfaces ~= CachedType(parseType(intf, i));
+					} break;
+				case DeclarationKind.Enum: {
+						auto e = cast(EnumDeclaration)decl;
+						e.baseType = parseType(json["base"], e);
+					} break;
+				case DeclarationKind.EnumMember: break;
+				case DeclarationKind.Alias: {
+						auto a = cast(AliasDeclaration)decl;
+						a.targetType = parseType(json, a, null);
+					} break;
+				case DeclarationKind.Template: break;
+				case DeclarationKind.TemplateParameter:
+					break;
+			}
+		}
 	}
 
 	Declaration[] parseDeclList(Json json, Entity parent)
@@ -174,6 +167,8 @@ private struct Parser
 			switch( json["kind"].get!string ){
 				default:
 					logWarn("Unknown declaration kind: %s", json["kind"].get!string);
+					return null;
+				case "generated function": // generated functions are never documented
 					return null;
 				case "import":
 				case "static import":
@@ -215,6 +210,8 @@ private struct Parser
 		ret.line = json["line"].opt!int;
 		ret.docGroup = new DocGroup(ret, json["comment"].opt!string());
 
+		m_declarations ~= tuple(ret, json);
+
 		return ret;
 	}
 
@@ -222,7 +219,6 @@ private struct Parser
 	{
 		auto ret = new AliasDeclaration(parent, json["name"].get!string);
 		ret.attributes = json["storageClass"].opt!(Json[]).map!(j => CachedString(j.get!string)).array.assumeUnique;
-		ret.targetType = parseType(json, ret, null);
 		if( ret.targetType && ret.targetType.kind == TypeKind.Primitive && ret.targetType.typeName.length == 0 )
 			ret.targetType = CachedType.init;
 		insertIntoTypeMap(ret);
@@ -232,45 +228,10 @@ private struct Parser
 	auto parseFunctionDecl(Json json, Entity parent)
 	{
 		auto ret = new FunctionDeclaration(parent, json["name"].opt!string);
-		ret.type = parseType(json, ret, "void()");
-		assert(!!ret.type);
-		// TODO: use "storageClass" and "parameters" fields
-		if( ret.type.kind == TypeKind.Function ){
-			ret.returnType = ret.type.returnType;
-			assert(!!ret.returnType);
-			ret.attributes = ret.type.attributes ~ ret.type.modifiers;
-			if (auto psc = "storageClass" in json)
-				foreach (sc; *psc)
-					if (!ret.attributes.canFind(sc.get!string))
-						ret.attributes ~= CachedString(sc.get!string);
-
-			auto params = json["parameters"].opt!(Json[]);
-			if (!params) {
-				params.length = ret.type.parameterTypes.length;
-				foreach (i, pt; ret.type.parameterTypes) {
-					auto jp = Json.emptyObject;
-					jp["name"] = ret.type._parameterNames[i];
-					jp["type"] = pt.text;
-					if (ret.type._parameterDefaultValues[i])
-						jp["default"] = ret.type._parameterDefaultValues[i].valueString;
-					params[i] = jp;
-				}
-			}
-
-			foreach (i, p; params) {
-				auto pname = p["name"].opt!string;
-				auto decl = new VariableDeclaration(ret, pname);
-				foreach (sc; p["storageClass"].opt!(Json[]))
-					if (!decl.attributes.canFind(sc.get!string))
-						decl.attributes ~= CachedString(sc.get!string);
-				decl.type = parseType(p, ret);
-				if (auto pdv = "default" in p)
-					decl.initializer = parseValue(pdv.opt!string);
-				ret.parameters ~= decl;
-			}
-		} else {
-			logError("Expected function type for '%s'/'%s', got %s %s", json["type"].opt!string, demangleType(json["deco"].opt!string), ret.type.kind, ret.type.typeName);
-		}
+		if (auto psc = "storageClass" in json)
+			foreach (sc; *psc)
+				if (!ret.attributes.canFind(sc.get!string))
+					ret.attributes ~= CachedString(sc.get!string);
 		return ret;
 	}
 
@@ -282,7 +243,6 @@ private struct Parser
 			if( auto pd = "baseDeco" in json )
 				json["base"] = demanglePrettyType(pd.get!string());
 		}
-		ret.baseType = parseType(json["base"], ret);
 		auto mems = parseDeclList(json["members"], ret);
 		foreach( m; mems ){
 			auto em = cast(EnumMemberDeclaration)m;
@@ -315,16 +275,10 @@ private struct Parser
 				break;
 			case "class":
 				auto clsdecl = new ClassDeclaration(parent, json["name"].get!string);
-				if( clsdecl.qualifiedName != "object.Object" )
-					clsdecl.baseClass = parseType(json["base"], clsdecl, "Object", false);
-				foreach( intf; json["interfaces"].opt!(Json[]) )
-					clsdecl.derivedInterfaces ~= CachedType(parseType(intf, clsdecl));
 				ret = clsdecl;
 				break;
 			case "interface":
 				auto intfdecl = new InterfaceDeclaration(parent, json["name"].get!string);
-				foreach( intf; json["interfaces"].opt!(Json[]) )
-					intfdecl.derivedInterfaces ~= CachedType(parseType(intf, intfdecl));
 				ret = intfdecl;
 				break;
 		}
@@ -345,7 +299,6 @@ private struct Parser
 			return ret;
 		} else {
 			auto ret = new VariableDeclaration(parent, json["name"].get!string);
-			ret.type = parseType(json, ret);
 			if (json["init"].opt!string.length)
 				ret.initializer = parseValue(json["init"].opt!string);
 			return ret;
@@ -435,16 +388,6 @@ private struct Parser
 		}
 	}
 
-	Declaration lookupDecl(string qualified_name, Entity sc)
-	{
-		while(sc){
-			auto ent = cast(Declaration)sc.lookup(qualified_name);
-			if( ent ) return ent;
-			sc = sc.parent;
-		}
-		return null;
-	}
-
 	Type parseTypeDecl(ref string[] tokens, Entity sc)
 	{
 
@@ -517,7 +460,6 @@ private struct Parser
 			tokens.popFront();
 		} else if (!tokens.empty && !tokens.front.among("function", "delegate")) {
 			type.kind = TypeKind.Primitive;
-			addPrimType(CachedType(type), sc);
 
 			size_t start = 0, end;
 			if( tokens[start] == "." ) start++;
@@ -540,7 +482,7 @@ private struct Parser
 			} else {
 				enforce(i > 0, "Expected identifier but got "~tokens.front);
 				type.typeName = join(tokens[start .. end]);
-				//type.typeDecl = cast(Declaration)sc.lookup(type.typeName);
+				//
 				tokens.popFrontN(i);
 				
 				if (type.typeName == "typeof" && !tokens.empty && tokens.front == "(") {
@@ -578,6 +520,8 @@ private struct Parser
 						if (!tokens.empty()) tokens.popFront();
 					}
 				}
+
+				resolveTypeDecl(type, sc);
 			}
 		}
 		
@@ -590,6 +534,7 @@ private struct Parser
 				tokens.popFront();
 			} else if( tokens.front == "[" ){
 				tokens.popFront();
+				enforce(!tokens.empty, "Missing ']'.");
 				if( tokens.front == "]" ){
 					Type arr;
 					arr.kind = TypeKind.Array;
@@ -704,11 +649,12 @@ private struct Parser
 		return type;
 	}
 	
-	string[] tokenizeDSource(string dsource_)
+	string[] tokenizeDSource(string dsource)
 	{
 		static import std.uni;
+		import std.utf : stride;
 
-		static immutable dstring[] tokens = [
+		static immutable string[] tokens = [
 			"/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 			"-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=",
 			"<>", "<>=", ">", ">=", ">>=", ">>>=", ">>", ">>>", "!", "!=",
@@ -716,36 +662,37 @@ private struct Parser
 			"{", "}", "?", ",", ";", ":", "$", "=", "==", "*", "*=",
 			"%", "%=", "^", "^=", "~", "~=", "@", "=>", "#", "C++"
 		];
-		static bool[dstring] token_map;
+		static bool[string] token_map;
 		
-		if( !token_map.length ){
-			foreach( t; tokens )
+		if (token_map is null) {
+			foreach (t; tokens)
 				token_map[t] = true;
 			token_map.rehash;
 		}
 		
-		dstring dsource = to!dstring(dsource_);
-		
-		dstring[] ret;
+		string[] ret;
 		outer:
 		while(true){
 			dsource = stripLeft(dsource);
 			if( dsource.length == 0 ) break;
 			
 			// special token?
-			foreach_reverse( i; 1 .. min(5, dsource.length+1) )
-				if( dsource[0 .. i] in token_map ){
+			foreach_reverse (i; 1 .. min(5, dsource.length+1))
+				if (dsource[0 .. i] in token_map) {
 					ret ~= dsource[0 .. i];
-					dsource.popFrontN(i);
+					dsource = dsource[i .. $];
 					continue outer;
 				}
 			
 			// identifier?
-			if( dsource[0] == '_' || std.uni.isAlpha(dsource[0]) ){
+			if( dsource[0] == '_' || std.uni.isAlpha(dsource.front) ){
 				size_t i = 1;
-				while( i < dsource.length && (dsource[i] == '_' || std.uni.isAlpha(dsource[i]) || isDigit(dsource[i])) ) i++;
-				ret ~= dsource[0 .. i];
-				dsource.popFrontN(i);
+				string rem = dsource;
+				rem.popFront();
+				while (rem.length && (rem[0] == '_' || std.uni.isAlpha(rem.front) || isDigit(rem.front)))
+					rem.popFront();
+				ret ~= dsource[0 .. $ - rem.length];
+				dsource = rem;
 				continue;
 			}
 			
@@ -758,7 +705,7 @@ private struct Parser
 					enforce(i < dsource.length);
 				}
 				ret ~= dsource[0 .. i+1];
-				dsource.popFrontN(i+1);
+				dsource = dsource[i+1 .. $];
 				continue;
 			}
 			
@@ -771,7 +718,7 @@ private struct Parser
 					enforce(i < dsource.length);
 				}
 				ret ~= dsource[0 .. i+1];
-				dsource.popFrontN(i+1);
+				dsource = dsource[i+1 .. $];
 				continue;
 			}
 			
@@ -780,19 +727,18 @@ private struct Parser
 				auto dscopy = dsource;
 				parse!double(dscopy);
 				ret ~= dsource[0 .. dsource.length-dscopy.length];
-				dsource.popFrontN(dsource.length-dscopy.length);
-				if( dsource.startsWith("u") ) dsource.popFront();
-				else if( dsource.startsWith("f") ) dsource.popFront();
+				dsource = dscopy;
+				if (dsource.startsWith("u")) dsource.popFront();
+				else if (dsource.startsWith("f")) dsource.popFront();
 				continue;
 			}
 			
-			ret ~= dsource[0 .. 1];
-			dsource.popFront();
+			auto nb = dsource.stride();
+			ret ~= dsource[0 .. nb];
+			dsource = dsource[nb .. $];
 		}
 		
-		auto ret_ = new string[ret.length];
-		foreach( i; 0 .. ret.length ) ret_[i] = to!string(ret[i]);
-		return ret_;
+		return ret;
 	}
 
 	bool isDigit(dchar ch)
@@ -823,16 +769,48 @@ private struct Parser
 
 	void insertIntoTypeMap(Declaration decl)
 	{
-		string[] parts = split(decl.qualifiedName, ".");
-		foreach( i; 0 .. parts.length ){
-			auto partial_name = join(parts[i .. $], ".");
-			m_typeMap[partial_name] = decl;
+		auto qname = decl.qualifiedName.to!string;
+		m_typeMap[qname] = decl;
+		auto idx = qname.indexOf('.');
+		while (idx >= 0) {
+			qname = qname[idx+1 .. $];
+			m_typeMap[qname] = decl;
+			idx = qname.indexOf('.');
 		}
 	}
 
-	private void addPrimType(CachedType tp, const(Entity) decl)
+	private void resolveTypeDecl(ref Type tp, const(Entity) sc)
 	{
-		m_primTypes ~= tuple(tp, Rebindable!(const(Entity))(decl));
+		if (tp.kind != TypeKind.Primitive) return;
+		if (tp.typeDecl) return;
+
+		tp.typeDecl = sc.lookup!Declaration(tp.typeName);
+		if (!tp.typeDecl || !isTypeDecl(tp.typeDecl)) tp.typeDecl = m_typeMap.get(tp.typeName, null);
+	}
+
+	private bool isTypeDecl(in Declaration a)
+	{
+		switch(a.kind){
+			default: return false;
+			case DeclarationKind.Struct:
+			case DeclarationKind.Union:
+			case DeclarationKind.Class:
+			case DeclarationKind.Interface:
+			case DeclarationKind.Enum:
+				return true;
+			case DeclarationKind.Alias:
+				return !!(cast(AliasDeclaration)a).targetType;
+			case DeclarationKind.TemplateParameter:
+				return true;
+			case DeclarationKind.Template:
+				// support eponymous template types
+				auto td = cast(TemplateDeclaration)a;
+				// be optimistic for templates without content that they are in fact types
+				if (!td.members.length) return true;
+				// otherwise require an actual eponymous type member
+				auto mi = td.members.countUntil!(m => m.name == a.name);
+				return mi >= 0 && isTypeDecl(td.members[mi]);
+		}
 	}
 }
 

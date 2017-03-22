@@ -43,7 +43,7 @@
 					- if( auto ctd = cast(Declaration)item.parent )
 						|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
 					- else
-						|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName)}</a>
+						|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName.to!string)}</a>
 					br
 					span.pun {
 					br

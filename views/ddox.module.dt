@@ -6,7 +6,7 @@ block ddox.defs
 	- import std.typetuple;
 
 block ddox.title
-	- title = "Module " ~ info.mod.qualifiedName;
+	- title = "Module " ~ info.mod.qualifiedName.to!string;
 	
 block ddox.description		
 	p!= info.formatDoc(info.mod.docGroup, 2, sec => sec == "$Short")

@@ -29,6 +29,8 @@ class DocGroupContext : DdocContext {
 
 	this(DocGroup grp, string delegate(in Entity ent) link_to)
 	{
+		import std.typecons : Rebindable;
+
 		m_group = grp;
 		m_linkTo = link_to;
 
@@ -37,7 +39,7 @@ class DocGroupContext : DdocContext {
 
 		// inherit macros of parent scopes
 		if (grp.members.length > 0) {
-			auto e = grp.members[0];
+			Entity e = grp.members[0];
 			while (true) {
 				if (cast(Module)e) break;
 				e = e.parent;
@@ -58,6 +60,8 @@ class DocGroupContext : DdocContext {
 
 	string lookupScopeSymbolLink(string name)
 	{
+		import std.typecons : Rebindable;
+
 		assert(name.length > 0, "Empty identifier!");
 		if (name == "this") return null;
 
@@ -94,8 +98,8 @@ class DocGroupContext : DdocContext {
 			}
 
 			// module names must be fully qualified
-			if( auto mod = cast(Module)n )
-				if( mod.qualifiedName != name )
+			if (auto mod = cast(Module)n)
+				if (!mod.qualifiedName.equal(name))
 					continue;
 			
 			if (n) {
@@ -131,9 +135,9 @@ unittest {
 	assert(getFunctionName(Json(["name": Json("test")])) == "test");
 }
 
-DocGroup[] docGroups(Declaration[] items)
+inout(DocGroup)[] docGroups(inout(Declaration)[] items)
 {
-	DocGroup[] ret;
+	inout(DocGroup)[] ret;
 	foreach( itm; items ){
 		bool found = false;
 		foreach( g; ret )
@@ -240,6 +244,7 @@ string formatType()(CachedType type, string delegate(in Entity) link_to, bool in
 void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_to, bool include_code_tags = true)
 {
 	import ddox.highlight;
+	import std.range : chain, walkLength;
 
 	if (include_code_tags) dst.put("<code class=\"prettyprint lang-d\">");
 	foreach( att; type.attributes){
@@ -255,10 +260,10 @@ void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_t
 	switch (type.kind) {
 		default:
 		case TypeKind.Primitive:
-			if (type.typeDecl && !cast(TemplateParameterDeclaration)type.typeDecl) {
+			if (type.typeDecl && !cast(const(TemplateParameterDeclaration))type.typeDecl) {
 				auto mn = type.typeDecl.module_.qualifiedName;
 				auto qn = type.typeDecl.nestedName;
-				if( qn.startsWith(mn~".") ) qn = qn[mn.length+1 .. $];
+				if (qn.startsWith(chain(mn, "."))) qn = qn[mn.walkLength+1 .. $];
 				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), highlightDCode(qn).replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			} else {
 				dst.highlightDCode(type.typeName);
@@ -317,10 +322,10 @@ void formatType(R)(ref R dst, CachedType type, string delegate(in Entity) link_t
 	if (include_code_tags) dst.put("</code>");
 }
 
-CachedType getPropertyType(Entity[] mems...)
+CachedType getPropertyType(const(Entity)[] mems...)
 {
 	foreach (ov; mems) {
-		auto ovf = cast(FunctionDeclaration)ov;
+		auto ovf = cast(const(FunctionDeclaration))ov;
 		if (!ovf) continue;
 		auto rt = ovf.returnType;
 		assert(!!rt);
@@ -331,10 +336,10 @@ CachedType getPropertyType(Entity[] mems...)
 	return CachedType.init;
 }
 
-bool anyPropertyGetter(Entity[] mems...)
+bool anyPropertyGetter(const(Entity)[] mems...)
 {
 	foreach (ov; mems) {
-		auto ovf = cast(FunctionDeclaration)ov;
+		auto ovf = cast(const(FunctionDeclaration))ov;
 		if (!ovf) continue;
 		assert(!!ovf.returnType);
 		if (ovf.returnType.typeName == "void") continue;
@@ -343,10 +348,10 @@ bool anyPropertyGetter(Entity[] mems...)
 	return false;
 }
 
-bool anyPropertySetter(Entity[] mems...)
+bool anyPropertySetter(const(Entity)[] mems...)
 {
 	foreach (ov; mems) {
-		auto ovf = cast(FunctionDeclaration)ov;
+		auto ovf = cast(const(FunctionDeclaration))ov;
 		if (!ovf) continue;
 		if (ovf.parameters.length == 1) return true;
 	}

@@ -84,14 +84,14 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				return dst.data();
 			}
 
-			auto dp = cast(VariableDeclaration)ent;
-			auto dfn = ent.parent ? cast(FunctionDeclaration)ent.parent : null;
+			auto dp = cast(const(VariableDeclaration))ent;
+			auto dfn = ent.parent ? cast(const(FunctionDeclaration))ent.parent : null;
 			if( dp && dfn ) ent = ent.parent;
 
 			const(Entity)[] nodes;
 			size_t mod_idx = 0;
 			while( ent ){
-				if( cast(Module)ent ) mod_idx = nodes.length;
+				if( cast(const(Module))ent ) mod_idx = nodes.length;
 				nodes ~= ent.get;
 				ent = ent.parent;
 			}
@@ -260,14 +260,17 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 
 void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to)
 {
-	bool[string] visited;
+	import std.typecons : Tuple, tuple;
+
+	bool[Tuple!(Entity, CachedString)] visited;
 
 	auto rng = StreamOutputRange(dst);
 
 	void writeEntry(Entity ent) {
+		auto key = tuple(ent.parent, ent.name);
 		if (cast(Package)ent || cast(TemplateParameterDeclaration)ent) return;
-		if (ent.qualifiedName in visited) return;
-		visited[ent.qualifiedName] = true;
+		if (key in visited) return;
+		visited[key] = true;
 
 		string kind = ent.classinfo.name.split(".")[$-1].toLower;
 		const(CachedString)[] cattributes;
@@ -335,7 +338,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, string
 	rng.compileHTMLDietFile!("ddox.docpage.dt", req, info);
 }
 
-private bool cmpKind(Entity a, Entity b)
+private bool cmpKind(in Entity a, in Entity b)
 {
 	static immutable kinds = [
 		DeclarationKind.Variable,
@@ -351,8 +354,8 @@ private bool cmpKind(Entity a, Entity b)
 		DeclarationKind.Alias
 	];
 
-	auto ad = cast(Declaration)a;
-	auto bd = cast(Declaration)b;
+	auto ad = cast(const(Declaration))a;
+	auto bd = cast(const(Declaration))b;
 
 	if (!ad && !bd) return false;
 	if (!ad) return false;
