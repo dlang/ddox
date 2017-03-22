@@ -29,26 +29,26 @@
 					- else if (ad.targetDecl)
 						//- TODO!
 
+				- string indent;
 				- if (!cast(Module)item.parent)
 					- if( auto ctd = cast(Declaration)item.parent )
 						|<span class="kwd">#{toLower(to!string(ctd.kind))}</span> <a href="#{info.linkTo(ctd)}"><span class="typ">#{ctd.nestedName}</span></a>
 					- else
 						|<a href="#{info.linkTo(item.parent)}">!{highlightDCode(item.parent.qualifiedName.to!string)}</a>
 					br
-					span.pun {
-					br
-					| &nbsp;&nbsp;<span class="com">// ...</span>
-					br
-					| &nbsp;&nbsp;
+					span.pun {#[br]
+					| &nbsp;&nbsp;#[span.com // ...]#[br]
+					- indent = "&nbsp;&nbsp;";
 
-				| !{attributes}<span class="pln">#{item.name}</span>
+				| !{indent}!{attributes}<span class="pln">#{item.name}</span>
 				- info.renderTemplateArgs(&_diet_output, item);
 
+				- if (value.length)
+					|  <span class="pun">=</span> !{value}!{terminator}
+				- else
+					|!= terminator
+
 				- if (!cast(Module)item.parent)
-					- if (value.length)
-						|  <span class="pun">=</span> !{value}!{terminator}
-					- else
-						| !{terminator}
 					br
 					| &nbsp;&nbsp;<span class="com">// ...</span>
 					br
