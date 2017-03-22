@@ -334,6 +334,11 @@ class DdocComment {
 	Provides context information about the documented element.
 */
 interface DdocContext {
+	struct LinkInfo {
+		string uri; // URI of the linked entity (usually a relative path)
+		string shortName; // symbol name without qualified module name prefix
+	}
+
 	/// A line array with macro definitions
 	@property string[string] defaultMacroDefinitions();
 
@@ -341,14 +346,14 @@ interface DdocContext {
 	@property string[string] overrideMacroDefinitions();
 
 	/// Looks up a symbol in the scope of the documented element and returns a link to it.
-	string lookupScopeSymbolLink(string name);
+	LinkInfo lookupScopeSymbolLink(string name);
 }
 
 
 private class BareContext : DdocContext {
 	@property string[string] defaultMacroDefinitions() { return null; }
 	@property string[string] overrideMacroDefinitions() { return null; }
-	string lookupScopeSymbolLink(string name) { return null; }
+	LinkInfo lookupScopeSymbolLink(string name) { return LinkInfo(null, null); }
 }
 
 private enum {
@@ -556,8 +561,10 @@ private string highlightAndCrossLinkRaw(string line, DdocContext context, bool i
 
 private void highlightAndCrossLinkRaw(R)(ref R dst, string line, DdocContext context, bool in_code)
 {
-	while( line.length > 0 ){
-		switch( line[0] ){
+	import vibe.textfilter.html : filterHTMLAttribEscape;
+
+	while (line.length > 0) {
+		switch (line[0]) {
 			default:
 				dst.put(line[0]);
 				line = line[1 .. $];
@@ -592,15 +599,19 @@ private void highlightAndCrossLinkRaw(R)(ref R dst, string line, DdocContext con
 
 				auto ident = skipIdent(line);
 				auto link = context.lookupScopeSymbolLink(ident);
-				if (link.length && in_code) {
+				if (link.uri.length && in_code) {
 					import ddox.highlight : highlightDCode;
-					if( link != "#" ){
+					if (link.uri != "#") {
 						dst.put("<a href=\"");
-						dst.put(link);
+						dst.put(link.uri);
+						if (link.shortName.length) {
+							dst.put("\" title=\"");
+							dst.filterHTMLAttribEscape(ident);
+						}
 						dst.put("\">");
 					}
-					dst.highlightDCode(ident, null);
-					if( link != "#" ) dst.put("</a>");
+					dst.highlightDCode(link.shortName.length ? link.shortName : ident, null);
+					if (link.uri != "#") dst.put("</a>");
 				} else {
 					ident = ident.replace("._", ".");
 					if (s_enableHyphenation && !in_code)
@@ -625,16 +636,22 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 /// private
 private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 {
-	import ddox.highlight : highlightDCode;
-	dst.highlightDCode(line, (string ident, scope void delegate(bool) insert_ident) {
+	import ddox.highlight : IdentifierRenderMode, highlightDCode;
+	import vibe.textfilter.html : filterHTMLAttribEscape;
+	dst.highlightDCode(line, (string ident, scope void delegate(IdentifierRenderMode, size_t) insert_ident) {
 		auto link = context.lookupScopeSymbolLink(ident);
-		if (link.length && link != "#") {
+		auto nskip = link.shortName.length ? ident.count('.') - link.shortName.count('.') : 0;
+		if (link.uri.length && link.uri != "#") {
 			dst.put("<a href=\"");
-			dst.put(link);
+			dst.put(link.uri);
+			if (nskip > 0) {
+				dst.put("\" title=\"");
+				dst.filterHTMLAttribEscape(ident);
+			}
 			dst.put("\">");
-			insert_ident(true);
+			insert_ident(IdentifierRenderMode.nested, nskip);
 			dst.put("</a>");
-		} else insert_ident(false);
+		} else insert_ident(IdentifierRenderMode.normal, 0);
 	});
 }
 
@@ -770,16 +787,16 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			auto sym = appender!string;
 			renderMacros(sym, "$1", context, macros, args, callstack);
 
-			auto link = sym.data.length > 0 && !sym.data.endsWith('.') ? context.lookupScopeSymbolLink(sym.data) : null;
-			if (link.length) {
+			auto link = sym.data.length > 0 && !sym.data.endsWith('.') ? context.lookupScopeSymbolLink(sym.data) : DdocContext.LinkInfo.init;
+			if (link.uri.length) {
 				dst.put(`<a href="`);
-				dst.put(link);
+				dst.put(link.uri);
 				dst.put(`" title="`);
 				dst.put(sym.data);
 				dst.put(`">`);
 			}
 			dst.renderMacros("$+", context, macros, args, callstack);			
-			if (link.length) dst.put("</a>");
+			if (link.uri.length) dst.put("</a>");
 		} else if (pm) {
 			logTrace("MACRO %s: %s", mname, *pm);
 			renderMacros(dst, *pm, context, macros, args, callstack);
@@ -1353,4 +1370,14 @@ unittest {
 	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
 	assert(formatDdocComment("`foo") == "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n");
 	assert(formatDdocComment("$(D \"a < b\")") == "<code class=\"lang-d\"><span class=\"str\">\"a &lt; b\"</span></code>\n");
+}
+
+unittest {
+	auto src = "$(REF x, foo,bar)\nMacros:\nREF=$(D $(REF_HELPER $1, $+))\nREF_HELPER=$2$(DOT_PREFIXED_SKIP $+).$1\nDOT_PREFIXED_SKIP=$(DOT_PREFIXED $+)\nDOT_PREFIXED=.$1$(DOT_PREFIXED $+))";
+	auto dst = "<code class=\"lang-d\"><span class=\"pln\">foo<wbr/></span><span class=\"pun\">.</span><span class=\"pln\">bar</span><span class=\"pun\">)<wbr/>.</span><span class=\"pln\">x</span></code>\n";
+	assert(formatDdocComment(src) == dst, formatDdocComment(src));
+}
+
+unittest {
+	assert(formatDdocComment("$(A foo)\nMacros:A = $(B $+)\nB = bar$0") == "bar\n", formatDdocComment("$(A foo)\nMacros:A = $(B $+)\nB = bar$0"));
 }

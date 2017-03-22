@@ -81,7 +81,12 @@ unittest {
 }
 
 
-alias IdentifierRenderCallback = void delegate(string ident, scope void delegate(bool) insert_ident);
+alias IdentifierRenderCallback = void delegate(string ident, scope void delegate(IdentifierRenderMode mode, size_t nskip) insert_ident);
+
+enum IdentifierRenderMode {
+	normal,
+	nested
+}
 
 private void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallback ident_render, ref string last_class)
 	if (isOutputRange!(R, char))
@@ -90,7 +95,7 @@ private void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRende
 		isBasicType, isKeyword, isStringLiteral, isNumberLiteral,
 		isOperator, str, tok;
 	import std.algorithm : endsWith;
-	import std.string : stripRight;
+	import std.string : indexOf, stripRight;
 
 	StringCache cache = StringCache(1024 * 4);
 
@@ -128,14 +133,24 @@ private void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRende
 			dst.put("<wbr/>");
 			writeWithClass(".", "pun");
 		} else {
-			ident_render(symbol.data, (nested) {
-				if (nested) {
-					if (last_class.length) dst.put("</span>");
-					last_class = null;
-					string internal_class;
-					highlightDCodeImpl(dst, vsym, null, internal_class);
-					if (internal_class.length) dst.put("</span>");
-				} else highlightDCodeImpl(dst, vsym, null, last_class);
+			ident_render(symbol.data, (IdentifierRenderMode mode, size_t nskip) {
+				string dsym = vsym;
+				while (nskip-- > 0) {
+					auto idx = dsym.indexOf('.');
+					if (idx >= 0) dsym = dsym[idx+1 .. $];
+				}
+				final switch (mode) with (IdentifierRenderMode) {
+					case normal:
+						highlightDCodeImpl(dst, dsym, null, last_class);
+						break;
+					case nested:
+						if (last_class.length) dst.put("</span>");
+						last_class = null;
+						string internal_class;
+						highlightDCodeImpl(dst, dsym, null, internal_class);
+						if (internal_class.length) dst.put("</span>");
+						break;
+				}
 			});
 		}
 		if (vsym.length < verbatim_symbol.data.length)

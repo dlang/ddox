@@ -58,7 +58,30 @@ class DocGroupContext : DdocContext {
 	@property string[string] overrideMacroDefinitions() { return null; }
 	@property string[string] defaultMacroDefinitions() { return m_inheritedMacros; }
 
-	string lookupScopeSymbolLink(string name)
+	LinkInfo lookupScopeSymbolLink(string name)
+	{
+		import std.range : chain, walkLength;
+		LinkInfo ret;
+
+		if (auto n = lookupSymbol(name)) {
+			// don't return links to the declaration itself (or overloads of the
+			// declaration, because we don't know which one is meant), but
+			// the sepcial string # that will still print the identifier
+			// as code
+			if (m_group.members.canFind(n))
+				ret.uri = "#";
+			else
+				ret.uri = m_linkTo(n);
+
+			auto qname = n.module_.qualifiedName;
+			if (name.startsWith(qname.chain(".")))
+				ret.shortName = name[qname.walkLength+1 .. $];
+		}
+
+		return ret;
+	}
+
+	Entity lookupSymbol(string name)
 	{
 		import std.typecons : Rebindable;
 
@@ -83,7 +106,7 @@ class DocGroupContext : DdocContext {
 				if( auto fn = cast(FunctionDeclaration)def ){
 					foreach( p; fn.parameters )
 						if( p.name == name )
-							return m_linkTo(p);
+							return p;
 				}
 
 				// then look up the name in the outer scope
@@ -101,17 +124,10 @@ class DocGroupContext : DdocContext {
 			if (auto mod = cast(Module)n)
 				if (!mod.qualifiedName.equal(name))
 					continue;
-			
-			if (n) {
-				// don't return links to the declaration itself (or overloads of the
-				// declaration, because we don't know which one is meant), but
-				// the sepcial string # that will still print the identifier
-				// as code
-				if (n.qualifiedName == def.qualifiedName)
-					return "#";
-				return m_linkTo(n);
-			}
+
+			if (n) return n;
 		}
+
 		return null;
 	}
 }
