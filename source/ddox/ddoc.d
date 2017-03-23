@@ -313,8 +313,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 	{
 		auto ln = strip(lines[i]);
 		if( ln.length == 0 ) return BLANK;
-		else if( ln.length >= 3 &&ln.allOf("-") ) return CODE;
-		else if( ln.indexOf(':') > 0 && !ln[0 .. ln.indexOf(':')].anyOf(" \t") ) return SECTION;
+		else if (ln.length >= 3 &&ln.allOf("-")) return CODE;
 		return TEXT;
 	}
 
@@ -362,7 +361,6 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						dst.put('\n');
 						i++;
 						continue;
-					case SECTION:
 					case TEXT:
 						if( hlevel >= 0 ) dst.put("<p>");
 						auto j = skipBlock(i);
@@ -1405,5 +1403,11 @@ unittest {
 unittest { // #144 - extraneous <p>
 	auto src = "$(UL\n\t$(LI Fixed: Item 1)\n\t$(LI Fixed: Item 2)\n)";
 	auto dst = "<ul>\t<li>Fixed: Item 1</li>\n\t<li>Fixed: Item 2</li>\n</ul>\n";
+	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #144 - extraneous <p>
+	auto src = "foo\n\n$(UL\n\t$(LI Fixed: Item 1)\n\t$(LI Fixed: Item 2)\n)";
+	auto dst = "foo\n<section><p><ul>\t<li>Fixed: Item 1</li>\n\t<li>Fixed: Item 2</li>\n</ul>\n</p>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
