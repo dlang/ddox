@@ -109,7 +109,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		import std.algorithm.iteration : map, splitter;
 		import std.algorithm.sorting : sort;
 		import std.algorithm.searching : canFind;
-
+		import std.conv : to;
 
 		auto terms = req.query.get("q", null).splitter(' ').map!(t => t.toLower()).array;
 
@@ -122,7 +122,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 			return parts.length;
 		}
 
-		string[] getAttributes(Entity ent)
+		immutable(CachedString)[] getAttributes(Entity ent)
 		{
 			if (auto fdecl = cast(FunctionDeclaration)ent) return fdecl.attributes;
 			else if (auto adecl = cast(AliasDeclaration)ent) return adecl.attributes;
@@ -138,10 +138,10 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 			if (adep != bdep) return bdep;
 
 			// normalize the names
-			auto aname = a.qualifiedName.toLower();
-			auto bname = b.qualifiedName.toLower();
+			auto aname = a.qualifiedName.to!string.toLower(); // FIXME: avoid GC allocations
+			auto bname = b.qualifiedName.to!string.toLower();
 
-			auto anameparts = aname.split(".");
+			auto anameparts = aname.split("."); // FIXME: avoid GC allocations
 			auto bnameparts = bname.split(".");
 
 			auto asname = anameparts[$-1];
@@ -230,7 +230,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 private void searchEntries(R)(ref R dst, Entity root_ent, string[] search_terms) {
 	bool[DocGroup] known_groups;
 	void searchRec(Entity ent) {
-		if ((!ent.docGroup || ent.docGroup !in known_groups) && matchesSearch(ent.qualifiedName, search_terms))
+		if ((!ent.docGroup || ent.docGroup !in known_groups) && matchesSearch(ent.qualifiedName.to!string, search_terms)) // FIXME: avoid GC allocations
 			dst.put(ent);
 		known_groups[ent.docGroup] = true;
 		if (cast(FunctionDeclaration)ent) return;
@@ -239,12 +239,12 @@ private void searchEntries(R)(ref R dst, Entity root_ent, string[] search_terms)
 	searchRec(root_ent);
 }
 
-private bool matchesSearch(string name, scope string[] terms)
+private bool matchesSearch(string name, in string[] terms)
 {
 	import std.algorithm.searching : canFind;
 
 	foreach (t; terms)
-		if (!name.toLower().canFind(t))
+		if (!name.toLower().canFind(t)) // FIXME: avoid GC allocations
 			return false;
 	return true;
 }
