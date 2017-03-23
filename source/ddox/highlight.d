@@ -62,7 +62,7 @@ string highlightDCode(string str, IdentifierRenderCallback ident_render = null)
 }
 
 unittest {
-	void ident_render(string ident, scope void delegate(bool) insert) { insert(false); }
+	void ident_render(string ident, scope void delegate(IdentifierRenderMode, size_t) insert) { insert(IdentifierRenderMode.normal, 0); }
 	assert(highlightDCode("@safe", &ident_render) == `<span class="kwd">@safe</span>`);
 	assert(highlightDCode("@safe foo", &ident_render) == `<span class="kwd">@safe </span><span class="pln">foo</span>`);
 	assert(highlightDCode("@path", &ident_render) == `<span class="pun">@</span><span class="pln">path</span>`);

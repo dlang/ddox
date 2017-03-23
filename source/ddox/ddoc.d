@@ -1274,9 +1274,9 @@ unittest { // #109 dot followed by unicode character causes infinite loop
 
 unittest { // #119 dot followed by space causes assertion
 	static class Ctx : BareContext {
-		override string lookupScopeSymbolLink(string name) {
+		override LinkInfo lookupScopeSymbolLink(string name) {
 			assert(name.length > 0 && name != ".");
-			return null;
+			return LinkInfo.init;
 		}
 	}
 	auto src = "---\n. writeln();\n---";
@@ -1286,9 +1286,9 @@ unittest { // #119 dot followed by space causes assertion
 
 unittest { // dot followed by non-identifier
 	static class Ctx : BareContext {
-		override string lookupScopeSymbolLink(string name) {
+		override LinkInfo lookupScopeSymbolLink(string name) {
 			assert(name.length > 0 && name != ".");
-			return null;
+			return LinkInfo.init;
 		}
 	}
 	auto src = "---\n.()\n---";
@@ -1299,9 +1299,9 @@ unittest { // dot followed by non-identifier
 
 unittest { // X-REF
 	static class Ctx : BareContext {
-		override string lookupScopeSymbolLink(string name) {
-			if (name == "foo") return "foo.html";
-			else return null;
+		override LinkInfo lookupScopeSymbolLink(string name) {
+			if (name == "foo") return LinkInfo("foo.html", null);
+			else return LinkInfo.init;
 		}
 	}
 	auto src = "`foo` `bar` $(D foo) $(D bar)\n\n---\nfoo bar\n---";
@@ -1328,11 +1328,11 @@ unittest { // nested $(D $(D case)) (do not escape HTML tags)
 
 unittest { // DDOX_NAMED_REF special macro
 	static class Ctx : BareContext {
-		override string lookupScopeSymbolLink(string symbol) {
+		override LinkInfo lookupScopeSymbolLink(string symbol) {
 			if (symbol == "bar.baz")
-				return "bar/baz.html";
+				return LinkInfo("bar/baz.html", null);
 			else
-				return null;
+				return LinkInfo.init;
 		}
 	}
 
@@ -1345,10 +1345,10 @@ unittest { // DDOX_NAMED_REF special macro
 
 unittest { // DDOX_NAMED_REF special macro - handle invalid identifiers gracefully
 	static class Ctx : BareContext {
-		override string lookupScopeSymbolLink(string symbol) {
+		override LinkInfo lookupScopeSymbolLink(string symbol) {
 			assert(symbol.length > 0);
 			assert(!symbol.endsWith("."));
-			return null;
+			return LinkInfo.init;
 		}
 	}
 

@@ -109,8 +109,9 @@ private struct Parser
 				case DeclarationKind.Union: break;
 				case DeclarationKind.Class: {
 						auto c = cast(ClassDeclaration)decl;
-						if (!c.qualifiedName.equal("object.Object"))
+						if (!c.qualifiedName.equal("object.Object")) {
 							c.baseClass = parseType(json["base"], c, "Object", false);
+						}
 						foreach (intf; json["interfaces"].opt!(Json[]))
 							c.derivedInterfaces ~= CachedType(parseType(intf, c));
 					} break;
