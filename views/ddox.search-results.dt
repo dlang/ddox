@@ -1,0 +1,25 @@
+extends ddox.layout
+
+block ddox.defs
+
+block ddox.title
+	- title = req.query.get("q", null) ~ " - DDOX search";
+	
+block ddox.members
+	- import ddox.entities : TypedDeclaration;
+	- import std.array : split;
+	- import std.string : toLower;
+
+	- if (info.results.length == 0)
+		p No results matched the query.
+	- else
+		p Showing #{info.results.length} results.
+
+		ul.searchResults.symbolList
+			- foreach (e; info.results)
+				- string kind = e.classinfo.name.split(".")[$-1].toLower;
+				li(class=kind)
+					h2: a(href=info.linkTo(e))= e.qualifiedName
+					- if (auto td = cast(TypedDeclaration)e)
+						.signature!= info.formatType(td.type)
+					|!= info.formatDoc(e.docGroup, 2, sec => sec == "$Short")

@@ -54,10 +54,12 @@ class DocGroupContext : DdocContext {
 				if (!e) break;
 
 				//auto comment = e.docGroup.comment; // TODO: make this work!
-				auto comment = new DdocComment(e.docGroup.text);
-				foreach (k, v; comment.macros)
-					if (k !in m_inheritedMacros)
-						m_inheritedMacros[k] = v;
+				if (e.docGroup) {
+					auto comment = new DdocComment(e.docGroup.text);
+					foreach (k, v; comment.macros)
+						if (k !in m_inheritedMacros)
+							m_inheritedMacros[k] = v;
+				}
 			}
 		}
 	}

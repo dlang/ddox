@@ -1,6 +1,6 @@
 - import vibe.data.json;
 
-ul#symbolSearchResults(style="display: none")
+ul#symbolSearchResults.symbolList(style="display: none")
 
 script(type="application/javascript", src="#{info.linkTo(null)}symbols.js")
 script(type="application/javascript").

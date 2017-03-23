@@ -104,6 +104,89 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		generateSitemap(res.bodyWriter, pack, settings, ent => linkTo(ent, 0), req);
 	}
 
+	void showSearchResults(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		import std.algorithm.iteration : map, splitter;
+		import std.algorithm.sorting : sort;
+		import std.algorithm.searching : canFind;
+		import std.conv : to;
+
+		auto terms = req.query.get("q", null).splitter(' ').map!(t => t.toLower()).array;
+
+		size_t getPrefixIndex(string[] parts)
+		{
+			foreach_reverse (i, p; parts)
+				foreach (t; terms)
+					if (p.startsWith(t))
+						return parts.length - 1 - i;
+			return parts.length;
+		}
+
+		immutable(CachedString)[] getAttributes(Entity ent)
+		{
+			if (auto fdecl = cast(FunctionDeclaration)ent) return fdecl.attributes;
+			else if (auto adecl = cast(AliasDeclaration)ent) return adecl.attributes;
+			else if (auto tdecl = cast(TypedDeclaration)ent) return tdecl.type.attributes;
+			else return null;
+		}
+
+		bool sort_pred(Entity a, Entity b)
+		{
+			// prefer non-deprecated matches
+			auto adep = getAttributes(a).canFind("deprecated");
+			auto bdep = getAttributes(b).canFind("deprecated");
+			if (adep != bdep) return bdep;
+
+			// normalize the names
+			auto aname = a.qualifiedName.to!string.toLower(); // FIXME: avoid GC allocations
+			auto bname = b.qualifiedName.to!string.toLower();
+
+			auto anameparts = aname.split("."); // FIXME: avoid GC allocations
+			auto bnameparts = bname.split(".");
+
+			auto asname = anameparts[$-1];
+			auto bsname = bnameparts[$-1];
+
+			// prefer exact matches
+			auto aexact = terms.canFind(asname);
+			auto bexact = terms.canFind(bsname);
+			if (aexact != bexact) return aexact;
+
+			// prefer prefix matches
+			auto apidx = getPrefixIndex(anameparts);
+			auto bpidx = getPrefixIndex(bnameparts);
+			if (apidx != bpidx) return apidx < bpidx;
+
+			// prefer elements with less nesting
+			if (anameparts.length != bnameparts.length)
+				return anameparts.length < bnameparts.length;
+
+			// prefer matches with a shorter name
+			if (asname.length != bsname.length)
+				return asname.length < bsname.length;
+
+			// sort the rest alphabetically
+			return aname < bname;
+		}
+
+		auto dst = appender!(Entity[]);
+		if (terms.length)
+			searchEntries(dst, pack, terms);
+		dst.data.sort!sort_pred();
+
+		static class Info : DocPageInfo {
+			Entity[] results;
+		}
+		scope info = new Info;
+		info.linkTo = (e) => linkTo(e, 0);
+		info.settings = settings;
+		info.rootPackage = pack;
+		info.node = pack;
+		info.results = dst.data;
+
+		res.render!("ddox.search-results.dt", req, info);
+	}
+
 	string symbols_js;
 	string symbols_js_md5;
 
@@ -136,9 +219,32 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 	router.get(path_prefix~"/:modulename/:itemname", &showApiItem);
 	router.get(path_prefix~"/sitemap.xml", &showSitemap);
 	router.get(path_prefix~"/symbols.js", &showSymbolJS);
+	router.get(path_prefix~"/search", &showSearchResults);
 	router.get("*", serveStaticFiles("public"));
 
 	// convenience redirects (when leaving off the trailing slash)
 	if( path_prefix.length ) router.get(path_prefix, staticRedirect(path_prefix~"/"));
 	router.get(path_prefix~"/:modulename", (HTTPServerRequest req, HTTPServerResponse res){ res.redirect(path_prefix~"/"~req.params["modulename"]~"/"); });
+}
+
+private void searchEntries(R)(ref R dst, Entity root_ent, string[] search_terms) {
+	bool[DocGroup] known_groups;
+	void searchRec(Entity ent) {
+		if ((!ent.docGroup || ent.docGroup !in known_groups) && matchesSearch(ent.qualifiedName.to!string, search_terms)) // FIXME: avoid GC allocations
+			dst.put(ent);
+		known_groups[ent.docGroup] = true;
+		if (cast(FunctionDeclaration)ent) return;
+		ent.iterateChildren((ch) { searchRec(ch); return true; });
+	}
+	searchRec(root_ent);
+}
+
+private bool matchesSearch(string name, in string[] terms)
+{
+	import std.algorithm.searching : canFind;
+
+	foreach (t; terms)
+		if (!name.toLower().canFind(t)) // FIXME: avoid GC allocations
+			return false;
+	return true;
 }
