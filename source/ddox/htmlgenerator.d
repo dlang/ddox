@@ -227,7 +227,7 @@ class DocPageInfo {
 	string formatDoc(DocGroup group, int hlevel, bool delegate(string) display_section)
 	{
 		// TODO: memoize the DocGroupContext
-		return group.comment.renderSections(new DocGroupContext(group, linkTo), display_section, hlevel);
+		return group.comment.renderSections(new DocGroupContext(group, linkTo, settings), display_section, hlevel);
 	}
 }
 

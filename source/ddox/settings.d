@@ -48,6 +48,8 @@ class GeneratorSettings {
 	bool focusSearchField = false;
 	/// Defines how symbol names are mapped to file names when generating file based documentation (useful for case insensitive file systems)
 	MethodStyle fileNameStyle = MethodStyle.unaltered;
+	/// Enables syntax highlighting for inline code
+	bool highlightInlineCode = false;
 
 	/// Creates a page per enum member instead of putting everything into a single table.
 	bool enumMemberPages;

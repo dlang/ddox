@@ -26,14 +26,21 @@ class DocGroupContext : DdocContext {
 		DocGroup m_group;
 		string delegate(in Entity ent) m_linkTo;
 		string[string] m_inheritedMacros;
+		GeneratorSettings m_settings;
+		DdocRenderOptions m_renderOptions;
 	}
 
-	this(DocGroup grp, string delegate(in Entity ent) link_to)
+	this(DocGroup grp, string delegate(in Entity ent) link_to, GeneratorSettings settings)
 	{
 		import std.typecons : Rebindable;
 
 		m_group = grp;
 		m_linkTo = link_to;
+		m_settings = settings;
+
+		m_renderOptions = DdocRenderOptions.defaults;
+		if (!m_settings.highlightInlineCode)
+			m_renderOptions &= ~DdocRenderOptions.highlightInlineCode;
 
 		// Path to the root of the generated docs (ends with a '/')
 		m_inheritedMacros["DDOX_ROOT_DIR"] = link_to(null);
@@ -54,6 +61,8 @@ class DocGroupContext : DdocContext {
 			}
 		}
 	}
+
+	@property DdocRenderOptions renderOptions() { return m_renderOptions; }
 
 	@property string docText() { return m_group.text; }
 	@property string[string] overrideMacroDefinitions() { return null; }

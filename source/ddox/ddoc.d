@@ -21,109 +21,6 @@ import std.uni : isAlpha;
 // TODO: support escapes section
 
 
-shared static this()
-{
-	s_standardMacros =
-		[
-		 `B`: `<b>$0</b>`,
-		 `I`: `<i>$0</i>`,
-		 `U`: `<u>$0</u>`,
-		 `P` : `<p>$0</p>`,
-		 `DL` : `<dl>$0</dl>`,
-		 `DT` : `<dt>$0</dt>`,
-		 `DD` : `<dd>$0</dd>`,
-		 `TABLE` : `<table>$0</table>`,
-		 `TR` : `<tr>$0</tr>`,
-		 `TH` : `<th>$0</th>`,
-		 `TD` : `<td>$0</td>`,
-		 `OL` : `<ol>$0</ol>`,
-		 `UL` : `<ul>$0</ul>`,
-		 `LI` : `<li>$0</li>`,
-		 `LINK` : `<a href="$0">$0</a>`,
-		 `LINK2` : `<a href="$1">$+</a>`,
-		 `LPAREN` : `(`,
-		 `RPAREN` : `)`,
-
-		 `RED` :   `<font color=red>$0</font>`,
-		 `BLUE` :  `<font color=blue>$0</font>`,
-		 `GREEN` : `<font color=green>$0</font>`,
-		 `YELLOW` : `<font color=yellow>$0</font>`,
-		 `BLACK` : `<font color=black>$0</font>`,
-		 `WHITE` : `<font color=white>$0</font>`,
-
-		 `D_CODE` : `<pre class="d_code">$0</pre>`,
-		 `D_COMMENT` : `$(GREEN $0)`,
-		 `D_STRING`  : `$(RED $0)`,
-		 `D_KEYWORD` : `$(BLUE $0)`,
-		 `D_PSYMBOL` : `$(U $0)`,
-		 `D_PARAM` : `$(I $0)`,
-		 `BACKTICK`: "`",
-		 `DDOC_BACKQUOTED`: `$(D_INLINECODE $0)`,
-		 //`D_INLINECODE`: `<pre style="display:inline;" class="d_inline_code">$0</pre>`,
-		 `D_INLINECODE`: `<code class="lang-d">$0</code>`,
-
-		 `DDOC` : `<html>
-  <head>
-    <META http-equiv="content-type" content="text/html; charset=utf-8">
-    <title>$(TITLE)</title>
-  </head>
-  <body>
-  <h1>$(TITLE)</h1>
-  $(BODY)
-  </body>
-</html>`,
-
-		 `DDOC_COMMENT` : `<!-- $0 -->`,
-		 `DDOC_DECL` : `$(DT $(BIG $0))`,
-		 `DDOC_DECL_DD` : `$(DD $0)`,
-		 `DDOC_DITTO` : `$(BR)$0`,
-		 `DDOC_SECTIONS` : `$0`,
-		 `DDOC_SUMMARY` : `$0$(BR)$(BR)`,
-		 `DDOC_DESCRIPTION` : `$0$(BR)$(BR)`,
-		 `DDOC_AUTHORS` : "$(B Authors:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_BUGS` : "$(RED BUGS:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_COPYRIGHT` : "$(B Copyright:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_DATE` : "$(B Date:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_DEPRECATED` : "$(RED Deprecated:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_EXAMPLES` : "$(B Examples:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_HISTORY` : "$(B History:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_LICENSE` : "$(B License:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_RETURNS` : "$(B Returns:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_SEE_ALSO` : "$(B See Also:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_STANDARDS` : "$(B Standards:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_THROWS` : "$(B Throws:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_VERSION` : "$(B Version:)$(BR)\n$0$(BR)$(BR)",
-		 `DDOC_SECTION_H` : `$(B $0)$(BR)$(BR)`,
-		 `DDOC_SECTION` : `$0$(BR)$(BR)`,
-		 `DDOC_MEMBERS` : `$(DL $0)`,
-		 `DDOC_MODULE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
-		 `DDOC_CLASS_MEMBERS` : `$(DDOC_MEMBERS $0)`,
-		 `DDOC_STRUCT_MEMBERS` : `$(DDOC_MEMBERS $0)`,
-		 `DDOC_ENUM_MEMBERS` : `$(DDOC_MEMBERS $0)`,
-		 `DDOC_TEMPLATE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
-		 `DDOC_PARAMS` : "$(B Params:)$(BR)\n$(TABLE $0)$(BR)",
-		 `DDOC_PARAM_ROW` : `$(TR $0)`,
-		 `DDOC_PARAM_ID` : `$(TD $0)`,
-		 `DDOC_PARAM_DESC` : `$(TD $0)`,
-		 `DDOC_BLANKLINE` : `$(BR)$(BR)`,
-
-		 `DDOC_ANCHOR` : `<a name="$1"></a>`,
-		 `DDOC_PSYMBOL` : `$(U $0)`,
-		 `DDOC_KEYWORD` : `$(B $0)`,
-		 `DDOC_PARAM` : `$(I $0)`,
-
-		 `DDOX_UNITTEST_HEADER`: ``,
-		 `DDOX_UNITTEST_FOOTER`: ``
-		 ];
-	import std.datetime : Clock;
-	auto now = Clock.currTime();
-	s_standardMacros["DATETIME"] = "%s %s %s %s:%s:%s %s".format(
-		now.dayOfWeek.to!string.capitalize, now.month.to!string.capitalize,
-		now.day, now.hour, now.minute, now.second, now.year);
-	s_standardMacros["YEAR"] = now.year.to!string;
-}
-
-
 /**
 	Takes a DDOC string and outputs formatted HTML.
 
@@ -329,6 +226,12 @@ class DdocComment {
 	}
 }
 
+enum DdocRenderOptions {
+	defaults = highlightInlineCode,
+	none = 0,
+
+	highlightInlineCode = 1<<0,
+}
 
 /**
 	Provides context information about the documented element.
@@ -338,6 +241,9 @@ interface DdocContext {
 		string uri; // URI of the linked entity (usually a relative path)
 		string shortName; // symbol name without qualified module name prefix
 	}
+
+	/// Returns a set of options to control the rendering process
+	@property DdocRenderOptions renderOptions();
 
 	/// A line array with macro definitions
 	@property string[string] defaultMacroDefinitions();
@@ -351,6 +257,7 @@ interface DdocContext {
 
 
 private class BareContext : DdocContext {
+	@property DdocRenderOptions renderOptions() { return DdocRenderOptions.defaults; }
 	@property string[string] defaultMacroDefinitions() { return null; }
 	@property string[string] overrideMacroDefinitions() { return null; }
 	LinkInfo lookupScopeSymbolLink(string name) { return LinkInfo(null, null); }
@@ -469,7 +376,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						dst.put("<pre class=\"code\"><code class=\"lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
-						renderCodeLine(dst, lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context);
+						renderCodeLine(dst, lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context, true);
 						dst.put("</code></pre>\n");
 						i = j+1;
 						break;
@@ -545,7 +452,7 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 			auto idx2 = line[1 .. $].indexOf('`');
 			auto eidx = idx2 >= 0 ? idx2+1 : line.length;
 			dst.put("<code class=\"lang-d\">");
-			dst.renderCodeLine(line[1 .. eidx], context);
+			dst.renderCodeLine(line[1 .. eidx], context, false);
 			dst.put("</code>");
 			line = line[min(eidx+1, $) .. $];
 		}
@@ -561,7 +468,7 @@ private string highlightAndCrossLinkRaw(string line, DdocContext context, bool i
 
 private void highlightAndCrossLinkRaw(R)(ref R dst, string line, DdocContext context, bool in_code)
 {
-	import vibe.textfilter.html : filterHTMLAttribEscape;
+	import vibe.textfilter.html : filterHTMLAttribEscape, filterHTMLEscape;
 
 	while (line.length > 0) {
 		switch (line[0]) {
@@ -610,7 +517,12 @@ private void highlightAndCrossLinkRaw(R)(ref R dst, string line, DdocContext con
 						}
 						dst.put("\">");
 					}
-					dst.highlightDCode(link.shortName.length ? link.shortName : ident, null);
+					auto dname = link.shortName.length ? link.shortName : ident;
+					if (context.renderOptions & DdocRenderOptions.highlightInlineCode)
+						dst.highlightDCode(dname, null);
+					else
+						dst.filterHTMLEscape(dname);
+
 					if (link.uri != "#") dst.put("</a>");
 				} else {
 					ident = ident.replace("._", ".");
@@ -634,25 +546,29 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 }
 
 /// private
-private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
+private void renderCodeLine(R)(ref R dst, string line, DdocContext context, bool in_code_section)
 {
 	import ddox.highlight : IdentifierRenderMode, highlightDCode;
 	import vibe.textfilter.html : filterHTMLAttribEscape;
-	dst.highlightDCode(line, (string ident, scope void delegate(IdentifierRenderMode, size_t) insert_ident) {
-		auto link = context.lookupScopeSymbolLink(ident);
-		auto nskip = link.shortName.length ? ident.count('.') - link.shortName.count('.') : 0;
-		if (link.uri.length && link.uri != "#") {
-			dst.put("<a href=\"");
-			dst.put(link.uri);
-			if (nskip > 0) {
-				dst.put("\" title=\"");
-				dst.filterHTMLAttribEscape(ident);
-			}
-			dst.put("\">");
-			insert_ident(IdentifierRenderMode.nested, nskip);
-			dst.put("</a>");
-		} else insert_ident(IdentifierRenderMode.normal, 0);
-	});
+	if (in_code_section || context.renderOptions & DdocRenderOptions.highlightInlineCode) {
+		dst.highlightDCode(line, (string ident, scope void delegate(IdentifierRenderMode, size_t) insert_ident) {
+			auto link = context.lookupScopeSymbolLink(ident);
+			auto nskip = link.shortName.length ? ident.count('.') - link.shortName.count('.') : 0;
+			if (link.uri.length && link.uri != "#") {
+				dst.put("<a href=\"");
+				dst.put(link.uri);
+				if (nskip > 0) {
+					dst.put("\" title=\"");
+					dst.filterHTMLAttribEscape(ident);
+				}
+				dst.put("\">");
+				insert_ident(IdentifierRenderMode.nested, nskip);
+				dst.put("</a>");
+			} else insert_ident(IdentifierRenderMode.normal, 0);
+		});
+	} else {
+		dst.highlightAndCrossLinkRaw(line, context, true);
+	}
 }
 
 /// private
@@ -780,7 +696,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 			dst.put("<code class=\"lang-d\">");
 			foreach (el; HTMLTagStream(tmp.data)) {
 				if (el.isTag) dst.put(el.text);
-				else dst.renderCodeLine(el.text, context);
+				else dst.renderCodeLine(el.text, context, false);
 			}
 			dst.put("</code>");
 		} else if (mname == "DDOX_NAMED_REF") {
@@ -1103,6 +1019,110 @@ private string stripDD(string s)
 {
 	return s.stripLeftDD.stripRightDD;
 }
+
+
+shared static this()
+{
+	s_standardMacros =
+		[
+		 `B`: `<b>$0</b>`,
+		 `I`: `<i>$0</i>`,
+		 `U`: `<u>$0</u>`,
+		 `P` : `<p>$0</p>`,
+		 `DL` : `<dl>$0</dl>`,
+		 `DT` : `<dt>$0</dt>`,
+		 `DD` : `<dd>$0</dd>`,
+		 `TABLE` : `<table>$0</table>`,
+		 `TR` : `<tr>$0</tr>`,
+		 `TH` : `<th>$0</th>`,
+		 `TD` : `<td>$0</td>`,
+		 `OL` : `<ol>$0</ol>`,
+		 `UL` : `<ul>$0</ul>`,
+		 `LI` : `<li>$0</li>`,
+		 `LINK` : `<a href="$0">$0</a>`,
+		 `LINK2` : `<a href="$1">$+</a>`,
+		 `LPAREN` : `(`,
+		 `RPAREN` : `)`,
+
+		 `RED` :   `<font color=red>$0</font>`,
+		 `BLUE` :  `<font color=blue>$0</font>`,
+		 `GREEN` : `<font color=green>$0</font>`,
+		 `YELLOW` : `<font color=yellow>$0</font>`,
+		 `BLACK` : `<font color=black>$0</font>`,
+		 `WHITE` : `<font color=white>$0</font>`,
+
+		 `D_CODE` : `<pre class="d_code">$0</pre>`,
+		 `D_COMMENT` : `$(GREEN $0)`,
+		 `D_STRING`  : `$(RED $0)`,
+		 `D_KEYWORD` : `$(BLUE $0)`,
+		 `D_PSYMBOL` : `$(U $0)`,
+		 `D_PARAM` : `$(I $0)`,
+		 `BACKTICK`: "`",
+		 `DDOC_BACKQUOTED`: `$(D_INLINECODE $0)`,
+		 //`D_INLINECODE`: `<pre style="display:inline;" class="d_inline_code">$0</pre>`,
+		 `D_INLINECODE`: `<code class="lang-d">$0</code>`,
+
+		 `DDOC` : `<html>
+  <head>
+    <META http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>$(TITLE)</title>
+  </head>
+  <body>
+  <h1>$(TITLE)</h1>
+  $(BODY)
+  </body>
+</html>`,
+
+		 `DDOC_COMMENT` : `<!-- $0 -->`,
+		 `DDOC_DECL` : `$(DT $(BIG $0))`,
+		 `DDOC_DECL_DD` : `$(DD $0)`,
+		 `DDOC_DITTO` : `$(BR)$0`,
+		 `DDOC_SECTIONS` : `$0`,
+		 `DDOC_SUMMARY` : `$0$(BR)$(BR)`,
+		 `DDOC_DESCRIPTION` : `$0$(BR)$(BR)`,
+		 `DDOC_AUTHORS` : "$(B Authors:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_BUGS` : "$(RED BUGS:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_COPYRIGHT` : "$(B Copyright:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_DATE` : "$(B Date:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_DEPRECATED` : "$(RED Deprecated:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_EXAMPLES` : "$(B Examples:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_HISTORY` : "$(B History:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_LICENSE` : "$(B License:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_RETURNS` : "$(B Returns:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_SEE_ALSO` : "$(B See Also:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_STANDARDS` : "$(B Standards:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_THROWS` : "$(B Throws:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_VERSION` : "$(B Version:)$(BR)\n$0$(BR)$(BR)",
+		 `DDOC_SECTION_H` : `$(B $0)$(BR)$(BR)`,
+		 `DDOC_SECTION` : `$0$(BR)$(BR)`,
+		 `DDOC_MEMBERS` : `$(DL $0)`,
+		 `DDOC_MODULE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_CLASS_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_STRUCT_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_ENUM_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_TEMPLATE_MEMBERS` : `$(DDOC_MEMBERS $0)`,
+		 `DDOC_PARAMS` : "$(B Params:)$(BR)\n$(TABLE $0)$(BR)",
+		 `DDOC_PARAM_ROW` : `$(TR $0)`,
+		 `DDOC_PARAM_ID` : `$(TD $0)`,
+		 `DDOC_PARAM_DESC` : `$(TD $0)`,
+		 `DDOC_BLANKLINE` : `$(BR)$(BR)`,
+
+		 `DDOC_ANCHOR` : `<a name="$1"></a>`,
+		 `DDOC_PSYMBOL` : `$(U $0)`,
+		 `DDOC_KEYWORD` : `$(B $0)`,
+		 `DDOC_PARAM` : `$(I $0)`,
+
+		 `DDOX_UNITTEST_HEADER`: ``,
+		 `DDOX_UNITTEST_FOOTER`: ``
+		 ];
+	import std.datetime : Clock;
+	auto now = Clock.currTime();
+	s_standardMacros["DATETIME"] = "%s %s %s %s:%s:%s %s".format(
+		now.dayOfWeek.to!string.capitalize, now.month.to!string.capitalize,
+		now.day, now.hour, now.minute, now.second, now.year);
+	s_standardMacros["YEAR"] = now.year.to!string;
+}
+
 
 import std.stdio;
 unittest {
