@@ -1401,3 +1401,9 @@ unittest {
 unittest {
 	assert(formatDdocComment("$(A foo)\nMacros:A = $(B $+)\nB = bar$0") == "bar\n", formatDdocComment("$(A foo)\nMacros:A = $(B $+)\nB = bar$0"));
 }
+
+unittest { // #144 - extraneous <p>
+	auto src = "$(UL\n\t$(LI Fixed: Item 1)\n\t$(LI Fixed: Item 2)\n)";
+	auto dst = "<ul>\t<li>Fixed: Item 1</li>\n\t<li>Fixed: Item 2</li>\n</ul>\n";
+	assert(formatDdocComment(src) == dst);
+}
