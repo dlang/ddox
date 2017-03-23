@@ -23,7 +23,7 @@ block ddox.members
 			ul
 				- foreach (i, dg; info.docGroups)
 					- auto itm = dg.members[0];
-					li: a(href="\##{i}") #{dg.collectKinds().joiner("/")} #{itm.nestedName}
+					li #[a(href="\##{i}") #{dg.collectKinds().joiner("/")} #[code= itm.nestedName]]
 
 	include ddox.inc.composite
 	include ddox.inc.enum
