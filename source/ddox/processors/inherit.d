@@ -65,12 +65,14 @@ void inheritDocs(Package root)
 		if (decl in visited) return;
 		foreach (i; decl.derivedInterfaces)
 			if (i.typeDecl)
-				scanInterface(cast(InterfaceDeclaration)i.typeDecl);
+				if (auto id = cast(InterfaceDeclaration)i.typeDecl)
+					scanInterface(id);
 		visited[decl] = true;
 
-		foreach (it; decl.derivedInterfaces)
-			if (it.typeDecl)
-				inheritMembers(decl, (cast(InterfaceDeclaration)it.typeDecl).members, it.typeDecl);
+		foreach (i; decl.derivedInterfaces)
+			if (i.typeDecl)
+				if (auto id = cast(InterfaceDeclaration)i.typeDecl)
+					inheritMembers(decl, id.members, i.typeDecl);
 	}
 
 	void scanClass(ClassDeclaration decl)
@@ -83,13 +85,15 @@ void inheritDocs(Package root)
 
 		foreach (i; decl.derivedInterfaces)
 			if (i.typeDecl)
-				scanInterface(cast(InterfaceDeclaration)i.typeDecl);
+				if (auto id = cast(InterfaceDeclaration)i.typeDecl)
+					scanInterface(id);
 
 		if (decl.baseClass && decl.baseClass.typeDecl)
 			inheritMembers(decl, (cast(ClassDeclaration)decl.baseClass.typeDecl).members, decl.baseClass.typeDecl);
 		foreach (i; decl.derivedInterfaces)
 			if (i.typeDecl)
-				inheritMembers(decl, (cast(InterfaceDeclaration)i.typeDecl).members, i.typeDecl);
+				if (auto id = cast(InterfaceDeclaration)i.typeDecl)
+					inheritMembers(decl, id.members, i.typeDecl);
 	}
 
 	void scanComposite(CompositeTypeDeclaration decl)
