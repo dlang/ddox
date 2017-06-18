@@ -1,16 +1,13 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"diet-ng": "1.2.0+commit.1.g206d498",
-		"eventcore": "0.8.9",
+		"diet-ng": "1.2.1+commit.1.gede7481",
 		"hyphenate": "1.1.1",
 		"libasync": "0.8.3",
 		"libdparse": "0.7.0",
 		"libevent": "2.0.2+2.0.16",
 		"memutils": "0.4.9",
 		"openssl": "1.1.5+1.0.1g",
-		"taggedalgebraic": "0.10.5+commit.1.ge4c5ec7",
-		"vibe-core": "1.0.0-beta.4+commit.5.ge3f9d07",
-		"vibe-d": "0.7.31-beta.2"
+		"vibe-d": "0.7.31"
 	}
 }
