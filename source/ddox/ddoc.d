@@ -448,11 +448,15 @@ private void highlightAndCrossLink(R)(ref R dst, string line, DdocContext contex
 		line = line[idx .. $];
 		if (line.length) {
 			auto idx2 = line[1 .. $].indexOf('`');
-			auto eidx = idx2 >= 0 ? idx2+1 : line.length;
-			dst.put("<code class=\"lang-d\">");
-			dst.renderCodeLine(line[1 .. eidx], context, false);
-			dst.put("</code>");
-			line = line[min(eidx+1, $) .. $];
+			if (idx2 < 0) { // a single backtick on a line is ignored and output normally
+				dst.put('`');
+				line = line[1 .. $];
+			} else {
+				dst.put("<code class=\"lang-d\">");
+				dst.renderCodeLine(line[1 .. idx2+1], context, false);
+				dst.put("</code>");
+				line = line[min(idx2+2, $) .. $];
+			}
 		}
 	}
 }
@@ -1386,7 +1390,7 @@ unittest { // #130 macro argument processing order
 unittest {
 	assert(formatDdocComment("`<&`") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
 	assert(formatDdocComment("$(D <&)") == "<code class=\"lang-d\"><span class=\"pun\">&lt;&amp;</span></code>\n");
-	assert(formatDdocComment("`foo") == "<code class=\"lang-d\"><span class=\"pln\">foo</span></code>\n");
+	assert(formatDdocComment("`foo") == "`foo\n");
 	assert(formatDdocComment("$(D \"a < b\")") == "<code class=\"lang-d\"><span class=\"str\">\"a &lt; b\"</span></code>\n");
 }
 
@@ -1410,4 +1414,10 @@ unittest { // #144 - extraneous <p>
 	auto src = "foo\n\n$(UL\n\t$(LI Fixed: Item 1)\n\t$(LI Fixed: Item 2)\n)";
 	auto dst = "foo\n<section><p><ul>\t<li>Fixed: Item 1</li>\n\t<li>Fixed: Item 2</li>\n</ul>\n</p>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
+}
+
+unittest { // #155 - single backtick
+	auto src = "foo`bar\nbaz`bam";
+	auto dst = "foo`bar\nbaz`bam\n";
+	assert(formatDdocComment(src) == dst, formatDdocComment(src));
 }
