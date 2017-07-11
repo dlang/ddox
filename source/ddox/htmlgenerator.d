@@ -146,7 +146,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		import vibe.stream.memory;
 		assert(filename.startsWith(dst_path));
 
-		auto str = new MemoryOutputStream;
+		auto str = createMemoryOutputStream();
 		del(str);
 		auto h = md5Of(str.data).toHexString.idup;
 		auto relfilename = filename[dst_path.length .. $].toString();

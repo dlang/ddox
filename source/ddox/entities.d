@@ -547,6 +547,7 @@ struct CachedType {
 
 	static CachedType fromTypeDecl(Declaration decl)
 	{
+		import std.conv : to;
 		Type tp;
 		tp.kind = TypeKind.Primitive;
 		tp.typeName = decl.qualifiedName.to!string;

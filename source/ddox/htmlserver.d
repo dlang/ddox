@@ -195,7 +195,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		if (!symbols_js.length) {
 			import std.digest.md;
 			import vibe.stream.memory;
-			auto os = new MemoryOutputStream;
+			auto os = createMemoryOutputStream;
 			generateSymbolsJS(os, pack, settings, ent => linkTo(ent, 0));
 			symbols_js = cast(string)os.data;
 			symbols_js_md5 = '"' ~ md5Of(symbols_js).toHexString().idup ~ '"';
@@ -230,6 +230,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 private void searchEntries(R)(ref R dst, Entity root_ent, string[] search_terms) {
 	bool[DocGroup] known_groups;
 	void searchRec(Entity ent) {
+		import std.conv : to;
 		if ((!ent.docGroup || ent.docGroup !in known_groups) && matchesSearch(ent.qualifiedName.to!string, search_terms)) // FIXME: avoid GC allocations
 			dst.put(ent);
 		known_groups[ent.docGroup] = true;
