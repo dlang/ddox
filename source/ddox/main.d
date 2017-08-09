@@ -111,33 +111,31 @@ int cmdServeTest(string[] args)
 
 int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, out Package pack)
 {
+	gensettings = new GeneratorSettings;
+	auto docsettings = new DdoxSettings;
+
 	string[] macrofiles;
 	string[] overridemacrofiles;
-	NavigationType navtype = NavigationType.ModuleTree;
-	string[] pack_order;
 	string sitemapurl = "http://127.0.0.1/";
-	MethodStyle file_name_style = MethodStyle.unaltered;
-	SortMode modsort = SortMode.protectionName;
-	SortMode declsort = SortMode.protectionInheritanceName;
 	bool lowercasenames;
 	bool hyphenate;
-	bool singlepageenum;
 	getopt(args,
 		//config.passThrough,
-		"decl-sort", &declsort,
-		"file-name-style", &file_name_style,
+		"decl-sort", &docsettings.declSort,
+		"file-name-style", &gensettings.fileNameStyle,
 		"hyphenate", &hyphenate,
 		"lowercase-names", &lowercasenames,
-		"module-sort", &modsort,
-		"navigation-type", &navtype,
+		"module-sort", &docsettings.moduleSort,
+		"navigation-type", &gensettings.navigationType,
 		"override-macros", &overridemacrofiles,
-		"package-order", &pack_order,
+		"package-order", &docsettings.packageOrder,
 		"sitemap-url", &sitemapurl,
 		"std-macros", &macrofiles,
-		"enum-member-pages", &singlepageenum,
+		"enum-member-pages", &gensettings.enumMemberPages,
 		);
+	gensettings.siteUrl = URL(sitemapurl);
 
-	if (lowercasenames) file_name_style = MethodStyle.lowerCase;
+	if (lowercasenames) gensettings.fileNameStyle = MethodStyle.lowerCase;
 
 	if( args.length < 3 ){
 		showUsage(args);
@@ -149,17 +147,8 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	if (hyphenate) enableHyphenation();
 
 	// parse the json output file
-	auto docsettings = new DdoxSettings;
-	docsettings.packageOrder = pack_order;
-	docsettings.moduleSort = modsort;
-	docsettings.declSort = declsort;
 	pack = parseDocFile(args[2], docsettings);
 
-	gensettings = new GeneratorSettings;
-	gensettings.siteUrl = URL(sitemapurl);
-	gensettings.navigationType = navtype;
-	gensettings.fileNameStyle = file_name_style;
-	gensettings.enumMemberPages = singlepageenum;
 	return 0;
 }
 
