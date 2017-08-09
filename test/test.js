@@ -3,10 +3,12 @@ var fs = require('fs'),
 
 casper.test.begin('ddox visual test', function(test) {
     phantomcss.init({
+	rebase: casper.cli.get( "rebase" ),
         libraryRoot: './node_modules/phantomcss',
         screenshotRoot: './test/screenshots',
         failedComparisonsRoot: './test/failures',
-        addLabelToFailedImage: false
+        addLabelToFailedImage: false,
+        addIteratorToImage: false
     });
 
     casper
