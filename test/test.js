@@ -12,7 +12,7 @@ casper.test.begin('ddox visual test', function(test) {
     };
     phantomcss.init(options);
 
-    var tests = ['declaration_prototype', 'function_parameters', 'code_example'];
+    var tests = ['declaration_prototype', 'function_parameters', 'code_example', 'class_main_contents'];
 
     casper
         .start('http://localhost:8080/vibe.web.rest/registerRestInterface')
@@ -25,6 +25,10 @@ casper.test.begin('ddox visual test', function(test) {
         })
         .then(function() {
             phantomcss.screenshot('#main-contents > section:nth-child(7)', tests[2]);
+        })
+        .thenOpen('http://localhost:8080/vibe.web.rest/RestInterfaceClient')
+        .then(function() {
+            phantomcss.screenshot('#main-contents', tests[3]);
         });
 
     casper
