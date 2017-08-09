@@ -2,14 +2,19 @@
 
 - void heading(int hlevel, string[] caption...)
 	- import std.algorithm.iteration : joiner;
-	- if (hlevel == 1)
-		h1= caption.joiner()
-	- if (hlevel == 2)
-		h2= caption.joiner()
-	- if (hlevel == 3)
-		h3= caption.joiner()
-	- else
-		h4= caption.joiner()
+	- switch (hlevel)
+		- case 1:
+			h1= caption.joiner()
+			- break;
+		- case 2:
+			h2= caption.joiner()
+			- break;
+		- case 3:
+			h3= caption.joiner()
+			- break;
+		- default:
+			h4= caption.joiner()
+			- break;
 
 - Module getPackageModule(Package pack)
 	- import std.algorithm : find;
