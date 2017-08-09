@@ -16,6 +16,7 @@ import std.array;
 import std.digest.md;
 import std.format : formattedWrite;
 import std.string : startsWith, toLower;
+import std.traits : EnumMembers;
 import std.variant;
 import vibe.core.log;
 import vibe.core.file;
@@ -25,6 +26,7 @@ import vibe.inet.path;
 import vibe.http.server;
 import vibe.stream.wrapper : StreamOutputRange;
 import diet.html;
+import diet.traits : dietTraits;
 
 
 /*
@@ -232,11 +234,17 @@ class DocPageInfo {
 	}
 }
 
+@dietTraits
+struct DdoxDietTraits(HTMLOutputStyle htmlStyle) {
+	// fields and functions must be static atm., see https://github.com/rejectedsoftware/diet-ng/issues/33
+	enum HTMLOutputStyle htmlOutputStyle = htmlStyle;
+}
+
 void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
 {
 	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
-	
+
 	void writeEntry(string[] parts...){
 		dst.write("<url><loc>");
 		foreach( p; parts )
@@ -305,7 +313,15 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.node = root_package;
 
 	auto rng = StreamOutputRange(dst);
-	rng.compileHTMLDietFile!("ddox.overview.dt", req, info);
+	final switch (settings.htmlOutputStyle)
+	{
+		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
+		case htmlOutputStyle:
+		{
+			rng.compileHTMLDietFile!("ddox.overview.dt", req, info, DdoxDietTraits!(htmlOutputStyle));
+			return;
+		}
+	}
 }
 
 void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
@@ -319,7 +335,15 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.docGroups = null;
 
 	auto rng = StreamOutputRange(dst);
-	rng.compileHTMLDietFile!("ddox.module.dt", req, info);
+	final switch (settings.htmlOutputStyle)
+	{
+		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
+		case htmlOutputStyle:
+		{
+			rng.compileHTMLDietFile!("ddox.module.dt", req, info, DdoxDietTraits!(htmlOutputStyle));
+			return;
+		}
+	}
 }
 
 void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
@@ -337,7 +361,15 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, string
 	info.nestedName = nested_name;
 
 	auto rng = StreamOutputRange(dst);
-	rng.compileHTMLDietFile!("ddox.docpage.dt", req, info);
+	final switch (settings.htmlOutputStyle)
+	{
+		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
+		case htmlOutputStyle:
+		{
+			rng.compileHTMLDietFile!("ddox.docpage.dt", req, info, DdoxDietTraits!(htmlOutputStyle));
+			return;
+		}
+	}
 }
 
 private bool cmpKind(in Entity a, in Entity b)

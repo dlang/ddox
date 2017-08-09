@@ -132,6 +132,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 		"sitemap-url", &sitemapurl,
 		"std-macros", &macrofiles,
 		"enum-member-pages", &gensettings.enumMemberPages,
+		"html-style", &gensettings.htmlOutputStyle,
 		);
 	gensettings.siteUrl = URL(sitemapurl);
 
@@ -345,6 +346,7 @@ Use <COMMAND> -h|--help to get detailed usage information for a command.
     --decl-sort=MODE       The sort order used for declaration lists
     --web-file-dir=DIR     Make files from dir available on the served site
     --enum-member-pages    Generate a single page per enum member
+    --html-style=STYLE     Sets the HTML output style, either compact (default) or pretty.
     --hyphenate            hyphenate text
  -h --help                 Show this help
 
@@ -374,6 +376,7 @@ protectionInheritanceName
                            This option is useful on case insensitive file
                            systems.
     --enum-member-pages    Generate a single page per enum member
+    --html-style=STYLE     Sets the HTML output style, either compact (default) or pretty.
     --hyphenate            hyphenate text
  -h --help                 Show this help
 

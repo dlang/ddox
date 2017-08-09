@@ -8,6 +8,7 @@
 module ddox.settings;
 
 import vibe.inet.url;
+import diet.html : HTMLOutputStyle;
 public import vibe.web.common : MethodStyle;
 
 enum SortMode {
@@ -50,6 +51,8 @@ class GeneratorSettings {
 	MethodStyle fileNameStyle = MethodStyle.unaltered;
 	/// Enables syntax highlighting for inline code
 	bool highlightInlineCode = true;
+	/// Select HTML style (e.g. compact, pretty)
+	HTMLOutputStyle htmlOutputStyle = HTMLOutputStyle.compact;
 
 	/// Creates a page per enum member instead of putting everything into a single table.
 	bool enumMemberPages;
