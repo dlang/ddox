@@ -492,6 +492,7 @@ private struct Parser
 				nested_name = null;
 			} else {
 				enforce(i > 0, "Expected identifier but got "~tokens.front);
+				auto unqualified_name = tokens[end - 1];
 				type.typeName = join(tokens[start .. end]);
 				//
 				tokens.popFrontN(i);
@@ -524,10 +525,25 @@ private struct Parser
 						type.templateArgs = tokens[0];
 						tokens.popFront();
 					}
-					
-					// HACK: dropping the actual type name here!
-					while (!tokens.empty && tokens.front == ".") {
+
+					// resolve eponymous template member, e.g. test.Foo!int.Foo
+					if (!tokens.empty && tokens.front == ".") {
 						tokens.popFront();
+						if (!tokens.empty && tokens.front == unqualified_name) { // eponymous template
+							resolveTypeDecl(type, sc);
+							auto members = (cast(TemplateDeclaration)type.typeDecl).members;
+							auto mi = members.countUntil!(m => m.name == tokens.front);
+							assert(mi >= 0 || members.empty);
+							if (mi >= 0)
+								type.typeDecl = members[mi];
+							tokens.popFront();
+						}
+					}
+					// HACK: dropping the actual type name here!
+					// TODO: resolve other members and adjust typeName,
+					// e.g. test.Foo!int.Enum, test.Foo!int.Bar!int, test.Foo!int.Struct.Templ!(int, double)
+					while (!tokens.empty && tokens.front == ".") {
+ 						tokens.popFront();
 						if (!tokens.empty()) tokens.popFront();
 					}
 				}
