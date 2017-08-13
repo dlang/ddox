@@ -18,7 +18,6 @@ import std.string;
 import vibe.core.log;
 import vibe.http.fileserver;
 import vibe.http.router;
-import vibe.templ.diet; // just so that rdmd picks it up
 
 
 void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings = null)
