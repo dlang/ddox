@@ -392,8 +392,8 @@ bool anyPropertyGetter(const(Entity)[] mems...)
 	foreach (ov; mems) {
 		auto ovf = cast(const(FunctionDeclaration))ov;
 		if (!ovf) continue;
-		assert(!!ovf.returnType);
-		if (ovf.returnType.typeName == "void") continue;
+		// NOTE: functions with auto return have returnType set to null
+		if (!ovf.returnType || ovf.returnType.typeName == "void") continue;
 		if (ovf.parameters.length == 0) return true;
 	}
 	return false;
