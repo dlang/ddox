@@ -531,7 +531,8 @@ private struct Parser
 						tokens.popFront();
 						if (!tokens.empty && tokens.front == unqualified_name) { // eponymous template
 							resolveTypeDecl(type, sc);
-							auto members = (cast(TemplateDeclaration)type.typeDecl).members;
+							auto tdecl = cast(TemplateDeclaration)type.typeDecl;
+							auto members = tdecl ? tdecl.members : null;
 							auto mi = members.countUntil!(m => m.name == tokens.front);
 							assert(mi >= 0 || members.empty);
 							if (mi >= 0)
