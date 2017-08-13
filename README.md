@@ -72,3 +72,14 @@ DDOX specific Ddoc macros
 -------------------------
 
 Apart from the standard set of predefined macros, DDOX defines a macro `DDOX_ROOT_DIR`, which contains the relative path to the root of the documentation hierarchy (ending with a slash). It can be used to link to resources that reside in a fixed location within the same directory tree.
+
+
+Known issues
+------------
+
+There are a number of issues due to limitations of the JSON output that DMD generates:
+
+- User defined attributes don't show up in the documentation (issue #6)
+- Declarations within `static if` are not shown (issues #19 and #86)
+- Modules without a documented module declaration are omitted (issues #164 and #10)
+- Some declarations with complex types may fail to parse and will be missing proper cross linking
