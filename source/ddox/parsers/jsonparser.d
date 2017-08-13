@@ -365,7 +365,7 @@ private struct Parser
 		out(ret) { assert(ret != Type.init); }
 	body {
 		auto tokens = tokenizeDSource(str);
-		
+
 		logDebug("parse type '%s'", str);
 		try {
 			auto type = parseTypeDecl(tokens, sc);
@@ -411,7 +411,7 @@ private struct Parser
 		CachedString[] attributes;
 		auto basic_type = parseBasicType(tokens, sc, attributes);
 		basic_type.attributes ~= attributes;
-		return basic_type;	
+		return basic_type;
 	}
 
 	Type parseBasicType(ref string[] tokens, Entity sc, out CachedString[] attributes)
@@ -425,15 +425,15 @@ private struct Parser
 			"lazy", "out", "ref", "scope", "shared"];
 
 		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "shared", "pure", "nothrow"];
-		
-			
+
+
 		if( tokens.length > 0 && tokens[0] == "extern" ){
 			enforce(tokens[1] == "(");
 			enforce(tokens[3] == ")");
 			attributes ~= CachedString(join(tokens[0 .. 4]));
 			tokens = tokens[4 .. $];
 		}
-		
+
 		static immutable string[] attribute_keywords = global_attribute_keywords ~ parameter_attribute_keywords ~ member_function_attribute_keywords;
 		/*final switch( sc ){
 			case DeclScope.Global: attribute_keywords = global_attribute_keywords; break;
@@ -496,7 +496,7 @@ private struct Parser
 				type.typeName = join(tokens[start .. end]);
 				//
 				tokens.popFrontN(i);
-				
+
 				if (type.typeName == "typeof" && !tokens.empty && tokens.front == "(") {
 					type.typeName ~= "(";
 					tokens.popFront();
@@ -551,7 +551,7 @@ private struct Parser
 				resolveTypeDecl(type, sc);
 			}
 		}
-		
+
 		while( !tokens.empty ){
 			if( tokens.front == "*" ){
 				Type ptr;
@@ -595,7 +595,7 @@ private struct Parser
 				tokens.popFront();
 			} else break;
 		}
-		
+
 		if (type == Type.init) {
 			type.kind = TypeKind.Primitive;
 			type.typeName = "auto";
@@ -675,7 +675,7 @@ private struct Parser
 		}
 		return type;
 	}
-	
+
 	string[] tokenizeDSource(string dsource)
 	{
 		static import std.uni;
@@ -690,19 +690,19 @@ private struct Parser
 			"%", "%=", "^", "^=", "~", "~=", "@", "=>", "#", "C++"
 		];
 		static bool[string] token_map;
-		
+
 		if (token_map is null) {
 			foreach (t; tokens)
 				token_map[t] = true;
 			token_map.rehash;
 		}
-		
+
 		string[] ret;
 		outer:
 		while(true){
 			dsource = stripLeft(dsource);
 			if( dsource.length == 0 ) break;
-			
+
 			// special token?
 			foreach_reverse (i; 1 .. min(5, dsource.length+1))
 				if (dsource[0 .. i] in token_map) {
@@ -710,7 +710,7 @@ private struct Parser
 					dsource = dsource[i .. $];
 					continue outer;
 				}
-			
+
 			// identifier?
 			if( dsource[0] == '_' || std.uni.isAlpha(dsource.front) ){
 				size_t i = 1;
@@ -722,7 +722,7 @@ private struct Parser
 				dsource = rem;
 				continue;
 			}
-			
+
 			// character literal?
 			if( dsource[0] == '\'' ){
 				size_t i = 1;
@@ -735,7 +735,7 @@ private struct Parser
 				dsource = dsource[i+1 .. $];
 				continue;
 			}
-			
+
 			// string? (incomplete!)
 			if( dsource[0] == '"' ){
 				size_t i = 1;
@@ -748,7 +748,7 @@ private struct Parser
 				dsource = dsource[i+1 .. $];
 				continue;
 			}
-			
+
 			// number?
 			if( isDigit(dsource[0]) || dsource[0] == '.' ){
 				auto dscopy = dsource;
@@ -759,12 +759,12 @@ private struct Parser
 				else if (dsource.startsWith("f")) dsource.popFront();
 				continue;
 			}
-			
+
 			auto nb = dsource.stride();
 			ret ~= dsource[0 .. nb];
 			dsource = dsource[nb .. $];
 		}
-		
+
 		return ret;
 	}
 
@@ -783,7 +783,7 @@ private struct Parser
 			if( i > 0 && isDigit(ch) ) continue;
 			return false;
 		}
-		return true;	
+		return true;
 	}
 
 	string fullStrip(string s)
