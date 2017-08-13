@@ -38,8 +38,8 @@
 
 - void outputCompositeMembers(CompositeTypeDeclaration item, int hlevel)
 	- alias TypeTuple!(InterfaceDeclaration, ClassDeclaration, StructDeclaration, UnionDeclaration, EnumDeclaration, AliasDeclaration, TemplateDeclaration) kinds;
-	- auto kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
-	- auto kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
+	- static const kindnames =      ["Inner interfaces", "Inner classes", "Inner structs", "Unions", "Enums", "Aliases", "Templates"];
+	- static const kindnames_sing = ["Inner interface",  "Inner class",   "Inner struct",  "Union",  "Enum",  "Alias",   "Template"];
 
 	- FunctionDeclaration[] properties, methods, constructors;
 	- foreach( itm; getDocGroups!FunctionDeclaration(item) )
