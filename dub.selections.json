@@ -3,16 +3,16 @@
 	"versions": {
 		"botan": "1.12.9",
 		"botan-math": "1.0.3",
-		"diet-ng": "1.4.0",
-		"eventcore": "0.8.13",
+		"diet-ng": "1.4.3",
+		"eventcore": "0.8.17",
 		"hyphenate": "1.1.1",
 		"libasync": "0.8.3",
-		"libdparse": "0.7.1-beta.9",
+		"libdparse": "0.7.1",
 		"libevent": "2.0.2+2.0.16",
 		"memutils": "0.4.9",
 		"openssl": "1.1.5+1.0.1g",
 		"taggedalgebraic": "0.10.7",
-		"vibe-core": "1.1.1+commit.6.g24f4e5f",
-		"vibe-d": "0.8.1-rc.2"
+		"vibe-core": "1.2.0",
+		"vibe-d": "0.8.1"
 	}
 }
