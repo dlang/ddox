@@ -448,7 +448,7 @@ private struct Parser
 					tokens.popFront();
 					del(CachedString("@"~tokens.front));
 					tokens.popFront();
-				} else if( keywords.countUntil(tokens[0]) >= 0 && tokens[1] != "(" ){
+				} else if( keywords.countUntil(tokens[0]) >= 0 && tokens.length > 1 && tokens[1] != "(" ){
 					del(CachedString(tokens.front));
 					tokens.popFront();
 				} else break;
