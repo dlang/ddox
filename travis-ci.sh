@@ -10,7 +10,14 @@ shopt -s globstar # for **/*.d expansion
 for dir in tests/*; do
     pushd $dir
     ${DMD:-dmd} -Xftest.json -Df__dummy.html -c -o- **/*.d
-    ../../ddox generate-html --html-style=pretty test.json docs
+    if [ -f .filter_args ]; then
+        filter_args=$(cat .filter_args)
+    fi
+    ../../ddox filter ${filter_args:-} test.json
+    if [ -f .gen_args ]; then
+        gen_args=$(cat .gen_args)
+    fi
+    ../../ddox generate-html --html-style=pretty ${gen_args:-} test.json docs
     if [ ! -f .no_diff ] && ! git --no-pager diff --exit-code -- docs; then
         failure=1
     fi

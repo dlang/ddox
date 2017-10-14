@@ -35,9 +35,16 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		else dst.put("./");
 
 		if( ent !is null && ent.parent !is null ){
-			auto dp = cast(VariableDeclaration)ent;
-			auto dfn = cast(FunctionDeclaration)ent.parent;
-			if( dp && dfn ) ent = ent.parent;
+			Entity nested;
+			if (
+				// link parameters to their function
+				(cast(FunctionDeclaration)ent.parent !is null &&
+				 (nested = cast(VariableDeclaration)ent) !is null) ||
+				// link enum members to their enum
+				(!settings.enumMemberPages &&
+				 cast(EnumDeclaration)ent.parent !is null &&
+				 (nested = cast(EnumMemberDeclaration)ent) !is null))
+				ent = ent.parent;
 
 			const(Entity)[] nodes;
 			size_t mod_idx = 0;
@@ -56,9 +63,10 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 				if( i > 0 ) dst.put('.');
 			}
 
-			if( dp && dfn ){
+			// link nested elements to anchor in parent, e.g. params, enum members
+			if( nested ){
 				dst.put('#');
-				dst.put(dp.name[]);
+				dst.put(nested.name[]);
 			}
 		}
 

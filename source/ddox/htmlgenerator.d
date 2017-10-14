@@ -86,9 +86,16 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				return dst.data();
 			}
 
-			auto dp = cast(const(VariableDeclaration))ent;
-			auto dfn = ent.parent ? cast(const(FunctionDeclaration))ent.parent : null;
-			if( dp && dfn ) ent = ent.parent;
+			Entity nested;
+			if (
+				// link parameters to their function
+				(cast(FunctionDeclaration)ent.parent !is null &&
+				 (nested = cast(VariableDeclaration)ent) !is null) ||
+				// link enum members to their enum
+				(!settings.enumMemberPages &&
+				 cast(EnumDeclaration)ent.parent !is null &&
+				 (nested = cast(EnumMemberDeclaration)ent) !is null))
+				ent = ent.parent;
 
 			const(Entity)[] nodes;
 			size_t mod_idx = 0;
@@ -111,10 +118,11 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 				dst.put("html");
 			}
 
-			// FIXME: must also work for multiple function overloads in separate doc groups!
-			if( dp && dfn ){
+			// FIXME: conflicting ids with parameters occurring in multiple overloads
+			// link nested elements to anchor in parent, e.g. params, enum members
+			if( nested ){
 				dst.put('#');
-				dst.put(dp.name[]);
+				dst.put(nested.name[]);
 			}
 		}
 
@@ -126,7 +134,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		Declaration[] members;
 		if (!settings.enumMemberPages && cast(EnumDeclaration)parent)
 			return;
-		
+
 		if (auto mod = cast(Module)parent) members = mod.members;
 		else if (auto ctd = cast(CompositeTypeDeclaration)parent) members = ctd.members;
 		else if (auto td = cast(TemplateDeclaration)parent) members = td.members;
@@ -222,7 +230,7 @@ class DocPageInfo {
 	Module mod;
 	DocGroup[] docGroups; // for multiple doc groups with the same name
 	string nestedName;
-	
+
 	@property NavigationType navigationType() const { return settings.navigationType; }
 	string formatType(CachedType tp, bool include_code_tags = true) { return .formatType(tp, linkTo, include_code_tags); }
 	void renderTemplateArgs(R)(R output, Declaration decl) { .renderTemplateArgs(output, decl, linkTo); }
@@ -263,7 +271,7 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 	}
 
 	writeEntityRec(root_package);
-	
+
 	dst.write("</urlset>\n");
 	dst.flush();
 }

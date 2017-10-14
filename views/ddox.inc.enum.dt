@@ -24,6 +24,6 @@
 								code= mem.name
 						td!= info.formatDoc(mem.docGroup, 4, sec => sec == "$Short")
 					- else
-						td
+						td(id="#{mem.name[]}")
 							code= mem.name
 						td!= info.formatDoc(mem.docGroup, 4, sec => true)
