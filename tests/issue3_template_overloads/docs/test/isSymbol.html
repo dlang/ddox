@@ -2,75 +2,79 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>isSymbol - multiple declarations</title>
+		<title>Enum member isSymbol</title>
 		<link rel="stylesheet" type="text/css" href="../styles/ddox.css"/>
 		<link rel="stylesheet" href="../prettify/prettify.css" type="text/css"/>
-		<script type="text/javascript" src="../scripts/jquery.js">/**/</script>
-		<script type="text/javascript" src="../prettify/prettify.js">/**/</script>
-		<script type="text/javascript" src="../scripts/ddox.js">/**/</script>
+		<script type="text/javascript" src="../scripts/jquery.js">/**/</script><script type="text/javascript" src="../scripts/ddox.js">/**/</script>
 	</head>
-	<body onload="prettyPrint(); setupDdox();">
+	<body onload="setupDdox();">
 		<nav id="main-nav">
-						<ul>
-						<li>
-							<a href="../test.html">test</a>
-						</li>
-						</ul>
-				<noscript>
-					<p style="color: red">The search functionality needs JavaScript enabled</p>
-				</noscript>
-				<div id="symbolSearchPane" style="display: none">
-					<p>
-						<input id="symbolSearch" type="text" placeholder="Search for symbols" onchange="performSymbolSearch(24);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
-					</p>
-	<ul id="symbolSearchResults" style="display: none"></ul>
-	<script type="application/javascript" src="../symbols.js"></script>
-	<script type="application/javascript">
-var symbolSearchRootDir = "../";
-$('#symbolSearchPane').show();
-	</script>
-				</div>
+			<noscript>
+				<p style="color: red">The search functionality needs JavaScript enabled</p>
+			</noscript>
+			<div id="symbolSearchPane" style="display: none">
+				<form action="#" method="GET">
+					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+				</form>
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../";
+$('#symbolSearchPane').show();</script>
+			</div>
+			<ul class="tree-view">
+				<li>
+					<div class="module selected">
+						<a href="../test.html">test</a>
+					</div>
+				</li>
+			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>isSymbol - multiple declarations</h1>
-			<ul>
-				<li>Enum member isSymbol</li>
-				<li>Enum member isSymbol</li>
-			</ul>
-			<section>
-				<h2>Enum member isSymbol</h2>
-				<p></p>
+			<h1>Enum member isSymbol</h1><p></p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="kwd">enum</span> <span class="pln">isSymbol</span>(T)
+			 <span class="pun">=</span> <span class="pun">!</span><span class="kwd">is</span><span class="pun">(</span><span class="pln">T</span><span class="pun">)</span><span class="pun">;</span>
+					</div>
+					<div class="single-prototype">
+			<span class="kwd">enum</span> <span class="pln">isSymbol</span>(alias T)
+			 <span class="pun">=</span> <span class="pun">!</span><span class="kwd">is</span><span class="pun">(</span><span class="pln">T</span><span class="pun">)</span><span class="pun">;</span>
+					</div>
+				</code>
+			</div>
+			
+			<section><h2>Returns</h2>
+<p>true if T is a symbol or literal
+</p>
+</section>
+<section><h2>Parameters</h2>
+<table><col class="caption"><tr><th>Name</th><th>Description</th></tr>
+<tr><td id="T">T</td><td> Type or symbol</td></tr>
+</table>
+</section>
 
-					<section>
-						<h3>Declaration</h3>
-						<pre class="code prettyprint lang-d prototype">
-enum isSymbol(T) = !is(T);</pre>
-					</section>
-
-			</section>
-			<section>
-				<h2>Enum member isSymbol</h2>
-				<p></p>
-
-					<section>
-						<h3>Declaration</h3>
-						<pre class="code prettyprint lang-d prototype">
-enum isSymbol(alias T) = !is(T);</pre>
-					</section>
-
-			</section>
-			<section>
-				<h2>Authors</h2>
-
-			</section>
-			<section>
-				<h2>Copyright</h2>
-
-			</section>
-			<section>
-				<h2>License</h2>
-
-			</section>
+			<footer>
+				<table class="license-info">
+					<tr>
+						<th>Authors</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>Copyright</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>License</th>
+						<td>
+							
+						</td>
+					</tr>
+				</table>
+				<p class="faint">Generated using the DDOX documentation generator</p>
+			</footer>
 		</div>
 	</body>
 </html>
