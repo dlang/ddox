@@ -1,5 +1,6 @@
 language: d
-sudo: false
+services:
+  - docker
 addons:
   apt:
     packages:

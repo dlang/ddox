@@ -4,3 +4,7 @@
 node_modules
 test/screenshots/*.diff.png
 test/screenshots/*.fail.png
+tests/*/test.json
+tests/*/__dummy.html
+tests/*/docs/file_hashes.json
+tests/timestamp/docs/
