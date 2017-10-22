@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>Module test</title>
+		<link rel="stylesheet" type="text/css" href="./styles/ddox.css"/>
+		<link rel="stylesheet" href="./prettify/prettify.css" type="text/css"/>
+		<script type="text/javascript" src="./scripts/jquery.js">/**/</script><script type="text/javascript" src="./scripts/ddox.js">/**/</script>
+	</head>
+	<body onload="setupDdox();">
+		<nav id="main-nav">
+			<noscript>
+				<p style="color: red">The search functionality needs JavaScript enabled</p>
+			</noscript>
+			<div id="symbolSearchPane" style="display: none">
+				<form action="#" method="GET">
+					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+				</form>
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="./symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "./";
+$('#symbolSearchPane').show();</script>
+			</div>
+			<ul class="tree-view">
+				<li>
+					<div class="module selected">
+						<a href="./test.html">test</a>
+					</div>
+				</li>
+			</ul>
+		</nav>
+		<div id="main-contents">
+			<h1>Module test</h1><p></p>
+			<section></section>
+			<section>
+				<h2>Functions</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="bug" class="[&quot;public&quot;]" href="./test/bug.html">bug</a><span class="decoration">(args)</span>
+							</code>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Classes</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="C" class="[&quot;public&quot;]" href="./test/C.html">C</a>
+							</code>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Global variables</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Type</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a id="var1" class="[&quot;public&quot;]" href="./test/var1.html">
+								<code>var1</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">[</span><span class="lit">4</span><span class="pun">]</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="var2" class="[&quot;public&quot;]" href="./test/var2.html">
+								<code>var2</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">[]</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="var3" class="[&quot;public&quot;]" href="./test/var3.html">
+								<code>var3</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="kwd">scope</span> <a href="./test/C.html"><span class="pln">C</span></a><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="var4" class="[&quot;public&quot;]" href="./test/var4.html">
+								<code>var4</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="var5" class="[&quot;public&quot;]" href="./test/var5.html">
+								<code>var5</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="kwd">extern</span><span class="pun">(</span><span class="pln">C</span><span class="pun">)</span> <span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">, ...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Aliases</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Type</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a id="FT1" class="[&quot;public&quot;]" href="./test/FT1.html">
+								<code>FT1</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">[</span><span class="lit">4</span><span class="pun">]</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="FT2" class="[&quot;public&quot;]" href="./test/FT2.html">
+								<code>FT2</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">[]</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="FT3" class="[&quot;public&quot;]" href="./test/FT3.html">
+								<code>FT3</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="kwd">scope</span> <a href="./test/C.html"><span class="pln">C</span></a><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="FT4" class="[&quot;public&quot;]" href="./test/FT4.html">
+								<code>FT4</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="pun">...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>
+							<a id="FT5" class="[&quot;public&quot;]" href="./test/FT5.html">
+								<code>FT5</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="kwd">extern</span><span class="pun">(</span><span class="pln">C</span><span class="pun">)</span> <span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="typ">int</span><span class="pun">, ...</span><span class="pun">)</span></code>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+			</section>
+			<footer>
+				<table class="license-info">
+					<tr>
+						<th>Authors</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>Copyright</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>License</th>
+						<td>
+							
+						</td>
+					</tr>
+				</table>
+				<p class="faint">Generated using the DDOX documentation generator</p>
+			</footer>
+		</div>
+	</body>
+</html>
