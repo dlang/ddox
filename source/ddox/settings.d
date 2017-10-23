@@ -52,7 +52,7 @@ class GeneratorSettings {
 	/// Enables syntax highlighting for inline code
 	bool highlightInlineCode = true;
 	/// Select HTML style (e.g. compact, pretty)
-	HTMLOutputStyle htmlOutputStyle = HTMLOutputStyle.compact;
+	HTMLOutputStyle htmlOutputStyle = HTMLOutputStyle.pretty;
 
 	/// Creates a page per enum member instead of putting everything into a single table.
 	bool enumMemberPages;
