@@ -227,7 +227,7 @@ T[] getDocGroups(T)(Declaration[] decls)
 ///
 string getAttributeString(S : string)(S[] attributes, AttributeStringKind kind)
 {
-	enum backAttributes = ["const", "immutable", "shared", "nothrow", "@safe", "@trusted", "@system", "pure", "@property", "@nogc"];
+	enum backAttributes = ["const", "immutable", "shared", "nothrow", "@safe", "@trusted", "@system", "pure", "@property", "@nogc", "return", "scope"];
 	auto ret = appender!string();
 	foreach (a; attributes) {
 		bool back = backAttributes.canFind(a);

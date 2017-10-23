@@ -422,9 +422,10 @@ private struct Parser
 			"__gshared", "scope", "static", "synchronize"];
 
 		static immutable parameter_attribute_keywords = ["auto", "const", "final", "immutable", "in", "inout",
-			"lazy", "out", "ref", "scope", "shared"];
+			"lazy", "out", "ref", "return", "scope", "shared"];
 
-		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "shared", "pure", "nothrow"];
+		static immutable member_function_attribute_keywords = ["const", "immutable", "inout", "ref", "return",
+			"scope", "shared", "pure", "nothrow"];
 
 
 		if( tokens.length > 0 && tokens[0] == "extern" ){
