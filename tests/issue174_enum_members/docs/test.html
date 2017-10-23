@@ -2,10 +2,10 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Enum E</title>
-		<link rel="stylesheet" type="text/css" href="../styles/ddox.css"/>
-		<link rel="stylesheet" href="../prettify/prettify.css" type="text/css"/>
-		<script type="text/javascript" src="../scripts/jquery.js">/**/</script><script type="text/javascript" src="../scripts/ddox.js">/**/</script>
+		<title>Module test</title>
+		<link rel="stylesheet" type="text/css" href="./styles/ddox.css"/>
+		<link rel="stylesheet" href="./prettify/prettify.css" type="text/css"/>
+		<script type="text/javascript" src="./scripts/jquery.js">/**/</script><script type="text/javascript" src="./scripts/ddox.js">/**/</script>
 	</head>
 	<body onload="setupDdox();">
 		<nav id="main-nav">
@@ -16,29 +16,22 @@
 				<form action="#" method="GET">
 					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
 				</form>
-				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../";
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="./symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "./";
 $('#symbolSearchPane').show();</script>
 			</div>
 			<ul class="tree-view">
 				<li>
 					<div class="module selected">
-						<a href="../test.html">test</a>
+						<a href="./test.html">test</a>
 					</div>
 				</li>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Enum E</h1><p></p>
-			<div class="prototype">
-				<code class="lang-d">
-					<div class="single-prototype">
-			<span class="kwd">enum</span> <span class="typ">E</span>
-			 <span class="pun">:</span> <span class="typ">int</span> <span class="pun">{ ... }</span>
-					</div>
-				</code>
-			</div>
-			
-			<section><h2>Enum members</h2>
+			<h1>Module test</h1><p></p>
+			<section></section>
+			<section>
+				<h2>Enums</h2>
 				<table>
 					<col class="caption"/>
 					<tr>
@@ -46,15 +39,14 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 					<tr>
 						<td>
-							<a href="../test/E.a.html">
-								<code>a</code>
-							</a>
+							<code>
+								<a id="Enum" class="[&quot;public&quot;]" href="./test/Enum.html">Enum</a>
+							</code>
 						</td>
 						<td></td>
 					</tr>
 				</table>
 			</section>
-			
 			<footer>
 				<table class="license-info">
 					<tr>
