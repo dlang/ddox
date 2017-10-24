@@ -22,6 +22,7 @@
 					- break;
 		- auto attribute_prefix = highlightDCode(getAttributeString(attribs, AttributeStringKind.functionPrefix));
 		- auto attribute_suffix = highlightDCode(getAttributeString(attribs, AttributeStringKind.functionSuffix));
+		- auto variadic_suffix = highlightDCode(getVariadicSuffix(proto.type));
 		- if (!proto.templateConstraint.length) attribute_suffix ~= "<span class=\"pun\">;</span>";
 
 		- if (proto.parameters.length)
@@ -31,7 +32,7 @@
 			br
 			- foreach (size_t i, p; proto.parameters)
 				- auto pattribs = highlightDCode(getAttributeString(p.attributes, AttributeStringKind.normal));
-				- auto suffix = i+1 < proto.parameters.length ? "<span class=\"pun\">,</span>" : "";
+				- auto suffix = i+1 < proto.parameters.length ? "<span class=\"pun\">,</span>" : variadic_suffix;
 				- if (p.initializer)
 					| &nbsp;&nbsp;!{pattribs}!{info.formatType(p.type, false)} <span class="pln">#{p.name}</span> <span class="pun">=</span> !{highlightDCode(p.initializer.valueString)}!{suffix}
 				- else
@@ -41,7 +42,10 @@
 		- else
 			| !{attribute_prefix}!{rettype}<span class="pln">#{proto.name}
 			- info.renderTemplateArgs(&_diet_output, proto);
-			| <span class="pun">()</span>!{attribute_suffix}
+			- if (variadic_suffix)
+				| <span class="pun">(</span>!{variadic_suffix}<span class="pun">)</span>!{attribute_suffix}
+			- else
+				| <span class="pun">()</span>!{attribute_suffix}
 
 		- if (proto.templateConstraint.length)
 			br

@@ -485,10 +485,7 @@ private struct Parser
 			size_t i = end;
 
 			string type_name, nested_name;
-			if( i == 0 && tokens[0] == "..." ){
-				type_name = "...";
-				nested_name = null;
-			} else if( i == 0 && tokens[0] == "(" ){
+			if( i == 0 && tokens[0] == "(" ){
 				type_name = "constructor";
 				nested_name = null;
 			} else {
@@ -610,18 +607,35 @@ private struct Parser
 			if (tokens.front != "(") tokens.popFront();
 			enforce(tokens.front == "(");
 			tokens.popFront();
-			if (!tokens.empty && tokens.front == ",") tokens.popFront(); // sometimes demangleType() returns something like "void(, ...)"
+			// demangleType() returns something like "void(, ...)" for variadic functions or "void(, type)" for typeof(null) parameters
+			if (!tokens.empty && tokens.front == ",") tokens.popFront();
+			// (...) - D variadic function
+			if (tokens.front == "...") {
+				ftype.variadic = Type.Variadic.d;
+				tokens.popFront();
+			}
 			while (true) {
 				if (tokens.front == ")") break;
+
+				// (int) - parameter type
 				enforce(!tokens.empty);
 				ftype.parameterTypes ~= CachedType(parseTypeDecl(tokens, sc));
+
+
+				// (int[]...), (Clazz...) - typesafe variadic function
+				if (tokens.front == "...") {
+					ftype.variadic = Type.Variadic.typesafe;
+					tokens.popFront();
+				}
+				// (type, ...) - D or extern(C) variadic
+				else if (tokens.length > 2 && tokens[0] == "," && tokens[1] == "...") {
+					ftype.variadic = Type.Variadic.c; // c and d treated identical for doc-gen
+					tokens.popFrontN(2);
+				}
+
 				string pname;
 				if (tokens.front != "," && tokens.front != ")") {
 					pname = tokens.front;
-					tokens.popFront();
-				}
-				if (tokens.front == "...") {
-					pname ~= tokens.front;
 					tokens.popFront();
 				}
 				ftype._parameterNames ~= CachedString(pname);

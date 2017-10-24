@@ -612,6 +612,8 @@ struct Type {
 	immutable(CachedType)[] parameterTypes;
 	immutable(CachedString)[] _parameterNames;
 	immutable(Value)[] _parameterDefaultValues;
+	public import std.traits : Variadic;
+	Variadic variadic;
 
 	static Type makePointer(CachedType base_type) { Type ret; ret.kind = TypeKind.Pointer; ret.elementType = base_type; return ret; }
 	static Type makeArray(CachedType base_type) { Type ret; ret.kind = TypeKind.Array; ret.elementType = base_type; return ret; }

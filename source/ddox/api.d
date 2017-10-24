@@ -319,6 +319,8 @@ void formatType(R)(ref R dst, CachedType type, scope string delegate(in Entity) 
 					dst.put(type._parameterDefaultValues[i].valueString.str);
 				}
 			}
+			if (auto suffix = getVariadicSuffix(type))
+				dst.highlightDCode(suffix);
 			dst.highlightDCode(")");
 			foreach (att; type.modifiers)
 				dst.formattedWrite(" %s", att);
@@ -348,6 +350,19 @@ void formatType(R)(ref R dst, CachedType type, scope string delegate(in Entity) 
 		foreach( att; type.modifiers ) dst.highlightDCode(")");
 	}
 	if (include_code_tags) dst.put("</code>");
+}
+
+string getVariadicSuffix(Type type)
+{
+	final switch (type.variadic) {
+	case Type.Variadic.no:
+		return null;
+	case Type.Variadic.c:
+	case Type.Variadic.d:
+		return type.parameterTypes.length ? ", ..." : "...";
+	case Type.Variadic.typesafe:
+		return "...";
+	}
 }
 
 void renderTemplateArgs(R)(ref R output, Declaration decl, scope string delegate(in Entity) link_to)

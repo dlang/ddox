@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>http://127.0.0.1/index.html</loc></url>
+<url><loc>http://127.0.0.1/test.html</loc></url>
+<url><loc>http://127.0.0.1/test/bug.html</loc></url>
+<url><loc>http://127.0.0.1/test/bug.html</loc></url>
+<url><loc>http://127.0.0.1/test/bug.html</loc></url>
+<url><loc>http://127.0.0.1/test/bug.html</loc></url>
+<url><loc>http://127.0.0.1/test/bug.html</loc></url>
+<url><loc>http://127.0.0.1/test/C.html</loc></url>
+<url><loc>http://127.0.0.1/test/FT1.html</loc></url>
+<url><loc>http://127.0.0.1/test/FT2.html</loc></url>
+<url><loc>http://127.0.0.1/test/FT3.html</loc></url>
+<url><loc>http://127.0.0.1/test/FT4.html</loc></url>
+<url><loc>http://127.0.0.1/test/FT5.html</loc></url>
+<url><loc>http://127.0.0.1/test/var1.html</loc></url>
+<url><loc>http://127.0.0.1/test/var2.html</loc></url>
+<url><loc>http://127.0.0.1/test/var3.html</loc></url>
+<url><loc>http://127.0.0.1/test/var4.html</loc></url>
+<url><loc>http://127.0.0.1/test/var5.html</loc></url>
+</urlset>
