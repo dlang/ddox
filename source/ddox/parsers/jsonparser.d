@@ -315,6 +315,7 @@ private struct Parser
 		foreach (arg; json["parameters"].opt!(Json[])) {
 			string pname = arg["name"].get!string;
 			string defvalue = arg["defaultValue"].opt!string;
+			string specvalue = arg["specValue"].opt!string;
 			bool needs_type_parse = false;
 
 			switch (arg["kind"].get!string) {
@@ -332,6 +333,7 @@ private struct Parser
 
 			auto pdecl = new TemplateParameterDeclaration(ret, pname);
 			pdecl.defaultValue = defvalue;
+			pdecl.specValue = specvalue;
 			ret.templateArgs ~= pdecl;
 			ret.templateConstraint = json["constraint"].opt!string;
 
