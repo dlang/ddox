@@ -9,3 +9,4 @@ dependency "hyphenate" version="~>1.1.0"
 dependency "libdparse" version="~>0.7.0"
 
 versions "JsonLineNumbers"
+versions "VibeNoSSL"
