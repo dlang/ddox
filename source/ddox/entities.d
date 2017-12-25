@@ -507,7 +507,7 @@ final class TemplateDeclaration : Declaration {
 }
 
 final class TemplateParameterDeclaration : TypedDeclaration {
-	string defaultValue;
+	string defaultValue, specValue;
 
 	override @property string kindCaption() const { return "Template parameter"; }
 	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }

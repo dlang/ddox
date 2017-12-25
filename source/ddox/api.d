@@ -380,6 +380,10 @@ void renderTemplateArgs(R)(ref R output, Declaration decl, scope string delegate
 			output.put(' ');
 		}
 		output.put(arg.name);
+		if (arg.specValue.length) {
+			output.highlightDCode(" : ");
+			output.highlightDCode(arg.specValue);
+		}
 		if (arg.defaultValue.length) {
 			output.highlightDCode(" = ");
 			output.highlightDCode(arg.defaultValue);
