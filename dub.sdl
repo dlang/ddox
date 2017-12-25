@@ -8,4 +8,13 @@ dependency "vibe-d:web" version=">=0.7.31 <0.9.0"
 dependency "hyphenate" version="~>1.1.0"
 dependency "libdparse" version="~>0.7.0"
 
-versions "JsonLineNumbers"
+configuration "application" {
+	targetType "executable"
+	mainSourceFile "source/app.d"
+	versions "JsonLineNumbers" "VibeNoSSL"
+}
+
+configuration "library" {
+	targetType "library"
+	excludedSourceFiles "source/app.d"
+}
