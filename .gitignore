@@ -2,6 +2,7 @@
 /ddox
 /__*
 node_modules
+ddox-test-library
 test/screenshots/*.diff.png
 test/screenshots/*.fail.png
 tests/*/test.json
