@@ -1,12 +1,9 @@
 language: d
-services:
-  - docker
+d: dmd-2.078.1
 addons:
   apt:
     packages:
     - libevent-dev
     - libssl-dev
-    - pkg-config
-    - zlib1g-dev
 
 script: ./travis-ci.sh
