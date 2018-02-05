@@ -187,10 +187,11 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 
 	void visitPackage(Package p, Path path)
 	{
+		import std.parallelism : parallel;
 		auto packpath = p.parent ? path ~ PathEntry(p.name) : path;
 		if( !packpath.empty && !existsFile(packpath) ) createDirectory(packpath);
 		foreach( sp; p.packages ) visitPackage(sp, packpath);
-		foreach( m; p.modules ) visitModule(m, packpath);
+		foreach( m; p.modules.parallel(1) ) visitModule(m, packpath);
 	}
 
 	dst_path.normalize();
