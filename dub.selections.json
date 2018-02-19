@@ -9,11 +9,11 @@
 		"libasync": "0.8.3",
 		"libdparse": "0.7.1",
 		"libevent": "2.0.2+2.0.16",
-		"memutils": "0.4.9",
+		"memutils": "0.4.10",
 		"openssl": "1.1.6+1.0.1g",
 		"stdx-allocator": "2.77.0",
 		"taggedalgebraic": "0.10.9",
 		"vibe-core": "1.4.0-alpha.1",
-		"vibe-d": "0.8.3-alpha.1"
+		"vibe-d": "0.8.3-alpha.4+commit.24.g3759bde"
 	}
 }
