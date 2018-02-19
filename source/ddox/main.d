@@ -53,7 +53,7 @@ int cmdGenerateHtml(string[] args)
 	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
 		return ret;
 
-	generateHtmlDocs(Path(args[3]), pack, gensettings);
+	generateHtmlDocs(NativePath(args[3]), pack, gensettings);
 	return 0;
 }
 

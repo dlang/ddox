@@ -24,7 +24,7 @@ import vibe.core.stream;
 import vibe.data.json;
 import vibe.inet.path;
 import vibe.http.server;
-import vibe.stream.wrapper : StreamOutputRange;
+import vibe.stream.wrapper : streamOutputRange;
 import diet.html;
 import diet.traits : dietTraits;
 
@@ -40,7 +40,7 @@ import diet.traits : dietTraits;
 version (Windows) version = CaseInsensitiveFS;
 else version (OSX) version = CaseInsensitiveFS;
 
-void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = null)
+void generateHtmlDocs(NativePath dst_path, Package root, GeneratorSettings settings = null)
 {
 	import std.algorithm : splitter;
 	import vibe.web.common : adjustMethodStyle;
@@ -151,15 +151,17 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		}
 	}
 
-	void writeHashedFile(Path filename, scope void delegate(OutputStream) del)
+	void writeHashedFile(NativePath filename, scope void delegate(OutputStream) del)
 	{
+		import std.range : drop, walkLength;
 		import vibe.stream.memory;
+
 		assert(filename.startsWith(dst_path));
 
 		auto str = createMemoryOutputStream();
 		del(str);
 		auto h = md5Of(str.data).toHexString.idup;
-		auto relfilename = filename[dst_path.length .. $].toString();
+		auto relfilename = NativePath(filename.bySegment.drop(dst_path.bySegment.walkLength)).toString();
 		auto ph = relfilename in file_hashes;
 		if (!ph || *ph != h) {
 			//logInfo("do write %s", filename);
@@ -168,26 +170,28 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		new_file_hashes[relfilename] = h;
 	}
 
-	void visitModule(Module mod, Path pack_path)
+	void visitModule(Module mod, NativePath pack_path)
 	{
-		auto modpath = pack_path ~ PathEntry(mod.name);
+		import std.range : walkLength;
+
+		auto modpath = pack_path ~ NativePath.Segment(mod.name);
 		if (!existsFile(modpath)) createDirectory(modpath);
 		logInfo("Generating module: %s", mod.qualifiedName);
-		writeHashedFile(pack_path ~ PathEntry(mod.name~".html"), (stream) {
-			generateModulePage(stream, root, mod, settings, ent => linkTo(ent, pack_path.length-dst_path.length));
+		writeHashedFile(pack_path ~ NativePath.Segment(mod.name~".html"), (stream) {
+			generateModulePage(stream, root, mod, settings, ent => linkTo(ent, pack_path.bySegment.walkLength-dst_path.bySegment.walkLength));
 		});
 
 		DocGroup[][string] pages;
 		collectChildren(mod, pages);
 		foreach (name, decls; pages)
-			writeHashedFile(modpath ~ PathEntry(name~".html"), (stream) {
-				generateDeclPage(stream, root, mod, name, decls, settings, ent => linkTo(ent, modpath.length-dst_path.length));
+			writeHashedFile(modpath ~ NativePath.Segment(name~".html"), (stream) {
+				generateDeclPage(stream, root, mod, name, decls, settings, ent => linkTo(ent, modpath.bySegment.walkLength-dst_path.bySegment.walkLength));
 			});
 	}
 
-	void visitPackage(Package p, Path path)
+	void visitPackage(Package p, NativePath path)
 	{
-		auto packpath = p.parent ? path ~ PathEntry(p.name) : path;
+		auto packpath = p.parent ? path ~ NativePath.Segment(p.name) : path;
 		if( !packpath.empty && !existsFile(packpath) ) createDirectory(packpath);
 		foreach( sp; p.packages ) visitPackage(sp, packpath);
 		foreach( m; p.modules ) visitModule(m, packpath);
@@ -197,7 +201,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 
 	if( !dst_path.empty && !existsFile(dst_path) ) createDirectory(dst_path);
 
-	writeHashedFile(dst_path ~ PathEntry("index.html"), (stream) {
+	writeHashedFile(dst_path ~ NativePath.Segment("index.html"), (stream) {
 		generateApiIndex(stream, root, settings, ent => linkTo(ent, 0));
 	});
 
@@ -205,7 +209,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 		generateSymbolsJS(stream, root, settings, ent => linkTo(ent, 0));
 	});
 
-	writeHashedFile(dst_path ~ PathEntry("sitemap.xml"), (stream) {
+	writeHashedFile(dst_path ~ NativePath.Segment("sitemap.xml"), (stream) {
 		generateSitemap(stream, root, settings, ent => linkTo(ent, 0));
 	});
 
@@ -214,7 +218,7 @@ void generateHtmlDocs(Path dst_path, Package root, GeneratorSettings settings = 
 	// delete obsolete files
 	foreach (f; file_hashes.byKey)
 		if (f !in new_file_hashes) {
-			try removeFile(dst_path ~ Path(f));
+			try removeFile(dst_path ~ NativePath(f));
 			catch (Exception e) logWarn("Failed to remove obsolete file '%s': %s", f, e.msg);
 		}
 
@@ -248,7 +252,8 @@ struct DdoxDietTraits(HTMLOutputStyle htmlStyle) {
 	enum HTMLOutputStyle htmlOutputStyle = htmlStyle;
 }
 
-void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+void generateSitemap(OutputStream)(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+	if (isOutputStream!OutputStream)
 {
 	dst.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	dst.write("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
@@ -262,10 +267,13 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 
 	void writeEntityRec(Entity ent){
 		import std.string;
-		if( !cast(Package)ent || ent is root_package ){
+		if (!cast(Package)ent || ent is root_package) {
 			auto link = link_to(ent);
-			if( indexOf(link, '#') < 0 ) // ignore URLs with anchors
-				writeEntry((settings.siteUrl ~ Path(link)).toString());
+			if (indexOf(link, '#') < 0) { // ignore URLs with anchors
+				auto p = InetPath(link);
+				p.normalize();
+				writeEntry((settings.siteUrl ~ p).toString());
+			}
 		}
 		ent.iterateChildren((ch){ writeEntityRec(ch); return true; });
 	}
@@ -276,13 +284,14 @@ void generateSitemap(OutputStream dst, Package root_package, GeneratorSettings s
 	dst.flush();
 }
 
-void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to)
+void generateSymbolsJS(OutputStream)(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to)
+	if (isOutputStream!OutputStream)
 {
 	import std.typecons : Tuple, tuple;
 
 	bool[Tuple!(Entity, CachedString)] visited;
 
-	auto rng = StreamOutputRange(dst);
+	auto rng = streamOutputRange(dst);
 
 	void writeEntry(Entity ent) {
 		auto key = tuple(ent.parent, ent.name);
@@ -312,7 +321,8 @@ void generateSymbolsJS(OutputStream dst, Package root_package, GeneratorSettings
 	rng.put("];\n");
 }
 
-void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+void generateApiIndex(OutputStream)(OutputStream dst, Package root_package, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+	if (isOutputStream!OutputStream)
 {
 	auto info = new DocPageInfo;
 	info.linkTo = link_to;
@@ -320,7 +330,7 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	info.rootPackage = root_package;
 	info.node = root_package;
 
-	auto rng = StreamOutputRange(dst);
+	auto rng = streamOutputRange(dst);
 	final switch (settings.htmlOutputStyle)
 	{
 		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
@@ -332,7 +342,8 @@ void generateApiIndex(OutputStream dst, Package root_package, GeneratorSettings 
 	}
 }
 
-void generateModulePage(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+void generateModulePage(OutputStream)(OutputStream dst, Package root_package, Module mod, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+	if (isOutputStream!OutputStream)
 {
 	auto info = new DocPageInfo;
 	info.linkTo = link_to;
@@ -342,7 +353,7 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	info.node = mod;
 	info.docGroups = null;
 
-	auto rng = StreamOutputRange(dst);
+	auto rng = streamOutputRange(dst);
 	final switch (settings.htmlOutputStyle)
 	{
 		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
@@ -354,7 +365,8 @@ void generateModulePage(OutputStream dst, Package root_package, Module mod, Gene
 	}
 }
 
-void generateDeclPage(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+void generateDeclPage(OutputStream)(OutputStream dst, Package root_package, Module mod, string nested_name, DocGroup[] docgroups, GeneratorSettings settings, string delegate(in Entity) link_to, HTTPServerRequest req = null)
+	if (isOutputStream!OutputStream)
 {
 	import std.algorithm : sort;
 
@@ -368,7 +380,7 @@ void generateDeclPage(OutputStream dst, Package root_package, Module mod, string
 	sort!((a, b) => cmpKind(a.members[0], b.members[0]))(info.docGroups);
 	info.nestedName = nested_name;
 
-	auto rng = StreamOutputRange(dst);
+	auto rng = streamOutputRange(dst);
 	final switch (settings.htmlOutputStyle)
 	{
 		foreach (htmlOutputStyle; EnumMembers!HTMLOutputStyle)
