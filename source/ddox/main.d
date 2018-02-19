@@ -46,9 +46,8 @@ int ddoxMain(string[] args)
 	return 1;
 }
 
-int cmdGenerateHtml(string[] args)
+int cmdGenerateHtml(string[] args, GeneratorSettings gensettings = new GeneratorSettings())
 {
-	GeneratorSettings gensettings;
 	Package pack;
 	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
 		return ret;
@@ -57,14 +56,13 @@ int cmdGenerateHtml(string[] args)
 	return 0;
 }
 
-int cmdServeHtml(string[] args)
+int cmdServeHtml(string[] args, GeneratorSettings gensettings = new GeneratorSettings())
 {
 	string[] webfiledirs;
 	getopt(args,
 		config.passThrough,
 		"web-file-dir", &webfiledirs);
 
-	GeneratorSettings gensettings;
 	Package pack;
 	if( auto ret = setupGeneratorInput(args, gensettings, pack) )
 		return ret;
@@ -84,11 +82,9 @@ int cmdServeHtml(string[] args)
 	return runEventLoop();
 }
 
-int cmdServeTest(string[] args)
+int cmdServeTest(string[] args, GeneratorSettings gensettings = new GeneratorSettings(), DdoxSettings docsettings = new DdoxSettings())
 {
 	string[] webfiledirs;
-	auto docsettings = new DdoxSettings;
-	auto gensettings = new GeneratorSettings;
 
 	auto pack = parseD(args[2 .. $]);
 
@@ -111,7 +107,9 @@ int cmdServeTest(string[] args)
 
 int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, out Package pack)
 {
-	gensettings = new GeneratorSettings;
+	if (gensettings is null)
+		gensettings = new GeneratorSettings;
+
 	auto docsettings = new DdoxSettings;
 
 	string[] macrofiles;
@@ -153,7 +151,7 @@ int setupGeneratorInput(ref string[] args, out GeneratorSettings gensettings, ou
 	return 0;
 }
 
-int cmdFilterDocs(string[] args)
+int cmdFilterDocs(string[] args, GeneratorSettings generatorSettings = new GeneratorSettings())
 {
 	string[] excluded, included;
 	Protection minprot = Protection.Private;
@@ -225,6 +223,8 @@ int cmdFilterDocs(string[] args)
 					if (last_decl["comment"].opt!string.empty) {
 						writefln("Warning: Cannot add documented unit test %s to %s, which is not documented.", name, last_decl["name"].opt!string);
 					} else {
+						if (generatorSettings.postUnittestSourceCode !is null)
+							source = generatorSettings.postUnittestSourceCode(source);
 						last_decl["comment"] ~= format("Example:\n%s$(DDOX_UNITTEST_HEADER %s)\n---\n%s\n---\n$(DDOX_UNITTEST_FOOTER %s)\n", comment.strip, name, source, name);
 					}
 				} catch (Exception e) {
