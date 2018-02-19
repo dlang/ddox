@@ -161,7 +161,10 @@ void generateHtmlDocs(NativePath dst_path, Package root, GeneratorSettings setti
 		auto str = createMemoryOutputStream();
 		del(str);
 		auto h = md5Of(str.data).toHexString.idup;
-		auto relfilename = NativePath(filename.bySegment.drop(dst_path.bySegment.walkLength)).toString();
+		version (Have_vibe_core)
+			auto relfilename = NativePath(filename.bySegment.drop(dst_path.bySegment.walkLength)).toString();
+		else
+			auto relfilename = NativePath(filename.bySegment.drop(dst_path.bySegment.walkLength), false).toString();
 		auto ph = relfilename in file_hashes;
 		if (!ph || *ph != h) {
 			//logInfo("do write %s", filename);
