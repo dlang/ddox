@@ -10,6 +10,8 @@ dependency "libdparse" version="~>0.7.0"
 
 configuration "application" {
 	targetType "executable"
+	// Temporarily disabled to work around dlang/dub#1407
+	// mainSourceFile "source/app.d"
 	versions "JsonLineNumbers" "VibeNoSSL"
 }
 
