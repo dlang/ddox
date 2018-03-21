@@ -10,7 +10,6 @@ dependency "libdparse" version="~>0.7.0"
 
 configuration "application" {
 	targetType "executable"
-	mainSourceFile "source/app.d"
 	versions "JsonLineNumbers" "VibeNoSSL"
 }
 
