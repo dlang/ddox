@@ -5,11 +5,11 @@
 - void outputFunctionPrototype(FunctionDeclaration item)
 	- auto docgroup = item.docGroup;
 	- auto mems = docgroup.members;
-	- foreach( size_t pi, pd; mems )
+	- foreach (size_t pi, pd; mems)
 		- auto proto = cast(FunctionDeclaration)pd;
-		- if( !proto ) continue;
+		- if (!proto) continue;
 		- auto attribs = proto.attributes.dup;
-		- if( pi > 0 )
+		- if (pi > 0)
 			br
 			br
 		- auto rettype = proto.name == "this" ? "" : info.formatType(proto.returnType, false) ~ " ";
@@ -26,27 +26,24 @@
 		- if (!proto.templateConstraint.length) attribute_suffix ~= "<span class=\"pun\">;</span>";
 
 		- if (proto.parameters.length)
-			| !{attribute_prefix}!{rettype}<span class="pln">#{proto.name}</span>
+			| !{attribute_prefix}!{rettype}#[span.pln= proto.name]
 			- info.renderTemplateArgs(&_diet_output, proto);
-			| <span class="pun">(</span>
+			span.pun (
 			br
 			- foreach (size_t i, p; proto.parameters)
 				- auto pattribs = highlightDCode(getAttributeString(p.attributes, AttributeStringKind.normal));
 				- auto suffix = i+1 < proto.parameters.length ? "<span class=\"pun\">,</span>" : variadic_suffix;
 				- if (p.initializer)
-					| &nbsp;&nbsp;!{pattribs}!{info.formatType(p.type, false)} <span class="pln">#{p.name}</span> <span class="pun">=</span> !{highlightDCode(p.initializer.valueString)}!{suffix}
+					| &nbsp;&nbsp;!{pattribs}!{info.formatType(p.type, false)} #[span.pln= p.name] #[span.pun =] !{highlightDCode(p.initializer.valueString)}!{suffix}
 				- else
-					| &nbsp;&nbsp;!{pattribs}!{info.formatType(p.type, false)} <span class="pln">#{p.name}</span>!{suffix}
+					| &nbsp;&nbsp;!{pattribs}!{info.formatType(p.type, false)} #[span.pln= p.name]!{suffix}
 				br
-			|<span class="pun">)</span>!{attribute_suffix}
+			|#[span.pun )]!{attribute_suffix}
 		- else
-			| !{attribute_prefix}!{rettype}<span class="pln">#{proto.name}
+			| !{attribute_prefix}!{rettype}#[span.pln= proto.name]
 			- info.renderTemplateArgs(&_diet_output, proto);
-			- if (variadic_suffix)
-				| <span class="pun">(</span>!{variadic_suffix}<span class="pun">)</span>!{attribute_suffix}
-			- else
-				| <span class="pun">()</span>!{attribute_suffix}
+			| #[span.pun<> (]!{variadic_suffix}#[span.pun )]!{attribute_suffix}
 
 		- if (proto.templateConstraint.length)
 			br
-			|<span class="kwd">if</span> <span class="pun">(</span>!{highlightDCode(proto.templateConstraint)}<span class="pun">);</span>
+			|#[span.kwd if] #[span.pun (]!{highlightDCode(proto.templateConstraint)}#[span.pun );]
