@@ -3,17 +3,17 @@
 	"versions": {
 		"botan": "1.12.9",
 		"botan-math": "1.0.3",
-		"diet-ng": "1.4.4",
-		"eventcore": "0.8.27",
+		"diet-ng": "1.4.5",
+		"eventcore": "0.8.34+commit.4.g745e4ea",
 		"hyphenate": "1.1.1",
 		"libasync": "0.8.3",
-		"libdparse": "0.7.1",
+		"libdparse": "0.8.4",
 		"libevent": "2.0.2+2.0.16",
 		"memutils": "0.4.10",
 		"openssl": "1.1.6+1.0.1g",
-		"stdx-allocator": "2.77.0",
-		"taggedalgebraic": "0.10.9",
-		"vibe-core": "1.4.0-alpha.1",
-		"vibe-d": "0.8.3-alpha.4+commit.24.g3759bde"
+		"stdx-allocator": "2.77.1",
+		"taggedalgebraic": "0.10.11",
+		"vibe-core": "1.4.0",
+		"vibe-d": "0.8.3"
 	}
 }

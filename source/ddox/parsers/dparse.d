@@ -157,7 +157,7 @@ private struct DParser
 			ret ~= fdr;
 		} else if (auto vd = decl.variableDeclaration) {
 			comment = vd.comment.undecorateComment();
-			line = vd.declarators[0].name.line;
+			line = vd.declarators.length ? vd.declarators[0].name.line : vd.autoDeclaration.parts[0].identifier.line;
 			foreach (d; vd.declarators) {
 				auto v = new VariableDeclaration(parent, d.name.text.idup);
 				resolveTypeDeferred(&v.type, vd.type, parent);
@@ -358,23 +358,26 @@ private struct DParser
 
 	Type parseType(in dparse.Type2 type, Entity scope_)
 	{
+		import dparse.ast : TypeIdentifierPart;
+
 		Type ret;
 		if (type.builtinType) {
 			ret.kind = TypeKind.Primitive;
 			ret.typeName = dlex.str(type.builtinType);
-		} else if (type.symbol) {
-			ret.kind = TypeKind.Primitive;
-			ret.typeName = formatNode(type.symbol);
-			resolveTypeDecl(ret, scope_);
 		} else if (auto te = type.typeofExpression) {
 			ret.kind = TypeKind.Primitive;
 			ret.typeName = formatNode(te.expression);
-			// te.return_?
-		} else if (auto itc = type.identifierOrTemplateChain) {
+		} else if (auto ti = type.typeIdentifierPart) {
 			ret.kind = TypeKind.Primitive;
-			ret.typeName = itc.identifiersOrTemplateInstances
-				.map!(it => it.templateInstance ? formatNode(it.templateInstance) : it.identifier.text.idup)
-				.join(".");
+			for (Rebindable!(const(TypeIdentifierPart)) i = ti; i; i = i.typeIdentifierPart) {
+				if (i.dot) ret.typeName ~= ".";
+				auto iot = i.identifierOrTemplateInstance;
+				if (iot.templateInstance) {
+					ret.typeName ~= formatNode(iot.templateInstance);
+				} else {
+					ret.typeName ~= iot.identifier.text.idup;
+				}
+			}
 			resolveTypeDecl(ret, scope_);
 		} else if (auto tc = type.typeConstructor) {
 			ret = parseType(type.type, scope_);
