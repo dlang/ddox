@@ -30,6 +30,10 @@ PID=$!
 cleanup() { kill $PID; }
 trap cleanup EXIT
 
+# Don't run the phantomcss-tester on the Project Tester (no docker available)
+if [ "${DETERMINISTIC_HINT:-0}" -eq 1 ] ; then
+    exit 0
+fi
 
 bridgeip=$(ip -4 addr show dev docker0 | sed -n 's|.*inet \(.*\)/.*|\1|p')
 if ! docker run --rm --env LISTEN_ADDR="http://$bridgeip:8080" \
