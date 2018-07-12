@@ -207,7 +207,7 @@ class DdocComment {
 
 		foreach (s; m_sections) {
 			if (display_section && !display_section(s.name)) continue;
-			parseSection(dst, s.name, s.lines, context, hlevel, allmacros);
+			parseSection(dst, s.name, s.lines.dup, context, hlevel, allmacros);
 		}
 	}
 
