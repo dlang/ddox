@@ -63,6 +63,7 @@
 						td
 							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))
 								code= p.name
+							span.tableEntryAnnotation (#{p.parameters.map!(param => param.name[]).joiner(", ")})
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- if( hasChild!VariableDeclaration(item) )
@@ -112,6 +113,7 @@
 						td
 							a(href="#{info.linkTo(p)}", class=declStyleClasses(p))
 								code= p.name
+							span.tableEntryAnnotation (#{p.parameters.map!(param => param.name[]).joiner(", ")})
 						td!= info.formatDoc(p.docGroup, 3, sec => sec == "$Short")
 
 	- foreach( i, kind; kinds )
