@@ -17,9 +17,8 @@
 			- foreach (i, attr; attribs)
 				- if (attr == "auto")
 					- rettype = highlightDCode(attr) ~ " ";
-					- attribs[i] = attribs[$-1];
-					- attribs.length--;
 					- break;
+		- attribs = attribs.remove!(a => a.str == "auto");
 		- auto attribute_prefix = highlightDCode(getAttributeString(attribs, AttributeStringKind.functionPrefix));
 		- auto attribute_suffix = highlightDCode(getAttributeString(attribs, AttributeStringKind.functionSuffix));
 		- auto variadic_suffix = highlightDCode(getVariadicSuffix(proto.type));
