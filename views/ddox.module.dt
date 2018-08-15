@@ -36,7 +36,7 @@ block ddox.members
 								code
 									a(id=grp.name[], class=declStyleClasses(grp), href=info.linkTo(grp))= grp.name
 									- if (auto fd = cast(FunctionDeclaration)grp)
-										span.decoration (#{fd.parameters.map!(p => p.name[]).joiner(", ")})
+										span.tableEntryAnnotation (#{fd.parameters.map!(p => p.name[]).joiner(", ")})
 							td!= info.formatDoc(grp.docGroup, 3, sec => sec == "$Short")
 
 	- alias TypeTuple!(EnumMemberDeclaration, VariableDeclaration, AliasDeclaration) tkinds;
