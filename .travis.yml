@@ -1,5 +1,4 @@
 language: d
-d: dmd-2.078.1
 addons:
   apt:
     packages:
