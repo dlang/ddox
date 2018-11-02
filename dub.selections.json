@@ -7,7 +7,7 @@
 		"eventcore": "0.8.35",
 		"hyphenate": "1.1.1",
 		"libasync": "0.8.3",
-		"libdparse": "0.8.7",
+		"libdparse": "0.9.10",
 		"libevent": "2.0.2+2.0.16",
 		"memutils": "0.4.11",
 		"mir-linux-kernel": "1.0.0",
