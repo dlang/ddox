@@ -30,13 +30,13 @@ struct S
 	}
 
 	///
-	ref S foo() return scope
+	ref S bar() return scope
 	{
 		return this;
 	}
 
 	///
-	S foo() return scope
+	S baz() return scope
 	{
 		return this;
 	}
