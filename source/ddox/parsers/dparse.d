@@ -328,7 +328,7 @@ private struct DParser
 			ret.initializer.type = ret.type;
 			ret.initializer.valueString = formatNode(dparam.default_);
 		}
-		addAttributes(ret, dparam.parameterAttributes.map!(a => dlex.str(a)).array);
+		addAttributes(ret, dparam.parameterAttributes.map!(a => dlex.str(a.idType)).array);
 		return ret;
 	}
 
