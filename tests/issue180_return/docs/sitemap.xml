@@ -6,8 +6,8 @@
 <url><loc>http://127.0.0.1/test/foo.html</loc></url>
 <url><loc>http://127.0.0.1/test/foo.html</loc></url>
 <url><loc>http://127.0.0.1/test/S.html</loc></url>
-<url><loc>http://127.0.0.1/test/S.foo.html</loc></url>
-<url><loc>http://127.0.0.1/test/S.foo.html</loc></url>
+<url><loc>http://127.0.0.1/test/S.bar.html</loc></url>
+<url><loc>http://127.0.0.1/test/S.baz.html</loc></url>
 <url><loc>http://127.0.0.1/test/S.foo.html</loc></url>
 <url><loc>http://127.0.0.1/test/S.p.html</loc></url>
 </urlset>
