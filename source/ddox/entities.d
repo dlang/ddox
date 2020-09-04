@@ -559,7 +559,7 @@ struct CachedType {
 		return ct;
 	}
 
-	this(in ref Type tp)
+	this(const ref Type tp)
 	{
 		this.type = tp;
 	}
