@@ -222,4 +222,3 @@ private bool isCamelCase(string text)
 	if (!text.any!(ch => ch.isLower)) return false;
 	return true;
 }
-
