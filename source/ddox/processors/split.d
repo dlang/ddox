@@ -34,11 +34,11 @@ void splitDocGroups(Package root, bool by_name, bool by_type, bool case_insensit
 				foreach (g; new_groups)
 					if (match(g.members[0], child)) {
 						g.members ~= child;
-						continue next_child;	
+						continue next_child;
 					}
 				new_groups ~= new DocGroup(child, dg.text, dg.comment);
 			}
-			
+
 			foreach (g; new_groups)
 				foreach (m; g.members)
 					m.docGroup = g;

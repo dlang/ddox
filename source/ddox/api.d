@@ -106,7 +106,7 @@ class DocGroupContext : DdocContext {
 			name = name[1 .. $];
 			assert(name.length > 0, "Missing identifier after dot!");
 		}
-		
+
 		foreach( def; m_group.members ){
 			Entity n, nmod;
 			if (is_global) {

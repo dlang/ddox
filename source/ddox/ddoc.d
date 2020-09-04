@@ -713,7 +713,7 @@ private void renderMacro(R)(ref R dst, ref string line, DdocContext context, str
 				dst.put(sym.data);
 				dst.put(`">`);
 			}
-			dst.renderMacros("$+", context, macros, args, callstack);			
+			dst.renderMacros("$+", context, macros, args, callstack);
 			if (link.uri.length) dst.put("</a>");
 		} else if (pm) {
 			logTrace("MACRO %s: %s", mname, *pm);

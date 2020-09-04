@@ -38,7 +38,7 @@ void processDocs(Package root, DdoxSettings settings)
 	if (settings.moduleSort != SortMode.none) {
 		auto mpred = sortPred(settings.moduleSort);
 		sortModules!((a, b)  => mpred(a, b))(root);
-		
+
 		import std.algorithm;
 		bool package_order(Package a, Package b){
 			auto ia = settings.packageOrder.countUntil(a.name);
@@ -90,4 +90,3 @@ private bool function(Entity, Entity) sortPred(SortMode mode)
 			};
 	}
 }
-

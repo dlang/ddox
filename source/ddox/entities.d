@@ -187,7 +187,7 @@ class Entity {
 						ret = res;
 						return false;
 					}
-					return true; 
+					return true;
 				});
 				return cast(inout)ret;
 			}
@@ -407,7 +407,7 @@ class CompositeTypeDeclaration : Declaration {
 
 	override @property string kindCaption() const { return "Composite type"; }
 	override abstract @property DeclarationKind kind() const;
- 
+
 	this(Entity parent, string name){ super(parent, name); }
 
 	override void iterateChildren(scope bool delegate(Entity) del)
@@ -559,7 +559,7 @@ struct CachedType {
 		return ct;
 	}
 
-	this(in ref Type tp)
+	this(const ref Type tp)
 	{
 		this.type = tp;
 	}
@@ -630,7 +630,7 @@ struct Type {
 
 		final switch( kind ){
 			case TypeKind.Primitive: return typeName == other.typeName;
-			case TypeKind.Pointer: 
+			case TypeKind.Pointer:
 			case TypeKind.Array: return elementType == other.elementType;
 			case TypeKind.StaticArray: return elementType == other.elementType && arrayLength == other.arrayLength;
 			case TypeKind.AssociativeArray: return elementType == other.elementType && keyType == other.keyType;

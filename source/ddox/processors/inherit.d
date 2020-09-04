@@ -16,7 +16,7 @@ import std.algorithm : map;
 void inheritDocs(Package root)
 {
 	bool[CompositeTypeDeclaration] visited;
-	
+
 	bool matches(Declaration a, Declaration b)
 	{
 		if (a.kind != b.kind) return false;
