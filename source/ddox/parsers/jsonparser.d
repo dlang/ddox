@@ -346,7 +346,7 @@ private struct Parser
 
 	Type parseType(Json json, Entity sc, string def_type = "void", bool warn_if_not_exists = true)
 		out(ret) { assert(!def_type.length || ret != Type.init); }
-	body {
+	do {
 		string str;
 		if( json.type == Json.Type.Undefined ){
 			if (warn_if_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
@@ -365,7 +365,7 @@ private struct Parser
 
 	Type parseType(string str, Entity sc)
 		out(ret) { assert(ret != Type.init); }
-	body {
+	do {
 		auto tokens = tokenizeDSource(str);
 
 		logDebug("parse type '%s'", str);
@@ -418,7 +418,7 @@ private struct Parser
 
 	Type parseBasicType(ref string[] tokens, Entity sc, out CachedString[] attributes)
 		out(ret) { assert(ret != Type.init); }
-	body {
+	do {
 		static immutable global_attribute_keywords = ["abstract", "auto", "const", "deprecated", "enum",
 			"extern", "final", "immutable", "inout", "shared", "nothrow", "override", "pure",
 			"__gshared", "scope", "static", "synchronize"];

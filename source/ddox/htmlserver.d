@@ -209,7 +209,7 @@ void registerApiDocs(URLRouter router, Package pack, GeneratorSettings settings 
 		}
 
 		if (req.headers.get("If-None-Match", "") == symbols_js_md5) {
-			res.statusCode = HTTPStatus.NotModified;
+			res.statusCode = HTTPStatus.notModified;
 			res.writeVoidBody();
 			return;
 		}
