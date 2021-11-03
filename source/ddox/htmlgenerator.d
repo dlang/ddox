@@ -20,9 +20,9 @@ import std.traits : EnumMembers;
 import std.variant;
 import vibe.core.log;
 import vibe.core.file;
+import vibe.core.path;
 import vibe.core.stream;
 import vibe.data.json;
-import vibe.inet.path;
 import vibe.http.server;
 import vibe.stream.wrapper : streamOutputRange;
 import diet.html;
@@ -55,7 +55,7 @@ void generateHtmlDocs(NativePath dst_path, Package root, GeneratorSettings setti
 					~ "lower/upper case styles with the --file-name-style "
 					~ "option to avoid missing files in the generated output.");
 				break;
-			case lowerCase, upperCase, lowerUnderscored, upperUnderscored:
+			case lowerCase, upperCase, lowerUnderscored, upperUnderscored, lowerDashed, upperDashed:
 				break;
 		}
 	}

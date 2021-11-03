@@ -569,6 +569,16 @@ struct CachedType {
 		this.type = tp;
 	}
 
+	void opAssign(const ref Type tp)
+	{
+		this.type = tp;
+	}
+
+	void opAssign(Type tp)
+	{
+		this.type = tp;
+	}
+
 	bool opCast() const { return m_id != uint.max; }
 
 	@property ref const(Type) type() const { return m_id == uint.max ? s_emptyType : s_types[m_id]; }
@@ -654,6 +664,11 @@ struct CachedString {
 	}
 
 	this(string str) { this.str = str; }
+
+	void opAssign(string str)
+	{
+		this.str = str;
+	}
 
 	string toString() const { return this.str; }
 
