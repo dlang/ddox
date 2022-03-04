@@ -44,7 +44,7 @@ class DdoxSettings {
 class GeneratorSettings {
 	NavigationType navigationType = NavigationType.moduleTree;
 	/// used for sitemap generation and for determining the URL prefix in registerApiDocs()
-	URL siteUrl = URL("http://localhost:8080/");
+	URL siteUrl = URL("http", "localhost", 8080, InetPath("/"));
 	/// focus search field on load
 	bool focusSearchField = false;
 	/// Defines how symbol names are mapped to file names when generating file based documentation (useful for case insensitive file systems)
