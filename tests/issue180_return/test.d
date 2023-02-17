@@ -30,7 +30,7 @@ struct S
 	}
 
 	///
-	ref S bar() return scope
+	ref S bar() scope return
 	{
 		return this;
 	}
