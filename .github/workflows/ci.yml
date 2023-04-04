@@ -33,5 +33,4 @@ jobs:
                 CONFIG: ${{matrix.config}}
                 ARCH: ${{matrix.arch}}
               shell: bash
-              run: |
-                dub test
+              run: ./travis-ci.sh
