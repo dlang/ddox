@@ -164,11 +164,11 @@ class Entity {
 	inout {
 		assert(qualified_name.length > 0, "Looking up empty name.");
 		auto parts = split(qualified_name, ".");
-		Entity e = cast(Entity)this;
+		Entity[] e = [cast(Entity)this];
 		foreach (i, p; parts) {
-			if( i+1 < parts.length ) e = e.findChild(p);
-			else return cast(inout)e.findChildren!T(p);
-			if( !e ) return null;
+			if (i+1 < parts.length) e = e.map!(ee => ee.findChildren(p)).join;
+			else return cast(inout)e.map!(ee => ee.findChildren!T(p)).join;
+			if (!e.length) return null;
 		}
 		return null;
 	}
