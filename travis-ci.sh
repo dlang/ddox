@@ -2,14 +2,21 @@
 
 set -xueo pipefail
 
-dub test --compiler=${DC:=dmd}
+if [[ ${DC:-} == "" ]]; then
+    if [[ ${COMPILER:-} == *"ldc"* ]]; then DC=ldc2; DMD=ldmd2
+    elif [[ ${COMPILER:-} == *"gdc"* ]]; then DC=gdc; DMD=gdmd
+    else DC=dmd; DMD=dmd
+    fi
+fi
+
+dub test --compiler=${DC}
 dub build --compiler=${DC}
 
 failure=0
 shopt -s globstar # for **/*.d expansion
 for dir in tests/*; do
     pushd $dir
-    ${DMD:-dmd} -Xftest.json -Df__dummy.html -c -o- **/*.d
+    ${DMD:-dmd} -Xftest.json -Dd__dummy_html -c -o- **/*.d
     if [ -f .filter_args ]; then
         filter_args=$(cat .filter_args)
     fi

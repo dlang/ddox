@@ -32,5 +32,6 @@ jobs:
               env:
                 CONFIG: ${{matrix.config}}
                 ARCH: ${{matrix.arch}}
+                COMPILER: ${{matrix.dc}}
               shell: bash
-              run: ./travis-ci.sh
+              run: DC= ./travis-ci.sh
