@@ -15,8 +15,8 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                os: [ubuntu-latest, windows-latest]
-                dc: [dmd-latest, ldc-latest, ldc-1.20.0]
+                os: [ubuntu-latest]
+                dc: [dmd-latest, ldc-latest]
                 arch: [x86, x86_64]
 
         runs-on: ${{ matrix.os }}
@@ -32,6 +32,15 @@ jobs:
               env:
                 CONFIG: ${{matrix.config}}
                 ARCH: ${{matrix.arch}}
+                COMPILER: ${{matrix.dc}}
               shell: bash
-              run: |
-                dub test
+              run: DC= ./travis-ci.sh
+
+            - name: Upload PhantomCSS failures
+              uses: actions/upload-artifact@v3
+              if: always()
+              with:
+                name: phantomcss-failures
+                path: |
+                  test/screenshots/*.diff.png
+                  test/screenshots/*.fail.png

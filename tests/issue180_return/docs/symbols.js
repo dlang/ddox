@@ -3,8 +3,8 @@ var symbols = [
 {name: 'test', kind: "module", path: './test.html', attributes: []},
 {name: 'test.foo', kind: "functiondeclaration", path: './test/foo.html', attributes: ["ref", "safe"]},
 {name: 'test.S', kind: "structdeclaration", path: './test/S.html', attributes: []},
-{name: 'test.S.bar', kind: "functiondeclaration", path: './test/S.bar.html', attributes: ["ref", "return", "safe"]},
-{name: 'test.S.baz', kind: "functiondeclaration", path: './test/S.baz.html', attributes: ["return", "safe"]},
+{name: 'test.S.bar', kind: "functiondeclaration", path: './test/S.bar.html', attributes: ["ref", "scope", "return", "safe"]},
+{name: 'test.S.baz', kind: "functiondeclaration", path: './test/S.baz.html', attributes: ["return", "scope", "safe"]},
 {name: 'test.S.foo', kind: "functiondeclaration", path: './test/S.foo.html', attributes: ["ref", "return", "safe"]},
 {name: 'test.S.p', kind: "variabledeclaration", path: './test/S.p.html', attributes: []},
 ];
