@@ -55,12 +55,6 @@ trap cleanup EXIT
 bridgeip=$(ip -4 addr show dev docker0 | sed -n 's|.*inet \(.*\)/.*|\1|p')
 if ! docker run --rm --env LISTEN_ADDR="http://$bridgeip:8080" \
      --volume=$PWD/test:/usr/src/app/test martinnowak/phantomcss-tester test test/test.js; then
-    # upload failing screenshots
-    cd test/screenshots
-    for img in *.{diff,fail}.png; do
-        ARGS="${ARGS:-} -F name=@$img"
-    done
-    curl -fsSL https://img.vim-cn.com/ ${ARGS:-}
     echo "FAILED: PhantomCSS test failed"
     failure=1
 fi

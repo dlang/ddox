@@ -35,3 +35,12 @@ jobs:
                 COMPILER: ${{matrix.dc}}
               shell: bash
               run: DC= ./travis-ci.sh
+
+            - name: Upload PhantomCSS failures
+              uses: actions/upload-artifact@v3
+              if: always()
+              with:
+                name: phantomcss-failures
+                path: |
+                  test/screenshots/*.diff.png
+                  test/screenshots/*.fail.png
