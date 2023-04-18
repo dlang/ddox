@@ -16,7 +16,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest]
-                dc: [dmd-latest, ldc-latest]
+                dc: [dmd-latest, ldc-latest, dmd-master]
                 arch: [x86, x86_64]
 
         runs-on: ${{ matrix.os }}
