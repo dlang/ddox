@@ -3,7 +3,7 @@ description "Powerful alternative to DMD's DDOC engine."
 authors "Sönke Ludwig"
 license "MIT"
 
-dependency "vibe-d:web" version=">=0.7.31 <0.10.0-0"
+dependency "vibe-d:web" version=">=0.8.0 <0.11.0-0"
 dependency "hyphenate" version="~>1.1.0"
 dependency "libdparse" version="~>0.15.4"
 
