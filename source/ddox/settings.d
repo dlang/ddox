@@ -61,4 +61,10 @@ class GeneratorSettings {
 	@property bool lowerCase() const { return fileNameStyle == MethodStyle.lowerCase; }
 	deprecated("Use fileNameStyle = MethodStyle.lowerCase instead.")
 	@property void lowerCase(bool v) { fileNameStyle = MethodStyle.lowerCase; }
+
+	/**
+	Custom delegate that is called after the unittest source code has been parsed
+	Can be used to inject custom logic like an assert/writeln transformation.
+	*/
+	string delegate(string) postUnittestSourceCode;
 }
