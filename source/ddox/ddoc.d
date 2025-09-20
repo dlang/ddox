@@ -1,4 +1,4 @@
-﻿/**
+/**
 	DietDoc/DDOC support routines
 
 	Copyright: © 2012-2016 RejectedSoftware e.K.
@@ -191,6 +191,14 @@ class DdocComment {
 	/// The macros contained in the "Macros" section (if any)
 	@property const(string[string]) macros() const { return m_macros; }
 
+	/** All sections of the comment that contain visible text in original order
+
+		Note that any "Macro" section is not included, whereas the special
+		sections "$Short", "$Long" and "Params" are included, just as any
+		user defined sections.
+	*/
+	@property const(Section)[] sections() const { return m_sections; }
+
 	bool hasSection(string name) const { return m_sections.canFind!(s => s.name == name); }
 
 	void renderSectionR(R)(ref R dst, DdocContext context, string name, int hlevel = 2)
@@ -270,8 +278,14 @@ private enum {
 	SECTION
 }
 
-private struct Section {
+
+/// Represents a single section within a Ddoc comment
+struct Section {
+	/// Name of the section as specified in the Ddoc comment
 	string name;
+
+	/** Raw text contents of the section.
+	*/
 	string[] lines;
 
 	this(string name, string[] lines...)
