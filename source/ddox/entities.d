@@ -19,6 +19,7 @@ class Entity {
 	CachedString name;
 	DocGroup docGroup;
 
+@safe:
 	this(Entity parent, string name)
 	{
 		this.parent = parent;
@@ -74,8 +75,8 @@ class Entity {
 	@property const(Module) module_()
 	const {
 		Rebindable!(const(Entity)) e = this;
-		while (e && !cast(const(Module))e) e = e.parent;
-		return cast(const(Module))e;
+		while (e && !cast(const(Module))e.get) e = e.parent;
+		return cast(const(Module))e.get;
 	}
 	@property Module module_()
 	{
@@ -89,7 +90,7 @@ class Entity {
 		string s = name;
 		Rebindable!(const(Entity)) e = parent;
 		while( e && e.parent ){
-			if (cast(const(Module))e) break;
+			if (cast(const(Module))e.get) break;
 			s = e.name ~ "." ~ s;
 			e = e.parent;
 		}
@@ -108,10 +109,11 @@ class Entity {
 		return false;
 	}
 
-	abstract void iterateChildren(scope bool delegate(Entity) del);
+	abstract void iterateChildren(scope bool delegate(Entity) @safe del);
+	abstract void iterateChildren(scope bool delegate(Entity) @system del) @system;
 
 	final inout(T) findChild(T = Entity)(string name)
-	inout {
+	@trusted inout {
 		T ret;
 		(cast(Entity)this).iterateChildren((ch) {
 			if (ch.name == name) {
@@ -124,7 +126,7 @@ class Entity {
 	}
 
 	final inout(T)[] findChildren(T = Entity)(string name)
-	inout {
+	@trusted inout {
 		inout(T)[] ret;
 		(cast(Entity)this).iterateChildren((ch) {
 			if (ch.name == name) {
@@ -137,7 +139,7 @@ class Entity {
 	}
 
 	final inout(T) lookup(T = Entity)(string qualified_name, bool recurse = true)
-	inout {
+	@trusted inout {
 		assert(qualified_name.length > 0, "Looking up empty name.");
 		auto parts = split(qualified_name, ".");
 		Entity e = cast(Entity)this;
@@ -161,7 +163,7 @@ class Entity {
 	}
 
 	final inout(T)[] lookupAll(T = Entity)(string qualified_name)
-	inout {
+	@trusted inout {
 		assert(qualified_name.length > 0, "Looking up empty name.");
 		auto parts = split(qualified_name, ".");
 		Entity[] e = [cast(Entity)this];
@@ -174,7 +176,7 @@ class Entity {
 	}
 
 	final inout(Entity) lookdown(string qualified_name, bool stop_at_module_level = false)
-	inout {
+	@trusted inout {
 		auto parts = split(qualified_name, ".");
 		Entity e = cast(Entity)this;
 		foreach (p; parts) {
@@ -195,8 +197,27 @@ class Entity {
 		return cast(inout)e;
 	}
 
+	void visit(T)(scope void delegate(T) @safe del)
+	@trusted {
+		if (auto t = cast(T)this) del(t);
+		iterateChildren((ch) {
+			ch.visit!T(del);
+			return true;
+		});
+	}
+
+	void visit(T)(scope void delegate(T) @safe del)
+	@trusted const {
+		Entity uthis = cast(Entity)this;
+		if (auto t = cast(Unqual!T)uthis) del(t);
+		uthis.iterateChildren((ch) {
+			(cast(const)ch).visit!T(del);
+			return true;
+		});
+	}
+
 	void visit(T)(scope void delegate(T) del)
-	{
+	@system {
 		if (auto t = cast(T)this) del(t);
 		iterateChildren((ch) {
 			ch.visit!T(del);
@@ -205,7 +226,7 @@ class Entity {
 	}
 
 	void visit(T)(scope void delegate(T) del)
-	const {
+	@system const {
 		Entity uthis = cast(Entity)this;
 		if (auto t = cast(Unqual!T)uthis) del(t);
 		uthis.iterateChildren((ch) {
@@ -262,10 +283,16 @@ final class Package : Entity {
 		return pack;
 	}
 
-	override void iterateChildren(scope bool delegate(Entity) del)
+	override void iterateChildren(scope bool delegate(Entity) @safe del)
 	{
-		foreach( p; packages ) if( !del(p) ) return;
-		foreach( m; modules ) if( !del(m) ) return;
+		foreach (p; packages) if (!del(p)) return;
+		foreach (m; modules) if (!del(m)) return;
+	}
+
+	override void iterateChildren(scope bool delegate(Entity) @system del)
+	@system {
+		foreach (p; packages) if (!del(p)) return;
+		foreach (m; modules) if (!del(m)) return;
 	}
 }
 
@@ -280,8 +307,12 @@ final class Module : Entity{
 	/// Determines if this module is a "package.d" module.
 	@property bool isPackageModule() { return parent && parent.findChild!Package(this.name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del)
+	override void iterateChildren(scope bool delegate(Entity) @safe del)
 	{
+		foreach( m; members ) if( !del(m) ) return;
+	}
+	override void iterateChildren(scope bool delegate(Entity) @system del)
+	@system {
 		foreach( m; members ) if( !del(m) ) return;
 	}
 }
@@ -316,6 +347,7 @@ class Declaration : Entity {
 	TemplateParameterDeclaration[] templateArgs;
 	CachedString templateConstraint;
 
+@safe:
 	override @property string kindCaption() const { return "Declaration"; }
 	abstract @property Declaration dup();
 	abstract @property DeclarationKind kind() const;
@@ -330,8 +362,8 @@ class Declaration : Entity {
 	}
 	override @property const(Module) module_() const {
 		Rebindable!(const(Entity)) e = parent;
-		while(e){
-			if( auto m = cast(const(Module))e ) return m;
+		while (e) {
+			if (auto m = cast(const(Module))e.get) return m;
 			e = e.parent;
 		}
 		assert(false, "Declaration without module?");
@@ -339,7 +371,8 @@ class Declaration : Entity {
 
 	this(Entity parent, string name){ super(parent, name); }
 
-	abstract override void iterateChildren(scope bool delegate(Entity) del);
+	abstract override void iterateChildren(scope bool delegate(Entity) @safe del);
+	abstract override void iterateChildren(scope bool delegate(Entity) @system del) @system;
 
 	protected void copyFrom(Declaration src)
 	{
@@ -356,13 +389,14 @@ class Declaration : Entity {
 class TypedDeclaration : Declaration {
 	CachedType type;
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
 	override @property string kindCaption() const { return "Typed declaration"; }
 
 	abstract override @property DeclarationKind kind() const;
 
-	abstract override void iterateChildren(scope bool delegate(Entity) del);
+	abstract override void iterateChildren(scope bool delegate(Entity) @safe del);
+	abstract override void iterateChildren(scope bool delegate(Entity) @system del) @system;
 
 	protected override void copyFrom(Declaration src)
 	{
@@ -379,9 +413,10 @@ final class VariableDeclaration : TypedDeclaration {
 	override @property VariableDeclaration dup() { auto ret = new VariableDeclaration(parent, name); ret.copyFrom(this); ret.initializer = initializer; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Variable; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del) {}
+	override void iterateChildren(scope bool delegate(Entity) @safe del) {}
+	override void iterateChildren(scope bool delegate(Entity) @system del) @system {}
 }
 
 final class FunctionDeclaration : TypedDeclaration {
@@ -392,13 +427,17 @@ final class FunctionDeclaration : TypedDeclaration {
 	override @property FunctionDeclaration dup() { auto ret = new FunctionDeclaration(parent, name); ret.copyFrom(this); ret.returnType = returnType; ret.parameters = parameters.dup; ret.attributes = attributes; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Function; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
 	bool hasAttribute(string att) const { foreach( a; attributes ) if( a == att ) return true; return false; }
 
-	override void iterateChildren(scope bool delegate(Entity) del)
+	override void iterateChildren(scope bool delegate(Entity) @safe del)
 	{
-		foreach( p; parameters ) del(p);
+		foreach (p; parameters) del(p);
+	}
+	override void iterateChildren(scope bool delegate(Entity) @system del)
+	@system {
+		foreach (p; parameters) del(p);
 	}
 }
 
@@ -408,11 +447,19 @@ class CompositeTypeDeclaration : Declaration {
 	override @property string kindCaption() const { return "Composite type"; }
 	override abstract @property DeclarationKind kind() const;
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del)
+	override void iterateChildren(scope bool delegate(Entity) @safe del)
 	{
-		foreach( m; members ) if( !del(m) ) return;
+		foreach (m; members)
+			if (!del(m))
+				return;
+	}
+	override void iterateChildren(scope bool delegate(Entity) @system del)
+	@system {
+		foreach (m; members)
+			if (!del(m))
+				return;
 	}
 }
 
@@ -421,7 +468,7 @@ final class StructDeclaration : CompositeTypeDeclaration {
 	override @property StructDeclaration dup() { auto ret = new StructDeclaration(parent, name); ret.copyFrom(this); ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Struct; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 }
 
 final class UnionDeclaration : CompositeTypeDeclaration {
@@ -429,7 +476,7 @@ final class UnionDeclaration : CompositeTypeDeclaration {
 	override @property UnionDeclaration dup() { auto ret = new UnionDeclaration(parent, name); ret.copyFrom(this); ret.members = members; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Union; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 }
 
 final class InterfaceDeclaration : CompositeTypeDeclaration {
@@ -439,7 +486,7 @@ final class InterfaceDeclaration : CompositeTypeDeclaration {
 	override @property InterfaceDeclaration dup() { auto ret = new InterfaceDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.derivedInterfaces = derivedInterfaces.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Interface; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 }
 
 final class ClassDeclaration : CompositeTypeDeclaration {
@@ -450,7 +497,7 @@ final class ClassDeclaration : CompositeTypeDeclaration {
 	override @property ClassDeclaration dup() { auto ret = new ClassDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.baseClass = baseClass; ret.derivedInterfaces = derivedInterfaces.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Class; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 }
 
 final class EnumDeclaration : CompositeTypeDeclaration {
@@ -460,7 +507,7 @@ final class EnumDeclaration : CompositeTypeDeclaration {
 	override @property EnumDeclaration dup() { auto ret = new EnumDeclaration(parent, name); ret.copyFrom(this); ret.members = members; ret.baseType = baseType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Enum; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 }
 
 final class EnumMemberDeclaration : Declaration {
@@ -471,9 +518,10 @@ final class EnumMemberDeclaration : Declaration {
 	override @property DeclarationKind kind() const { return DeclarationKind.EnumMember; }
 	@property CachedType type() { if (!value) return CachedType.init; return value.type; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del) {}
+	override void iterateChildren(scope bool delegate(Entity) @safe del) {}
+	override void iterateChildren(scope bool delegate(Entity) @system del) @system {}
 }
 
 final class AliasDeclaration : Declaration {
@@ -484,11 +532,12 @@ final class AliasDeclaration : Declaration {
 	override @property string kindCaption() const { return "Alias"; }
 	override @property AliasDeclaration dup() { auto ret = new AliasDeclaration(parent, name); ret.copyFrom(this); ret.targetDecl = targetDecl; ret.targetType = targetType; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Alias; }
-	@property CachedType type() { return targetType; }
+	@property CachedType type() @safe { return targetType; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del) {}
+	override void iterateChildren(scope bool delegate(Entity) @safe del) {}
+	override void iterateChildren(scope bool delegate(Entity) @system del) @system {}
 }
 
 final class TemplateDeclaration : Declaration {
@@ -498,11 +547,15 @@ final class TemplateDeclaration : Declaration {
 	override @property TemplateDeclaration dup() { auto ret = new TemplateDeclaration(parent, name); ret.copyFrom(this); ret.members = members.dup; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.Template; }
 
-	this(Entity parent, string name){ super(parent, name); isTemplate = true; }
+	this(Entity parent, string name) @safe { super(parent, name); isTemplate = true; }
 
-	override void iterateChildren(scope bool delegate(Entity) del)
+	override void iterateChildren(scope bool delegate(Entity) @safe del)
 	{
 		foreach( m; members ) del(m);
+	}
+	override void iterateChildren(scope bool delegate(Entity) @system del)
+	@system {
+		foreach (m; members) del(m);
 	}
 }
 
@@ -513,15 +566,17 @@ final class TemplateParameterDeclaration : TypedDeclaration {
 	override @property TemplateParameterDeclaration dup() { auto ret = new TemplateParameterDeclaration(parent, name); ret.copyFrom(this); ret.type = type; return ret; }
 	override @property DeclarationKind kind() const { return DeclarationKind.TemplateParameter; }
 
-	this(Entity parent, string name){ super(parent, name); }
+	this(Entity parent, string name) @safe { super(parent, name); }
 
-	override void iterateChildren(scope bool delegate(Entity) del) {}
+	override void iterateChildren(scope bool delegate(Entity) @safe del) {}
+	override void iterateChildren(scope bool delegate(Entity) @system del) @system {}
 }
 
 final class Value {
 	CachedType type;
 	CachedString valueString;
 
+@safe:
 	this() {}
 	this(CachedType type, string value_string) { this.type = type; this.valueString = value_string; }
 }
@@ -545,6 +600,7 @@ struct CachedType {
 		static const(Type) s_emptyType;
 	}
 
+@safe:
 	static CachedType fromTypeDecl(Declaration decl)
 	{
 		import std.conv : to;
@@ -663,6 +719,7 @@ struct CachedString {
 		static string[] s_strings;
 	}
 
+@safe:
 	this(string str) { this.str = str; }
 
 	void opAssign(string str)
@@ -688,7 +745,7 @@ struct CachedString {
 			if (!s_strings.length) {
 				s_strings.length = 16384;
 				s_strings.length = 0;
-				s_strings.assumeSafeAppend();
+				() @trusted { s_strings.assumeSafeAppend(); } ();
 			}
 
 			// TODO: use a big pool of memory instead of individual allocations
