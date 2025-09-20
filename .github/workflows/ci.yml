@@ -21,10 +21,10 @@ jobs:
 
         runs-on: ${{ matrix.os }}
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
 
             - name: Install D compiler
-              uses: dlang-community/setup-dlang@v1
+              uses: dlang-community/setup-dlang@v2
               with:
                   compiler: ${{ matrix.dc }}
 
@@ -37,7 +37,7 @@ jobs:
               run: DC= ./travis-ci.sh
 
             - name: Upload PhantomCSS failures
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               if: always()
               with:
                 name: phantomcss-failures
