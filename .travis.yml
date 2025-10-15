@@ -1,9 +1,0 @@
-language: d
-d: dmd-2.085.1
-addons:
-  apt:
-    packages:
-    - libevent-dev
-    - libssl-dev
-
-script: ./travis-ci.sh
