@@ -5,7 +5,7 @@ license "MIT"
 
 dependency "vibe-d:web" version=">=0.9.8 <0.11.0-0"
 dependency "hyphenate" version="~>1.1.0"
-dependency "libdparse" version="~>0.15.4"
+dependency "libdparse" version="~>0.25.0"
 
 configuration "application" {
 	targetType "executable"
