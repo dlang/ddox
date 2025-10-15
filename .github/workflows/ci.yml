@@ -41,6 +41,7 @@ jobs:
               if: always()
               with:
                 name: phantomcss-failures
+                overwrite: true
                 path: |
                   test/screenshots/*.diff.png
                   test/screenshots/*.fail.png
