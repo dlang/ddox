@@ -36,6 +36,8 @@ shopt -u globstar
 # test for changes breaking the vibed.org build
 rm -rf vibed.org
 git clone https://github.com/vibe-d/vibed.org.git
+dparsever=`sed ':a;N;$!ba; s/.*\"libdparse\":\ \"\([^\"]*\)\",.*/\1/' dub.selections.json`
+sed -i 's/\"libdparse\":\ \".*",/\"libdparse\":\ \"$(dparsever)\",/' vibed.org/dub.selections.json
 sed -i 's/\"ddox\":\ \".*",/\"ddox\":\ {\"path\":\"..\"},/' vibed.org/dub.selections.json
 if ! dub build --root vibed.org; then
     echo "FAILED: vibed.org produced build errors"

@@ -1,6 +1,8 @@
 .dub
 /ddox
 /__*
+/libddox.a
+/ddox.dll
 node_modules
 ddox-test-library
 test/screenshots/*.diff.png
@@ -9,3 +11,4 @@ tests/*/test.json
 tests/*/__dummy.html
 tests/*/docs/file_hashes.json
 tests/timestamp/docs/
+__dummy_html
