@@ -1,4 +1,4 @@
-﻿/**
+/**
 	DietDoc/DDOC support routines
 
 	Copyright: © 2012-2016 RejectedSoftware e.K.
@@ -191,6 +191,14 @@ class DdocComment {
 	/// The macros contained in the "Macros" section (if any)
 	@property const(string[string]) macros() const { return m_macros; }
 
+	/** All sections of the comment that contain visible text in original order
+
+		Note that any "Macro" section is not included, whereas the special
+		sections "$Short", "$Long" and "Params" are included, just as any
+		user defined sections.
+	*/
+	@property const(Section)[] sections() const { return m_sections; }
+
 	bool hasSection(string name) const { return m_sections.canFind!(s => s.name == name); }
 
 	void renderSectionR(R)(ref R dst, DdocContext context, string name, int hlevel = 2)
@@ -223,6 +231,26 @@ class DdocComment {
 		auto dst = appender!string();
 		renderSectionsR(dst, context, display_section, hlevel);
 		return dst.data;
+	}
+
+	/** Renders each parameter's description in the "Params" section individually.
+
+		While `renderSection` and the related overloads will render the whole
+		parameter section as an HTML table, this method allows to customize
+		the structure of the section.
+
+		Params:
+			context = Context implementation used to control the render process
+			on_parameter = Callback that gets invoked with the name and the
+				rendered description for each parameter
+	*/
+	void renderParameters(DdocContext context,
+		void delegate(string, string) @safe on_parameter)
+	{
+		auto idx = m_sections.countUntil!(s => s.name == "Params");
+		if (idx < 0) return;
+
+		.renderParameters(context, m_sections[idx], on_parameter);
 	}
 }
 
@@ -270,8 +298,14 @@ private enum {
 	SECTION
 }
 
-private struct Section {
+
+/// Represents a single section within a Ddoc comment
+struct Section {
+	/// Name of the section as specified in the Ddoc comment
 	string name;
+
+	/** Raw text contents of the section.
+	*/
 	string[] lines;
 
 	this(string name, string[] lines...)
@@ -420,6 +454,39 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 			dst.put("</table>\n");
 			putFooter();
 			break;
+	}
+}
+
+private void renderParameters(DdocContext context, Section parms_section,
+	void delegate(string, string) @safe del)
+{
+	string paramname;
+	string desc;
+
+	foreach (string ln; parms_section.lines) {
+		// check if the line starts a parameter documentation
+		string name;
+		auto eidx = ln.indexOf("=");
+		if (eidx > 0) name = ln[0 .. eidx].strip();
+		if (!isIdent(name)) name = null;
+
+		// if it does, start a new row
+		if (name.length) {
+			if (paramname !is null) {
+				auto dst = appender!string;
+				renderTextLine(dst, desc, context);
+				del(paramname, dst.data);
+			}
+
+			desc = ln[eidx+1 .. $];
+			paramname = name;
+		} else if (paramname !is null) desc ~= "\n" ~ ln;
+	}
+
+	if (paramname !is null) {
+		auto dst = appender!string;
+		renderTextLine(dst, desc, context);
+		del(paramname, dst.data);
 	}
 }
 
