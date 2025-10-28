@@ -193,10 +193,10 @@ int cmdFilterDocs(string[] args)
 			return n;
 		}
 
-		if( json.type == Json.Type.Object ){
+		if( json.type == Json.Type.object ){
 			auto comment = json["comment"].opt!string;
 			if( justdoc && comment.empty ){
-				if( parent.type != Json.Type.Object || parent["kind"].opt!string() != "template" || templateName(parent) != json["name"].opt!string() )
+				if( parent.type != Json.Type.object || parent["kind"].opt!string() != "template" || templateName(parent) != json["name"].opt!string() )
 					return Json.undefined;
 			}
 
@@ -240,7 +240,7 @@ int cmdFilterDocs(string[] args)
 
 			if (auto mem = "members" in json)
 				json["members"] = filterProt(*mem, json, Json.undefined, mod);
-		} else if( json.type == Json.Type.Array ){
+		} else if( json.type == Json.Type.array ){
 			auto last_child_decl = Json.undefined;
 			Json[] newmem;
 			foreach (m; json) {

@@ -141,7 +141,7 @@ private struct Parser
 
 	Declaration[] parseDeclList(Json json, Entity parent)
 	{
-		if( json.type == Json.Type.Undefined ) return null;
+		if( json.type == Json.Type.undefined ) return null;
 		DocGroup lastdoc;
 		Declaration[] ret;
 		foreach( mem; json ){
@@ -348,10 +348,10 @@ private struct Parser
 		out(ret) { assert(!def_type.length || ret != Type.init); }
 	do {
 		string str;
-		if( json.type == Json.Type.Undefined ){
+		if( json.type == Json.Type.undefined ){
 			if (warn_if_not_exists) logWarn("No type found for %s.", sc.qualifiedName);
 			str = def_type;
-		} else if (json.type == Json.Type.String) str = json.get!string();
+		} else if (json.type == Json.Type.string) str = json.get!string();
 		else if (auto pv = "deco" in json) str = demanglePrettyType(pv.get!string());
 		else if (auto pv = "type" in json) str = fixFunctionType(pv.get!string(), def_type);
 		else if (auto pv = "originalType" in json) str = fixFunctionType(pv.get!string(), def_type);
